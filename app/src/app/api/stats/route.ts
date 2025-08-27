@@ -15,8 +15,10 @@ export async function GET(request: Request) {
       const results = [];
 
       // Nếu có month và year, bắt đầu từ tháng/năm chỉ định
-      let startMonth = month ? parseInt(month, 10) : currentDate.getMonth() + 1;
-      let startYear = year ? parseInt(year, 10) : currentDate.getFullYear();
+      const startMonth = month
+        ? parseInt(month, 10)
+        : currentDate.getMonth() + 1;
+      const startYear = year ? parseInt(year, 10) : currentDate.getFullYear();
 
       // Lấy dữ liệu của nhiều tháng
       for (let i = 0; i < monthsCount; i++) {
