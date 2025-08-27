@@ -34,7 +34,16 @@ const SCOPES = {
  */
 export function getGoogleAuth(readOnly = true) {
   try {
-    const credentials = JSON.parse(fs.readFileSync(CREDENTIALS_PATH, "utf8"));
+    let credentials;
+
+    // Kiểm tra nếu có biến môi trường GOOGLE_CREDENTIALS
+    if (process.env.GOOGLE_CREDENTIALS) {
+      credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
+    } else {
+      // Sử dụng file local nếu không có biến môi trường
+      credentials = JSON.parse(fs.readFileSync(CREDENTIALS_PATH, "utf8"));
+    }
+
     const auth = new google.auth.GoogleAuth({
       credentials,
       scopes: readOnly ? SCOPES.READ_ONLY : SCOPES.READ_WRITE,
