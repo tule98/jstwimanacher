@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Card,
@@ -165,12 +165,14 @@ export default function TransactionsPage() {
     amount: "",
     category_name: "",
     note: "",
-    created_at: format(new Date(), "yyyy-MM-dd'T'HH:mm"), // Format for datetime-local input
+    created_at: format(new Date(), "yyyy-MM-dd'T'00:00"), // Always set time to 00:00
   });
   const [rawAmount, setRawAmount] = useState(""); // Store raw numeric value
   const [editIdx, setEditIdx] = useState<number | null>(null);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestions, setSuggestions] = useState<Transaction[]>([]);
+  const noteInputRef = useRef<HTMLInputElement>(null);
+  const datetimeInputRef = useRef<HTMLInputElement>(null);
 
   // Initialize form with default category when categories are loaded
   useEffect(() => {
@@ -297,7 +299,7 @@ export default function TransactionsPage() {
       amount: Number(amountStr).toLocaleString("vi-VN"),
       category_name: tx.category_name,
       note: tx.note || "",
-      created_at: format(parseISO(tx.created_at), "yyyy-MM-dd'T'HH:mm"),
+      created_at: format(parseISO(tx.created_at), "yyyy-MM-dd'T'00:00"),
     });
     setEditIdx(idx);
   };
@@ -356,6 +358,7 @@ export default function TransactionsPage() {
                   Ghi chú
                 </label>
                 <input
+                  ref={noteInputRef}
                   id="note"
                   type="text"
                   name="note"
@@ -472,9 +475,10 @@ export default function TransactionsPage() {
                       key={cat.name}
                       type="button"
                       tabIndex={-1}
-                      onClick={() =>
-                        setForm({ ...form, category_name: cat.name })
-                      }
+                      onClick={() => {
+                        setForm({ ...form, category_name: cat.name });
+                        setTimeout(() => noteInputRef.current?.focus(), 0);
+                      }}
                       className={`px-2.5 py-1 rounded-full border-2 text-xs font-medium transition-all duration-200 hover:shadow-md whitespace-nowrap ${
                         isSelected
                           ? "border-transparent shadow-md text-white"
@@ -501,6 +505,7 @@ export default function TransactionsPage() {
                 Thời gian
               </label>
               <input
+                ref={datetimeInputRef}
                 id="created_at"
                 type="datetime-local"
                 name="created_at"
@@ -519,8 +524,9 @@ export default function TransactionsPage() {
                     const twoDaysAgo = subDays(new Date(), 2);
                     setForm({
                       ...form,
-                      created_at: format(twoDaysAgo, "yyyy-MM-dd'T'HH:mm"),
+                      created_at: format(twoDaysAgo, "yyyy-MM-dd'T'00:00"),
                     });
+                    setTimeout(() => datetimeInputRef.current?.focus(), 0);
                   }}
                   className="px-2 py-1 rounded-md text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300 transition-colors"
                 >
@@ -533,8 +539,9 @@ export default function TransactionsPage() {
                     const yesterday = subDays(new Date(), 1);
                     setForm({
                       ...form,
-                      created_at: format(yesterday, "yyyy-MM-dd'T'HH:mm"),
+                      created_at: format(yesterday, "yyyy-MM-dd'T'00:00"),
                     });
+                    setTimeout(() => datetimeInputRef.current?.focus(), 0);
                   }}
                   className="px-2 py-1 rounded-md text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300 transition-colors"
                 >
@@ -547,8 +554,9 @@ export default function TransactionsPage() {
                     const today = new Date();
                     setForm({
                       ...form,
-                      created_at: format(today, "yyyy-MM-dd'T'HH:mm"),
+                      created_at: format(today, "yyyy-MM-dd'T'00:00"),
                     });
+                    setTimeout(() => datetimeInputRef.current?.focus(), 0);
                   }}
                   className="px-2 py-1 rounded-md text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300 transition-colors"
                 >
