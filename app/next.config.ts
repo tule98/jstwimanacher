@@ -1,7 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  env: {
+    PROTECTION_KEY: process.env.PROTECTION_KEY,
+  },
 };
 
 export default nextConfig;

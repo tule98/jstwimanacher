@@ -1,6 +1,8 @@
+/* eslint-disable @next/next/no-page-custom-font */
 import "./globals.css";
 import AppProvider from "./_components/AppProvider";
 import AppNav from "./_components/AppNav";
+import AuthGuard from "./_components/AuthGuard";
 
 export const metadata = {
   title: "jstwimoniluver",
@@ -27,16 +29,18 @@ export default function RootLayout({
       </head>
       <body className="font-poppins bg-gradient-to-b from-green-50 to-green-100 min-h-screen dark:from-gray-900 dark:to-gray-800 transition-colors duration-300">
         <AppProvider>
-          <header className="sticky top-0 z-50 w-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm shadow-md">
+          <AuthGuard>
+            <header className="sticky top-0 z-50 w-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm shadow-md">
+              <div className="max-w-screen-lg mx-auto">
+                <AppNav />
+              </div>
+            </header>
             <div className="max-w-screen-lg mx-auto">
-              <AppNav />
+              <main className="flex flex-col items-center justify-start p-4 md:p-6 gap-6 pb-20 pt-4">
+                {children}
+              </main>
             </div>
-          </header>
-          <div className="max-w-screen-lg mx-auto">
-            <main className="flex flex-col items-center justify-start p-4 md:p-6 gap-6 pb-20 pt-4">
-              {children}
-            </main>
-          </div>
+          </AuthGuard>
         </AppProvider>
       </body>
     </html>

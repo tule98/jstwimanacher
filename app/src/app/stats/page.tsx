@@ -290,7 +290,7 @@ export default function StatsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-primary dark:text-green-400">
             <DollarSign size={20} />
-            Tổng chi tiêu tháng {month}/{year}
+            Tổng chi tháng {month}/{year}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -335,7 +335,7 @@ export default function StatsPage() {
           <div className="flex flex-row items-center justify-between">
             <CardTitle className="flex items-center gap-2 text-primary dark:text-green-400">
               <PieChartIcon size={20} />
-              Chi tiêu theo danh mục
+              Theo danh mục
             </CardTitle>
 
             {stats.length > 0 && (

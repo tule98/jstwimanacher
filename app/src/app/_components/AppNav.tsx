@@ -1,22 +1,13 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, FolderTree, CreditCard, PieChart } from "lucide-react";
+import { FolderTree, CreditCard, PieChart } from "lucide-react";
 
 export default function AppNav() {
   const pathname = usePathname();
 
   return (
     <nav className="w-full bg-primary text-white flex justify-center gap-2 sm:gap-4 py-3 mb-4 rounded-lg shadow-lg dark:bg-gray-900 dark:text-green-400">
-      <Link
-        href="/"
-        className={`font-semibold hover:text-green-200 dark:hover:text-green-300 transition-colors flex flex-col sm:flex-row items-center gap-1 px-2 py-1 rounded-md ${
-          pathname === "/" ? "bg-green-600/30 dark:bg-green-900/30" : ""
-        }`}
-      >
-        <Home size={18} />
-        <span className="text-xs sm:text-sm">Trang chủ</span>
-      </Link>
       <Link
         href="/categories"
         className={`font-semibold hover:text-green-200 dark:hover:text-green-300 transition-colors flex flex-col sm:flex-row items-center gap-1 px-2 py-1 rounded-md ${

@@ -10,6 +10,8 @@ import fs from "fs";
 // Constants
 const SPREADSHEET_ID =
   process.env.GOOGLE_SHEET_ID || "1YEg3XtyR3fxMb8rww6muDThk_qQZtCTX0NLkbO__pk8";
+const CATEGORIES_SHEET_ID = +(process.env.CATEGORIES_SHEET_ID || 0);
+const TRANSACTIONS_SHEET_ID = +(process.env.TRANSACTIONS_SHEET_ID || 454436180);
 const CREDENTIALS_PATH = path.join(
   process.cwd(),
   process.env.GOOGLE_CREDENTIALS_FILE || "jstwimoniluver-616a249223f5.json"
@@ -183,7 +185,7 @@ export const CategoriesService = {
             {
               deleteDimension: {
                 range: {
-                  sheetId: 0, // Giả sử sheet Categories có ID là 0
+                  sheetId: CATEGORIES_SHEET_ID,
                   dimension: "ROWS",
                   startIndex: rowIndex + 1, // +1 vì dòng đầu tiên là header
                   endIndex: rowIndex + 2,
@@ -258,12 +260,19 @@ export const TransactionsService = {
    * Thêm một transaction mới
    * @param amount - Số tiền
    * @param category_name - Tên danh mục
-   * @param note - Ghi chú (tùy chọn)
+   * @param note - Ghi chú
+   * @param created_at - Thời gian tạo (tùy chọn, mặc định là thời điểm hiện tại)
    * @returns Kết quả từ Google Sheets API
    */
-  async add(amount: number, category_name: string, note: string = "") {
+  async add(
+    amount: number,
+    category_name: string,
+    note: string,
+    created_at?: string
+  ) {
     try {
       const now = new Date().toISOString();
+      const createdAt = created_at || now;
       const sheets = getGoogleSheetsClient(false); // Cần quyền write
 
       const result = await sheets.spreadsheets.values.append({
@@ -271,7 +280,7 @@ export const TransactionsService = {
         range: RANGES.TRANSACTIONS,
         valueInputOption: "USER_ENTERED",
         requestBody: {
-          values: [[amount, category_name, note, now, now]],
+          values: [[amount, category_name, note, createdAt, now]],
         },
       });
 
@@ -299,7 +308,7 @@ export const TransactionsService = {
             {
               deleteDimension: {
                 range: {
-                  sheetId: 1, // Giả sử sheet Transactions có ID là 1
+                  sheetId: TRANSACTIONS_SHEET_ID,
                   dimension: "ROWS",
                   startIndex: index + 1, // +1 vì dòng đầu tiên là header
                   endIndex: index + 2,
@@ -320,12 +329,17 @@ export const TransactionsService = {
   /**
    * Cập nhật một transaction
    * @param index - Index của transaction (0-based)
-   * @param data - Dữ liệu cần cập nhật {amount, category_name, note}
+   * @param data - Dữ liệu cần cập nhật {amount, category_name, note, created_at}
    * @returns Kết quả từ Google Sheets API
    */
   async update(
     index: number,
-    data: { amount?: number; category_name?: string; note?: string }
+    data: {
+      amount?: number;
+      category_name?: string;
+      note?: string;
+      created_at?: string;
+    }
   ) {
     try {
       const sheets = getGoogleSheetsClient(false); // Cần quyền write
@@ -341,14 +355,14 @@ export const TransactionsService = {
         throw new Error(`Không tìm thấy transaction tại index: ${index}`);
       }
 
-      // Cập nhật dữ liệu
+      // Cập nhật dữ liệu - updated_at luôn được cập nhật
       const now = new Date().toISOString();
       const updatedData = [
         data.amount !== undefined ? data.amount : currentData[0],
         data.category_name !== undefined ? data.category_name : currentData[1],
         data.note !== undefined ? data.note : currentData[2],
-        currentData[3], // created_at giữ nguyên
-        now, // updated_at cập nhật
+        data.created_at !== undefined ? data.created_at : currentData[3], // created_at có thể được cập nhật
+        now, // updated_at luôn cập nhật
       ];
 
       // Gửi yêu cầu cập nhật

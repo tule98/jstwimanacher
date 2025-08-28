@@ -29,7 +29,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const { amount, category_name, note } = await request.json();
+    const { amount, category_name, note, created_at } = await request.json();
 
     if (amount === undefined || !category_name) {
       return NextResponse.json(
@@ -38,10 +38,18 @@ export async function POST(request: Request) {
       );
     }
 
+    if (!note) {
+      return NextResponse.json(
+        { error: "Ghi chú là bắt buộc" },
+        { status: 400 }
+      );
+    }
+
     const result = await TransactionsService.add(
       parseFloat(amount),
       category_name,
-      note || ""
+      note,
+      created_at ? new Date(created_at).toISOString() : new Date().toISOString()
     );
 
     return NextResponse.json({ success: true, result });
@@ -55,7 +63,8 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
   try {
-    const { index, amount, category_name, note } = await request.json();
+    const { index, amount, category_name, note, created_at } =
+      await request.json();
 
     if (index === undefined) {
       return NextResponse.json(
@@ -69,11 +78,14 @@ export async function PUT(request: Request) {
       amount?: number;
       category_name?: string;
       note?: string;
+      created_at?: string;
     } = {};
 
     if (amount !== undefined) updateData.amount = parseFloat(amount);
     if (category_name !== undefined) updateData.category_name = category_name;
     if (note !== undefined) updateData.note = note;
+    if (created_at !== undefined)
+      updateData.created_at = new Date(created_at).toISOString();
 
     const result = await TransactionsService.update(
       parseInt(index, 10),
