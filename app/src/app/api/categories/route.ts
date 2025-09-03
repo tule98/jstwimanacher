@@ -1,10 +1,19 @@
 import { NextResponse } from "next/server";
-import { CategoriesService } from "@/services/googleSheets/googleSheetsService";
+import { databaseService } from "@/services/database/databaseService";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const categories = await CategoriesService.getAll();
-    return NextResponse.json(categories);
+    const { searchParams } = new URL(request.url);
+    const type = searchParams.get("type") as "income" | "expense" | null;
+
+    const categories = await databaseService.getAllCategories();
+
+    if (type) {
+      const filteredCategories = categories.filter((cat) => cat.type === type);
+      return NextResponse.json(filteredCategories);
+    } else {
+      return NextResponse.json(categories);
+    }
   } catch (error) {
     return NextResponse.json(
       { error: (error as { message: string }).message },
@@ -15,7 +24,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const { name, color } = await request.json();
+    const { name, color, type = "expense" } = await request.json();
 
     if (!name || !color) {
       return NextResponse.json(
@@ -24,7 +33,14 @@ export async function POST(request: Request) {
       );
     }
 
-    const result = await CategoriesService.add(name, color);
+    if (type !== "income" && type !== "expense") {
+      return NextResponse.json(
+        { error: "Loại danh mục phải là 'income' hoặc 'expense'" },
+        { status: 400 }
+      );
+    }
+
+    const result = await databaseService.createCategory(name, color, type);
     return NextResponse.json({ success: true, result });
   } catch (error) {
     return NextResponse.json(
@@ -36,16 +52,24 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
   try {
-    const { name, color } = await request.json();
+    const { id, name, color } = await request.json();
 
-    if (!name || !color) {
+    if (!id || !name || !color) {
       return NextResponse.json(
-        { error: "Tên danh mục và màu sắc là bắt buộc" },
+        { error: "ID, tên danh mục và màu sắc là bắt buộc" },
         { status: 400 }
       );
     }
 
-    const result = await CategoriesService.update(name, color);
+    const result = await databaseService.updateCategory(id, name, color);
+
+    if (!result) {
+      return NextResponse.json(
+        { error: "Không tìm thấy danh mục" },
+        { status: 404 }
+      );
+    }
+
     return NextResponse.json({ success: true, result });
   } catch (error) {
     return NextResponse.json(
@@ -58,17 +82,25 @@ export async function PUT(request: Request) {
 export async function DELETE(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const name = searchParams.get("name");
+    const id = searchParams.get("id");
 
-    if (!name) {
+    if (!id) {
       return NextResponse.json(
-        { error: "Tên danh mục là bắt buộc" },
+        { error: "ID danh mục là bắt buộc" },
         { status: 400 }
       );
     }
 
-    const result = await CategoriesService.delete(name);
-    return NextResponse.json({ success: true, result });
+    const result = await databaseService.deleteCategory(id);
+
+    if (!result) {
+      return NextResponse.json(
+        { error: "Không tìm thấy danh mục hoặc danh mục có giao dịch" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ success: true });
   } catch (error) {
     return NextResponse.json(
       { error: (error as { message: string }).message },

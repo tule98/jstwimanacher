@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -10,6 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   CreditCard,
   List,
@@ -18,6 +18,11 @@ import {
   Save,
   AlertCircle,
   Loader2,
+  TrendingUp,
+  TrendingDown,
+  Wallet,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import {
   subDays,
@@ -28,85 +33,13 @@ import {
   compareDesc,
 } from "date-fns";
 import TransactionList from "./_components/TransactionList";
-
-interface Category {
-  name: string;
-  color: string;
-}
-
-interface Transaction {
-  amount: number;
-  category_name: string;
-  note?: string;
-  created_at: string;
-  updated_at: string;
-}
-
-// API functions
-const fetchCategories = async (): Promise<Category[]> => {
-  const response = await fetch("/api/categories");
-  if (!response.ok) {
-    throw new Error("Failed to fetch categories");
-  }
-  return response.json();
-};
-
-const fetchTransactions = async (): Promise<Transaction[]> => {
-  const response = await fetch("/api/transactions");
-  if (!response.ok) {
-    throw new Error("Failed to fetch transactions");
-  }
-  return response.json();
-};
-
-const addTransaction = async (data: {
-  amount: number;
-  category_name: string;
-  note: string;
-  created_at: string;
-}): Promise<any> => {
-  const response = await fetch("/api/transactions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(data),
-  });
-  if (!response.ok) {
-    throw new Error("Failed to add transaction");
-  }
-  return response.json();
-};
-
-const updateTransaction = async (data: {
-  index: number;
-  amount?: number;
-  category_name?: string;
-  note?: string;
-  created_at?: string;
-}): Promise<any> => {
-  const response = await fetch("/api/transactions", {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(data),
-  });
-  if (!response.ok) {
-    throw new Error("Failed to update transaction");
-  }
-  return response.json();
-};
-
-const deleteTransaction = async (index: number): Promise<any> => {
-  const response = await fetch(`/api/transactions?index=${index}`, {
-    method: "DELETE",
-  });
-  if (!response.ok) {
-    throw new Error("Failed to delete transaction");
-  }
-  return response.json();
-};
+import API, {
+  Category,
+  Transaction,
+  TransactionCreateData,
+  TransactionUpdateData,
+  BalanceStats,
+} from "@/services/api/client";
 
 // Format currency function
 const formatCurrency = (amount: number): string => {
@@ -123,11 +56,33 @@ const formatCurrency = (amount: number): string => {
 export default function TransactionsPage() {
   const queryClient = useQueryClient();
 
+  // Get current month/year for balance
+  const currentDate = new Date();
+  const currentMonth = currentDate.getMonth() + 1;
+  const currentYear = currentDate.getFullYear();
+
   // Query categories and transactions
-  const { data: categories = [] } = useQuery<Category[]>({
+  const { data: allCategories = [] } = useQuery<Category[]>({
     queryKey: ["categories"],
-    queryFn: fetchCategories,
+    queryFn: API.categories.getAll,
   });
+
+  // Query current month balance
+  const {
+    data: balanceStats,
+    isLoading: isLoadingBalance,
+    isError: isErrorBalance,
+    error: balanceError,
+  } = useQuery<BalanceStats>({
+    queryKey: ["balance-stats", currentMonth, currentYear],
+    queryFn: () => API.stats.getBalanceStats(currentMonth, currentYear),
+  });
+
+  // Separate income and expense categories
+  const incomeCategories = allCategories.filter((cat) => cat.type === "income");
+  const expenseCategories = allCategories.filter(
+    (cat) => cat.type === "expense"
+  );
 
   const {
     data: transactions = [],
@@ -135,67 +90,93 @@ export default function TransactionsPage() {
     isError: isErrorTransactions,
     error: transactionsError,
   } = useQuery<Transaction[]>({
-    queryKey: ["transactions"],
-    queryFn: fetchTransactions,
+    queryKey: ["transactions", "limited", 20],
+    queryFn: () => API.transactions.getWithLimit(30),
   });
 
   // Mutations for add, update, delete
   const addMutation = useMutation({
-    mutationFn: addTransaction,
+    mutationFn: API.transactions.create,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["balance-stats"] });
     },
   });
 
   const updateMutation = useMutation({
-    mutationFn: updateTransaction,
+    mutationFn: API.transactions.update,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["balance-stats"] });
     },
   });
 
   const deleteMutation = useMutation({
-    mutationFn: deleteTransaction,
+    mutationFn: API.transactions.delete,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["balance-stats"] });
+    },
+  });
+
+  const toggleResolvedMutation = useMutation({
+    mutationFn: (data: { id: string; is_resolved: boolean }) =>
+      API.transactions.update(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["balance-stats"] });
     },
   });
 
   const [form, setForm] = useState({
     amount: "",
-    category_name: "",
+    category_id: "",
     note: "",
     created_at: format(new Date(), "yyyy-MM-dd'T'00:00"), // Always set time to 00:00
   });
   const [rawAmount, setRawAmount] = useState(""); // Store raw numeric value
-  const [editIdx, setEditIdx] = useState<number | null>(null);
+  const [editId, setEditId] = useState<string | null>(null);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestions, setSuggestions] = useState<Transaction[]>([]);
+  const [activeType, setActiveType] = useState<"income" | "expense">("expense"); // Track current transaction type
+  const [hideBalance, setHideBalance] = useState(true); // State để ẩn/hiện thu nhập và số dư
   const noteInputRef = useRef<HTMLInputElement>(null);
   const datetimeInputRef = useRef<HTMLInputElement>(null);
 
+  // Get current categories based on active type
+  const categories =
+    activeType === "income" ? incomeCategories : expenseCategories;
+
   // Initialize form with default category when categories are loaded
   useEffect(() => {
-    if (categories.length > 0 && form.category_name === "") {
-      const defaultCategory = categories.find(
-        (cat) => cat.name === "Thiết yếu: Ăn uống cá nhân"
-      );
+    if (categories.length > 0 && form.category_id === "") {
+      // For expense, try to find default category, otherwise use first available
+      const defaultCategory =
+        activeType === "expense"
+          ? categories.find((cat) => cat.name === "Ăn uống cá nhân")
+          : null;
       setForm((prev) => ({
         ...prev,
-        category_name: defaultCategory?.name || categories[0].name,
+        category_id: defaultCategory?.id || categories[0]?.id || "",
       }));
     }
-  }, [categories, form.category_name]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.category_id, activeType]);
 
   // Update suggestions when note changes or on focus
   useEffect(() => {
     if (showSuggestions) {
-      // Get transactions from yesterday
+      // Get transactions from yesterday with same type
       const yesterday = startOfDay(subDays(new Date(), 1));
       const yesterdayTransactions = transactions
         .filter((tx) => {
           const txDate = startOfDay(parseISO(tx.created_at));
-          return isEqual(txDate, yesterday) && tx.note && tx.note.trim();
+          return (
+            isEqual(txDate, yesterday) &&
+            tx.note &&
+            tx.note.trim() &&
+            tx.category.type === activeType
+          ); // Filter by current transaction type
         })
         .sort((a, b) =>
           compareDesc(parseISO(a.created_at), parseISO(b.created_at))
@@ -216,7 +197,8 @@ export default function TransactionsPage() {
     } else {
       setSuggestions([]);
     }
-  }, [form.note, showSuggestions]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.note, showSuggestions, activeType]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -248,7 +230,7 @@ export default function TransactionsPage() {
       ...prev,
       note: transaction.note || "",
       amount: Number(amountStr).toLocaleString("vi-VN"),
-      category_name: transaction.category_name, // Update category as well
+      category_id: transaction.category_id, // Update category as well
     }));
     setShowSuggestions(false);
   };
@@ -256,66 +238,74 @@ export default function TransactionsPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (editIdx !== null) {
+    if (editId !== null) {
       // Edit mode
-      updateMutation.mutate({
-        index: editIdx,
+      const updateData: TransactionUpdateData = {
+        id: editId,
         amount: Number(rawAmount),
-        category_name: form.category_name,
+        category_id: form.category_id,
         note: form.note,
         created_at: form.created_at,
-      });
-      setEditIdx(null);
+      };
+      updateMutation.mutate(updateData);
+      setEditId(null);
     } else {
-      // Add mode
-      addMutation.mutate({
+      // Add mode - generate new ID
+      const createData: TransactionCreateData = {
         amount: Number(rawAmount),
-        category_name: form.category_name,
+        category_id: form.category_id,
         note: form.note,
         created_at: form.created_at,
-      });
+      };
+      addMutation.mutate(createData);
     }
 
     // Reset form but keep created_at
     const currentCreatedAt = form.created_at;
+    const defaultCategory =
+      activeType === "expense"
+        ? categories.find((cat) => cat.name === "Ăn uống cá nhân")
+        : null;
     setForm({
       amount: "",
-      category_name:
-        categories.find((cat) => cat.name === "Thiết yếu: Ăn uống cá nhân")
-          ?.name ||
-        categories[0]?.name ||
-        "",
+      category_id: defaultCategory?.id || categories[0]?.id || "",
       note: "",
       created_at: currentCreatedAt, // Keep the current datetime
     });
     setRawAmount("");
   };
 
-  const handleEdit = (idx: number) => {
-    const tx = transactions[idx];
-    const amountStr = tx.amount.toString();
+  const handleEdit = (transaction: Transaction) => {
+    const amountStr = transaction.amount.toString();
     setRawAmount(amountStr);
+
+    // Set the active type based on transaction type
+    setActiveType(transaction.category.type || "expense");
+
     setForm({
       amount: Number(amountStr).toLocaleString("vi-VN"),
-      category_name: tx.category_name,
-      note: tx.note || "",
-      created_at: format(parseISO(tx.created_at), "yyyy-MM-dd'T'00:00"),
+      category_id: transaction.category_id,
+      note: transaction.note || "",
+      created_at: format(
+        parseISO(transaction.created_at),
+        "yyyy-MM-dd'T'00:00"
+      ),
     });
-    setEditIdx(idx);
+    setEditId(transaction.id);
   };
 
-  const handleDelete = (idx: number) => {
-    deleteMutation.mutate(idx);
-    if (editIdx === idx) {
-      setEditIdx(null);
+  const handleDelete = (id: string) => {
+    deleteMutation.mutate(id);
+    if (editId === id) {
+      setEditId(null);
       const currentCreatedAt = form.created_at;
+      const defaultCategory =
+        activeType === "expense"
+          ? categories.find((cat) => cat.name === "Ăn uống cá nhân")
+          : null;
       setForm({
         amount: "",
-        category_name:
-          categories.find((cat) => cat.name === "Thiết yếu: Ăn uống cá nhân")
-            ?.name ||
-          categories[0]?.name ||
-          "",
+        category_id: defaultCategory?.id || categories[0]?.id || "",
         note: "",
         created_at: currentCreatedAt,
       });
@@ -323,31 +313,181 @@ export default function TransactionsPage() {
     }
   };
 
-  if (isLoadingTransactions) {
+  const handleToggleResolved = (id: string) => {
+    const transaction = transactions.find((tx) => tx.id === id);
+    if (transaction) {
+      // Toggle logic: undefined/true -> false, false -> true
+      // Default is resolved (true), so undefined is treated as resolved
+      const currentResolved = transaction.is_resolved !== false; // undefined or true means resolved
+      const newResolvedState = !currentResolved; // Toggle the state
+      toggleResolvedMutation.mutate({
+        id: id,
+        is_resolved: newResolvedState,
+      });
+    }
+  };
+
+  if (isLoadingTransactions || isLoadingBalance) {
     return <div className="max-w-md mx-auto p-4">Đang tải dữ liệu...</div>;
   }
 
-  if (isErrorTransactions) {
+  if (isErrorTransactions || isErrorBalance) {
     return (
       <div className="max-w-md mx-auto p-4 text-red-500">
-        Lỗi: {(transactionsError as Error)?.message || "Không thể tải dữ liệu"}
+        Lỗi:{" "}
+        {((isErrorTransactions ? transactionsError : balanceError) as Error)
+          ?.message || "Không thể tải dữ liệu"}
       </div>
     );
   }
 
   return (
     <div className="w-full max-w-3xl mx-auto space-y-6 pb-16">
+      {/* Balance Overview Card */}
+      <Card className="shadow-md border-blue-100 dark:border-blue-900/50 bg-gradient-to-br from-blue-50 to-white dark:from-blue-950/20 dark:to-gray-900">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
+              <Wallet size={20} />
+              Số dư {currentMonth}/{currentYear}
+            </CardTitle>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setHideBalance(!hideBalance)}
+              className="text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/20"
+            >
+              {hideBalance ? <Eye size={16} /> : <EyeOff size={16} />}
+            </Button>
+          </div>
+          <CardDescription>Tổng quan tài chính tháng này</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {balanceStats ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Thu nhập */}
+              <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                <h3 className="text-sm font-medium text-green-700 dark:text-green-300 mb-1">
+                  Thu nhập
+                </h3>
+                <p className="text-xl font-bold text-green-600 dark:text-green-400">
+                  {hideBalance
+                    ? "•••••••"
+                    : formatCurrency(balanceStats.income)}
+                </p>
+              </div>
+
+              {/* Chi tiêu */}
+              <div className="text-center p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+                <h3 className="text-sm font-medium text-red-700 dark:text-red-300 mb-1">
+                  Chi tiêu
+                </h3>
+                <p className="text-xl font-bold text-red-600 dark:text-red-400">
+                  {formatCurrency(balanceStats.expense)}
+                </p>
+              </div>
+
+              {/* Số dư */}
+              <div
+                className={`text-center p-4 rounded-lg border ${
+                  balanceStats.balance >= 0
+                    ? "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800"
+                    : "bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800"
+                }`}
+              >
+                <h3
+                  className={`text-sm font-medium mb-1 ${
+                    balanceStats.balance >= 0
+                      ? "text-blue-700 dark:text-blue-300"
+                      : "text-orange-700 dark:text-orange-300"
+                  }`}
+                >
+                  Số dư
+                </h3>
+                <p
+                  className={`text-xl font-bold ${
+                    balanceStats.balance >= 0
+                      ? "text-blue-600 dark:text-blue-400"
+                      : "text-orange-600 dark:text-orange-400"
+                  }`}
+                >
+                  {hideBalance ? (
+                    "•••••••"
+                  ) : (
+                    <>
+                      {balanceStats.balance >= 0 ? "+" : ""}
+                      {formatCurrency(balanceStats.balance)}
+                    </>
+                  )}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="flex justify-center items-center h-20">
+              <p className="text-gray-500 dark:text-gray-400 text-center">
+                Đang tải thông tin số dư...
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       <Card className="shadow-md">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-primary dark:text-green-400">
             <CreditCard size={20} />
-            Nhập khoản chi tiêu
+            Quản lý giao dịch
           </CardTitle>
           <CardDescription>
-            Thêm khoản chi tiêu mới hoặc chỉnh sửa khoản chi hiện có
+            Thêm khoản {activeType === "income" ? "thu nhập" : "chi tiêu"} mới
+            hoặc chỉnh sửa giao dịch hiện có
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {/* Transaction Type Selector */}
+          <div className="mb-6">
+            <Tabs
+              value={activeType}
+              onValueChange={(value: string) => {
+                const newType = value as "income" | "expense";
+                setActiveType(newType);
+                // Reset form when changing type
+                const currentCreatedAt = form.created_at;
+                const newCategories =
+                  newType === "income" ? incomeCategories : expenseCategories;
+                const defaultCategory =
+                  newType === "expense"
+                    ? newCategories.find(
+                        (cat) => cat.name === "Ăn uống cá nhân"
+                      )
+                    : null;
+                setForm({
+                  amount: "",
+                  category_id:
+                    defaultCategory?.id || newCategories[0]?.id || "",
+                  note: "",
+                  created_at: currentCreatedAt,
+                });
+                setRawAmount("");
+                setEditId(null);
+              }}
+              className="w-full"
+            >
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger
+                  value="expense"
+                  className="flex items-center gap-2"
+                >
+                  <TrendingDown size={16} />
+                  Chi tiêu ({expenseCategories.length} danh mục)
+                </TabsTrigger>
+                <TabsTrigger value="income" className="flex items-center gap-2">
+                  <TrendingUp size={16} />
+                  Thu nhập ({incomeCategories.length} danh mục)
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
           <form className="flex flex-col gap-3" onSubmit={handleSubmit}>
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="flex flex-col gap-2 relative">
@@ -365,7 +505,7 @@ export default function TransactionsPage() {
                   value={form.note}
                   onChange={handleChange}
                   onFocus={() => {
-                    // Get transactions from yesterday on focus
+                    // Get transactions from yesterday on focus with same type
                     const yesterday = startOfDay(subDays(new Date(), 1));
                     const yesterdayTransactions = transactions
                       .filter((tx) => {
@@ -373,7 +513,8 @@ export default function TransactionsPage() {
                         return (
                           isEqual(txDate, yesterday) &&
                           tx.note &&
-                          tx.note.trim()
+                          tx.note.trim() &&
+                          tx.category.type === activeType // Filter by current type
                         );
                       })
                       .sort((a, b) =>
@@ -402,8 +543,8 @@ export default function TransactionsPage() {
                   <div className="absolute top-full left-0 right-0 z-10 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-48 overflow-y-auto">
                     {suggestions.map((suggestion, idx) => {
                       const categoryColor =
-                        categories.find(
-                          (cat) => cat.name === suggestion.category_name
+                        allCategories.find(
+                          (cat) => cat.id === suggestion.category_id
                         )?.color || "#000000";
                       return (
                         <button
@@ -427,7 +568,9 @@ export default function TransactionsPage() {
                                 style={{ backgroundColor: categoryColor }}
                               />
                               <span className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                                {suggestion.category_name}
+                                {allCategories.find(
+                                  (cat) => cat.id === suggestion.category_id
+                                )?.name || "Unknown"}
                               </span>
                             </div>
                             <span className="text-xs text-gray-400 ml-2">
@@ -465,36 +608,51 @@ export default function TransactionsPage() {
 
             <div className="flex flex-col gap-2">
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                Danh mục
+                Danh mục {activeType === "income" ? "thu nhập" : "chi tiêu"}
               </label>
-              <div className="flex flex-wrap gap-1.5">
-                {categories.map((cat) => {
-                  const isSelected = form.category_name === cat.name;
-                  return (
-                    <button
-                      key={cat.name}
-                      type="button"
-                      tabIndex={-1}
-                      onClick={() => {
-                        setForm({ ...form, category_name: cat.name });
-                        setTimeout(() => noteInputRef.current?.focus(), 0);
-                      }}
-                      className={`px-2.5 py-1 rounded-full border-2 text-xs font-medium transition-all duration-200 hover:shadow-md whitespace-nowrap ${
-                        isSelected
-                          ? "border-transparent shadow-md text-white"
-                          : "bg-white dark:bg-gray-800 hover:shadow-sm"
-                      }`}
-                      style={{
-                        backgroundColor: isSelected ? cat.color : undefined,
-                        borderColor: isSelected ? "transparent" : cat.color,
-                        color: isSelected ? "#ffffff" : cat.color,
-                      }}
-                    >
-                      {cat.name}
-                    </button>
-                  );
-                })}
-              </div>
+              {categories.length === 0 ? (
+                <div className="text-sm text-gray-500 dark:text-gray-400 py-2">
+                  Chưa có danh mục{" "}
+                  {activeType === "income" ? "thu nhập" : "chi tiêu"} nào. Hãy
+                  thêm danh mục trong{" "}
+                  <a
+                    href="/categories"
+                    className="text-blue-500 hover:underline"
+                  >
+                    trang quản lý danh mục
+                  </a>
+                  .
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-1.5">
+                  {categories.map((cat) => {
+                    const isSelected = form.category_id === cat.id;
+                    return (
+                      <button
+                        key={cat.id}
+                        type="button"
+                        tabIndex={-1}
+                        onClick={() => {
+                          setForm({ ...form, category_id: cat.id });
+                          setTimeout(() => noteInputRef.current?.focus(), 0);
+                        }}
+                        className={`px-2.5 py-1 rounded-full border-2 text-xs font-medium transition-all duration-200 hover:shadow-md whitespace-nowrap ${
+                          isSelected
+                            ? "border-transparent shadow-md text-white"
+                            : "bg-white dark:bg-gray-800 hover:shadow-sm"
+                        }`}
+                        style={{
+                          backgroundColor: isSelected ? cat.color : undefined,
+                          borderColor: isSelected ? "transparent" : cat.color,
+                          color: isSelected ? "#ffffff" : cat.color,
+                        }}
+                      >
+                        {cat.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             <div className="flex flex-col gap-2">
@@ -575,7 +733,7 @@ export default function TransactionsPage() {
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Đang xử lý
                   </>
-                ) : editIdx !== null ? (
+                ) : editId !== null ? (
                   <>
                     <Save className="mr-2 h-4 w-4" /> Cập nhật
                   </>
@@ -586,22 +744,24 @@ export default function TransactionsPage() {
                 )}
               </Button>
 
-              {editIdx !== null && (
+              {editId !== null && (
                 <Button
                   type="button"
                   variant="outline"
                   className="border-gray-300 text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800"
                   onClick={() => {
-                    setEditIdx(null);
+                    setEditId(null);
                     const currentCreatedAt = form.created_at;
+                    const defaultCategory =
+                      activeType === "expense"
+                        ? categories.find(
+                            (cat) => cat.name === "Ăn uống cá nhân"
+                          )
+                        : null;
                     setForm({
                       amount: "",
-                      category_name:
-                        categories.find(
-                          (cat) => cat.name === "Thiết yếu: Ăn uống cá nhân"
-                        )?.name ||
-                        categories[0]?.name ||
-                        "",
+                      category_id:
+                        defaultCategory?.id || categories[0]?.id || "",
                       note: "",
                       created_at: currentCreatedAt,
                     });
@@ -616,7 +776,8 @@ export default function TransactionsPage() {
 
           {(addMutation.isError ||
             updateMutation.isError ||
-            deleteMutation.isError) && (
+            deleteMutation.isError ||
+            toggleResolvedMutation.isError) && (
             <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-lg flex items-start">
               <AlertCircle className="h-5 w-5 mr-2 flex-shrink-0 mt-0.5" />
               <div>
@@ -638,6 +799,12 @@ export default function TransactionsPage() {
                       "Không thể xóa giao dịch"}
                   </p>
                 )}
+                {toggleResolvedMutation.isError && (
+                  <p>
+                    {(toggleResolvedMutation.error as Error)?.message ||
+                      "Không thể cập nhật trạng thái giao dịch"}
+                  </p>
+                )}
               </div>
             </div>
           )}
@@ -648,20 +815,23 @@ export default function TransactionsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-primary dark:text-green-400">
             <List size={20} />
-            Danh sách khoản chi
+            Danh sách giao dịch
           </CardTitle>
-          <CardDescription>
-            Danh sách tất cả các khoản chi tiêu của bạn
-          </CardDescription>
+          <CardDescription>20 giao dịch gần nhất của bạn</CardDescription>
         </CardHeader>
         <CardContent>
           <TransactionList
             transactions={transactions}
-            categories={categories}
+            categories={allCategories} // Pass all categories so TransactionList can handle both types
             onEdit={handleEdit}
             onDelete={handleDelete}
+            onToggleResolved={handleToggleResolved}
             isDeleting={deleteMutation.isPending}
-            deletingIndex={deleteMutation.variables as number}
+            deletingId={deleteMutation.variables as string}
+            isTogglingResolved={toggleResolvedMutation.isPending}
+            togglingId={
+              toggleResolvedMutation.variables?.id as string | undefined
+            }
           />
         </CardContent>
       </Card>

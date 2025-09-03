@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { TransactionsService } from "@/services/googleSheets/googleSheetsService";
+import { databaseService } from "@/services/database/databaseService";
 
 export async function GET(request: Request) {
   try {
@@ -26,7 +26,7 @@ export async function GET(request: Request) {
           startMonth - i > 0 ? startMonth - i : 12 + (startMonth - i);
         const targetYear = startMonth - i > 0 ? startYear : startYear - 1;
 
-        const monthStats = await TransactionsService.getStatsByCategory(
+        const monthStats = await databaseService.getCategoryStats(
           targetMonth,
           targetYear
         );
@@ -56,7 +56,7 @@ export async function GET(request: Request) {
       );
     }
 
-    const stats = await TransactionsService.getStatsByCategory(
+    const stats = await databaseService.getCategoryStats(
       parseInt(month, 10),
       parseInt(year, 10)
     );

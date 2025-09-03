@@ -1,22 +1,24 @@
 import { NextResponse } from "next/server";
-import { TransactionsService } from "@/services/googleSheets/googleSheetsService";
+import { databaseService } from "@/services/database/databaseService";
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const month = searchParams.get("month");
     const year = searchParams.get("year");
+    const limit = searchParams.get("limit");
 
     if (month && year) {
       // Nếu có tham số month và year, lấy transactions theo tháng
-      const transactions = await TransactionsService.getByMonth(
+      const transactions = await databaseService.getTransactionsByMonth(
         parseInt(month, 10),
         parseInt(year, 10)
       );
       return NextResponse.json(transactions);
     } else {
-      // Nếu không có tham số, lấy tất cả transactions
-      const transactions = await TransactionsService.getAll();
+      // Nếu không có tham số month/year, lấy transactions với limit tùy chọn
+      const limitNum = limit ? parseInt(limit, 10) : undefined;
+      const transactions = await databaseService.getTransactions(limitNum);
       return NextResponse.json(transactions);
     }
   } catch (error) {
@@ -29,28 +31,21 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const { amount, category_name, note, created_at } = await request.json();
+    const { amount, category_id, note, created_at } = await request.json();
 
-    if (amount === undefined || !category_name) {
+    if (amount === undefined || !category_id) {
       return NextResponse.json(
         { error: "Số tiền và danh mục là bắt buộc" },
         { status: 400 }
       );
     }
 
-    if (!note) {
-      return NextResponse.json(
-        { error: "Ghi chú là bắt buộc" },
-        { status: 400 }
-      );
-    }
-
-    const result = await TransactionsService.add(
-      parseFloat(amount),
-      category_name,
+    const result = await databaseService.createTransaction({
+      amount: parseFloat(amount),
+      category_id,
       note,
-      created_at ? new Date(created_at).toISOString() : new Date().toISOString()
-    );
+      created_at: created_at ? new Date(created_at).toISOString() : undefined,
+    });
 
     return NextResponse.json({ success: true, result });
   } catch (error) {
@@ -63,12 +58,12 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
   try {
-    const { index, amount, category_name, note, created_at } =
+    const { id, amount, category_id, note, is_resolved, created_at } =
       await request.json();
 
-    if (index === undefined) {
+    if (!id) {
       return NextResponse.json(
-        { error: "Index của transaction là bắt buộc" },
+        { error: "ID của transaction là bắt buộc" },
         { status: 400 }
       );
     }
@@ -76,21 +71,27 @@ export async function PUT(request: Request) {
     // Chỉ cập nhật các trường được cung cấp
     const updateData: {
       amount?: number;
-      category_name?: string;
+      category_id?: string;
       note?: string;
+      is_resolved?: boolean;
       created_at?: string;
     } = {};
 
     if (amount !== undefined) updateData.amount = parseFloat(amount);
-    if (category_name !== undefined) updateData.category_name = category_name;
+    if (category_id !== undefined) updateData.category_id = category_id;
     if (note !== undefined) updateData.note = note;
+    if (is_resolved !== undefined) updateData.is_resolved = is_resolved;
     if (created_at !== undefined)
       updateData.created_at = new Date(created_at).toISOString();
 
-    const result = await TransactionsService.update(
-      parseInt(index, 10),
-      updateData
-    );
+    const result = await databaseService.updateTransaction(id, updateData);
+
+    if (!result) {
+      return NextResponse.json(
+        { error: "Không tìm thấy giao dịch" },
+        { status: 404 }
+      );
+    }
 
     return NextResponse.json({ success: true, result });
   } catch (error) {
@@ -104,18 +105,25 @@ export async function PUT(request: Request) {
 export async function DELETE(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const index = searchParams.get("index");
+    const id = searchParams.get("id");
 
-    if (!index) {
+    if (!id) {
       return NextResponse.json(
-        { error: "Index của transaction là bắt buộc" },
+        { error: "ID của transaction là bắt buộc" },
         { status: 400 }
       );
     }
 
-    const result = await TransactionsService.delete(parseInt(index, 10));
+    const result = await databaseService.deleteTransaction(id);
 
-    return NextResponse.json({ success: true, result });
+    if (!result) {
+      return NextResponse.json(
+        { error: "Không tìm thấy giao dịch" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ success: true });
   } catch (error) {
     return NextResponse.json(
       { error: (error as { message: string }).message },

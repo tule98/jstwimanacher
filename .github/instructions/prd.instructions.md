@@ -32,6 +32,9 @@ Xây dựng ứng dụng quản lý tài chính cá nhân, giúp người dùng 
 - Hỗ trợ các thao tác CRUD (Create, Read, Update, Delete) cho record.
 - Tích hợp Lucide Icons cho các button và hiển thị trực quan.
 - Tối ưu hóa gọi API bằng React Query cho các thao tác CRUD record.
+- **Đánh dấu "resolved" cho giao dịch**: Người dùng có thể đánh dấu giao dịch cần xem xét lại (unresolved) hoặc đã xác nhận (resolved).
+  - Hiển thị icon cảnh báo cho các giao dịch chưa resolved.
+  - Toggle đơn giản bằng icon để thay đổi trạng thái resolved.
 
 ### 1.3. Thống kê theo tháng và danh mục
 
@@ -57,6 +60,8 @@ Xây dựng ứng dụng quản lý tài chính cá nhân, giúp người dùng 
 - Trang nhập record: form nhập nhanh, liên tục.
 - Trang quản lý danh mục: thêm/sửa/xóa danh mục.
 - Trang danh sách record: hiển thị, chỉnh sửa/xóa.
+  - Icon cảnh báo nổi bật cho các giao dịch chưa resolved.
+  - Icon đơn giản để đánh dấu resolved/unresolved ngay trên card giao dịch.
 - Trang thống kê: tổng hợp theo tháng và danh mục, hiển thị biểu đồ trực quan.
 
 ---
@@ -81,9 +86,10 @@ Xây dựng ứng dụng quản lý tài chính cá nhân, giúp người dùng 
 1. Người dùng nhập record qua form.
 2. Record được lưu vào Google Sheets qua API.
 3. Người dùng có thể xem, chỉnh sửa, xóa record.
-4. Danh mục được quản lý riêng, có thể thêm/sửa/xóa.
-5. Thống kê tổng hợp theo tháng và danh mục được tính toán từ dữ liệu trên Google Sheets.
-6. Tất cả các thao tác lấy và cập nhật dữ liệu đều tối ưu bằng React Query.
+4. Người dùng có thể đánh dấu record cần xem xét lại (unresolved) thông qua icon đơn giản và thay đổi trạng thái sau khi đã xác nhận.
+5. Danh mục được quản lý riêng, có thể thêm/sửa/xóa.
+6. Thống kê tổng hợp theo tháng và danh mục được tính toán từ dữ liệu trên Google Sheets.
+7. Tất cả các thao tác lấy và cập nhật dữ liệu đều tối ưu bằng React Query.
 
 ---
 
@@ -128,6 +134,7 @@ Xây dựng ứng dụng quản lý tài chính cá nhân, giúp người dùng 
 - Giao diện đẹp, bo tròn, shadow, darkmode hiện đại.
 - Trải nghiệm người dùng tốt với Shadcn UI components.
 - Biểu đồ trực quan giúp người dùng dễ dàng nắm bắt thông tin chi tiêu.
+- Người dùng dễ dàng theo dõi và xử lý các giao dịch cần xem xét lại thông qua icon đơn giản.
 
 ---
 
@@ -139,8 +146,9 @@ Xây dựng ứng dụng quản lý tài chính cá nhân, giúp người dùng 
 4. Cài đặt và cấu hình Shadcn UI, Lucide Icons và React Charts/Chart.js.
 5. Xây dựng UI form nhập record, quản lý danh mục sử dụng Shadcn UI components.
 6. Hiển thị danh sách record, chức năng chỉnh sửa/xóa với UI thân thiện.
-7. Tính toán và hiển thị thống kê theo tháng/category, tích hợp biểu đồ trực quan.
-8. Kiểm thử, tối ưu, triển khai.
+7. Thêm tính năng đánh dấu resolved/unresolved cho giao dịch bằng icon đơn giản.
+8. Tính toán và hiển thị thống kê theo tháng/category, tích hợp biểu đồ trực quan.
+9. Kiểm thử, tối ưu, triển khai.
 
 ---
 
@@ -160,3 +168,4 @@ Xây dựng ứng dụng quản lý tài chính cá nhân, giúp người dùng 
 
 - App hướng tới cá nhân, không có chức năng chia sẻ dữ liệu.
 - Có thể mở rộng thêm tính năng xuất file, nhắc nhở, v.v.
+- Tính năng đánh dấu giao dịch resolved/unresolved giúp người dùng theo dõi các giao dịch cần xem xét lại.

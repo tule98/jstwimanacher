@@ -29,62 +29,12 @@ import {
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-
-interface Category {
-  name: string;
-  color: string;
-}
-
-interface Transaction {
-  amount: number;
-  category_name: string;
-  note?: string;
-  created_at: string;
-  updated_at: string;
-}
-
-interface CategoryStat {
-  category_name: string;
-  total: number;
-  percentage: number;
-}
-
-interface MonthlyStats {
-  month: number;
-  year: number;
-  total: number;
-  stats: CategoryStat[];
-}
-
-// API functions
-const fetchCategories = async (): Promise<Category[]> => {
-  const response = await fetch("/api/categories");
-  if (!response.ok) {
-    throw new Error("Failed to fetch categories");
-  }
-  return response.json();
-};
-
-const fetchStatsByMonth = async (
-  month: number,
-  year: number
-): Promise<CategoryStat[]> => {
-  const response = await fetch(`/api/stats?month=${month}&year=${year}`);
-  if (!response.ok) {
-    throw new Error("Failed to fetch statistics");
-  }
-  return response.json();
-};
-
-const fetchHistoricalStats = async (
-  months: number
-): Promise<MonthlyStats[]> => {
-  const response = await fetch(`/api/stats?months=${months}`);
-  if (!response.ok) {
-    throw new Error("Failed to fetch historical statistics");
-  }
-  return response.json();
-};
+import API, {
+  Category,
+  CategoryStats,
+  MonthlyStats,
+  BalanceStats,
+} from "@/services/api/client";
 
 export default function StatsPage() {
   // Lấy tháng và năm hiện tại
@@ -92,23 +42,38 @@ export default function StatsPage() {
   const [month, setMonth] = useState(currentDate.getMonth() + 1); // getMonth() trả về 0-11
   const [year, setYear] = useState(currentDate.getFullYear());
   const [chartView, setChartView] = useState<"pie" | "bar">("pie");
+  const [statsType, setStatsType] = useState<"expense" | "income" | "all">(
+    "all"
+  ); // New state for stats type
 
   // Query categories
   const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ["categories"],
-    queryFn: fetchCategories,
+    queryFn: API.categories.getAll,
   });
 
-  // Query stats for current month
+  // Query balance stats for current month (includes income + expense + balance)
+  const {
+    data: balanceStats,
+    isLoading: isLoadingBalance,
+    isError: isErrorBalance,
+    error: balanceError,
+    refetch: refetchBalance,
+  } = useQuery<BalanceStats>({
+    queryKey: ["balance-stats", month, year],
+    queryFn: () => API.stats.getBalanceStats(month, year),
+  });
+
+  // Query stats for current month (for backward compatibility)
   const {
     data: stats = [],
     isLoading: isLoadingStats,
     isError: isErrorStats,
     error: statsError,
     refetch: refetchStats,
-  } = useQuery<CategoryStat[]>({
+  } = useQuery<CategoryStats[]>({
     queryKey: ["stats", month, year],
-    queryFn: () => fetchStatsByMonth(month, year),
+    queryFn: () => API.stats.getCategoryStats(month, year),
   });
 
   // Query historical stats (last 6 months)
@@ -119,11 +84,35 @@ export default function StatsPage() {
     error: historicalError,
   } = useQuery<MonthlyStats[]>({
     queryKey: ["historical-stats", 6],
-    queryFn: () => fetchHistoricalStats(6),
+    queryFn: () => API.stats.getHistoricalStats(6),
   });
 
-  // Tính tổng chi tiêu
-  const totalExpense = stats.reduce((sum, stat) => sum + stat.total, 0);
+  // Tính tổng chi tiêu (sử dụng balanceStats nếu có, fallback về stats)
+  const totalExpense =
+    balanceStats?.balance || stats.reduce((sum, stat) => sum + stat.total, 0);
+  const totalIncome = balanceStats?.income || 0;
+  const netBalance = balanceStats?.balance || totalIncome - totalExpense;
+
+  // Prepare data for category charts based on statsType
+  const getStatsData = (): CategoryStats[] => {
+    if (!balanceStats) return stats;
+
+    return stats;
+    // switch (statsType) {
+    // case "income":
+    //   return balanceStats.income_by_category;
+    // case "expense":
+    //   return balanceStats.expense_by_category;
+    // case "all":
+    // default:
+    //   return [
+    //     ...balanceStats.income_by_category,
+    //     ...balanceStats.expense_by_category,
+    //   ];
+    // }
+  };
+
+  const currentStats = getStatsData();
 
   // Xử lý khi chọn tháng/năm khác
   const handleMonthChange = (value: string) => {
@@ -134,10 +123,16 @@ export default function StatsPage() {
     setYear(parseInt(value, 10));
   };
 
-  // Lấy màu từ danh mục
-  const getCategoryColor = (name: string): string => {
-    const category = categories.find((cat) => cat.name === name);
+  // Lấy màu từ danh mục (updated for ID-based)
+  const getCategoryColor = (categoryId: string): string => {
+    const category = categories.find((cat) => cat.id === categoryId);
     return category?.color || "#6B7280"; // Default gray if not found
+  };
+
+  // Get category name from ID
+  const getCategoryName = (categoryId: string): string => {
+    const category = categories.find((cat) => cat.id === categoryId);
+    return category?.name || "Unknown";
   };
 
   // Tạo danh sách năm để chọn (năm hiện tại và 5 năm trước)
@@ -162,7 +157,7 @@ export default function StatsPage() {
     .reverse(); // Đảo ngược để tháng gần nhất ở bên phải
 
   // Render skeleton loader khi đang tải dữ liệu
-  if (isLoadingStats || isLoadingHistorical) {
+  if (isLoadingStats || isLoadingHistorical || isLoadingBalance) {
     return (
       <div className="w-full max-w-3xl mx-auto space-y-6">
         <Card>
@@ -191,7 +186,7 @@ export default function StatsPage() {
   }
 
   // Render lỗi nếu có
-  if (isErrorStats || isErrorHistorical) {
+  if (isErrorStats || isErrorHistorical || isErrorBalance) {
     return (
       <Card className="max-w-3xl mx-auto bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-900">
         <CardHeader>
@@ -202,11 +197,19 @@ export default function StatsPage() {
         </CardHeader>
         <CardContent>
           <p className="text-red-600 dark:text-red-400">
-            {((isErrorStats ? statsError : historicalError) as Error)
-              ?.message || "Không thể tải dữ liệu thống kê"}
+            {(
+              (isErrorStats
+                ? statsError
+                : isErrorHistorical
+                ? historicalError
+                : balanceError) as Error
+            )?.message || "Không thể tải dữ liệu thống kê"}
           </p>
           <Button
-            onClick={() => refetchStats()}
+            onClick={() => {
+              refetchStats();
+              refetchBalance();
+            }}
             variant="outline"
             className="mt-4 border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/20"
           >
@@ -275,7 +278,10 @@ export default function StatsPage() {
             </div>
 
             <Button
-              onClick={() => refetchStats()}
+              onClick={() => {
+                refetchStats();
+                refetchBalance();
+              }}
               className="mt-6 sm:mt-auto"
               variant="default"
             >
@@ -290,16 +296,64 @@ export default function StatsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-primary dark:text-green-400">
             <DollarSign size={20} />
-            Tổng chi tháng {month}/{year}
+            Tổng quan tài chính tháng {month}/{year}
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-4xl font-bold text-primary dark:text-green-400">
-            {totalExpense.toLocaleString()} đ
-          </p>
-          {stats.length === 0 && (
-            <p className="text-gray-500 dark:text-gray-400 mt-2">
-              Không có dữ liệu chi tiêu trong tháng này
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Thu nhập */}
+            <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+              <h3 className="text-sm font-medium text-green-700 dark:text-green-300 mb-1">
+                Thu nhập
+              </h3>
+              <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+                {totalIncome.toLocaleString()} đ
+              </p>
+            </div>
+
+            {/* Chi tiêu */}
+            <div className="text-center p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+              <h3 className="text-sm font-medium text-red-700 dark:text-red-300 mb-1">
+                Chi tiêu
+              </h3>
+              <p className="text-2xl font-bold text-red-600 dark:text-red-400">
+                {totalExpense.toLocaleString()} đ
+              </p>
+            </div>
+
+            {/* Balance */}
+            <div
+              className={`text-center p-4 rounded-lg border ${
+                netBalance >= 0
+                  ? "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800"
+                  : "bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800"
+              }`}
+            >
+              <h3
+                className={`text-sm font-medium mb-1 ${
+                  netBalance >= 0
+                    ? "text-blue-700 dark:text-blue-300"
+                    : "text-orange-700 dark:text-orange-300"
+                }`}
+              >
+                Số dư
+              </h3>
+              <p
+                className={`text-2xl font-bold ${
+                  netBalance >= 0
+                    ? "text-blue-600 dark:text-blue-400"
+                    : "text-orange-600 dark:text-orange-400"
+                }`}
+              >
+                {netBalance >= 0 ? "+" : ""}
+                {netBalance.toLocaleString()} đ
+              </p>
+            </div>
+          </div>
+
+          {totalExpense === 0 && totalIncome === 0 && (
+            <p className="text-gray-500 dark:text-gray-400 mt-4 text-center">
+              Không có dữ liệu giao dịch trong tháng này
             </p>
           )}
         </CardContent>
@@ -349,10 +403,16 @@ export default function StatsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {stats.length === 0 ? (
+          {currentStats.length === 0 ? (
             <div className="flex justify-center items-center h-60 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
               <p className="text-gray-500 dark:text-gray-400 text-center">
-                Không có dữ liệu chi tiêu trong tháng {month}/{year}
+                Không có dữ liệu{" "}
+                {statsType === "income"
+                  ? "thu nhập"
+                  : statsType === "expense"
+                  ? "chi tiêu"
+                  : "giao dịch"}{" "}
+                trong tháng {month}/{year}
               </p>
             </div>
           ) : (
@@ -361,7 +421,22 @@ export default function StatsPage() {
               onValueChange={(value) => setChartView(value as "pie" | "bar")}
               className="w-full"
             >
-              <div className="flex justify-end mb-4">
+              {/* Stats Type Selector */}
+              <div className="flex justify-between items-center mb-4">
+                <Tabs
+                  value={statsType}
+                  onValueChange={(value) =>
+                    setStatsType(value as "expense" | "income" | "all")
+                  }
+                  className="w-auto"
+                >
+                  <TabsList className="grid w-[280px] grid-cols-3">
+                    <TabsTrigger value="all">Tất cả</TabsTrigger>
+                    <TabsTrigger value="expense">Chi tiêu</TabsTrigger>
+                    <TabsTrigger value="income">Thu nhập</TabsTrigger>
+                  </TabsList>
+                </Tabs>
+
                 <TabsList className="grid w-[160px] grid-cols-2">
                   <TabsTrigger value="pie" className="flex items-center gap-1">
                     <PieChartIcon size={14} />
@@ -373,63 +448,109 @@ export default function StatsPage() {
                   </TabsTrigger>
                 </TabsList>
               </div>
+
               <div className="space-y-6">
                 <TabsContent value="pie" className="mt-0">
                   <PieChart
-                    data={stats.map((stat) => ({
+                    data={currentStats.map((stat) => ({
                       ...stat,
-                      color: getCategoryColor(stat.category_name),
+                      category_name: getCategoryName(
+                        stat.category_id || stat.category_name
+                      ),
+                      color: getCategoryColor(
+                        stat.category_id || stat.category_name
+                      ),
                     }))}
-                    title="Phân bổ chi tiêu theo danh mục"
+                    title={`Phân bổ ${
+                      statsType === "income"
+                        ? "thu nhập"
+                        : statsType === "expense"
+                        ? "chi tiêu"
+                        : "giao dịch"
+                    } theo danh mục`}
                   />
                 </TabsContent>
 
                 <TabsContent value="bar" className="mt-0">
                   <BarChart
-                    data={stats
+                    data={currentStats
                       .sort((a, b) => b.total - a.total)
                       .map((stat) => ({
-                        label: stat.category_name,
+                        label: getCategoryName(
+                          stat.category_id || stat.category_name
+                        ),
                         value: stat.total,
-                        color: getCategoryColor(stat.category_name),
+                        color: getCategoryColor(
+                          stat.category_id || stat.category_name
+                        ),
                       }))}
-                    title="Chi tiêu theo danh mục"
+                    title={`${
+                      statsType === "income"
+                        ? "Thu nhập"
+                        : statsType === "expense"
+                        ? "Chi tiêu"
+                        : "Giao dịch"
+                    } theo danh mục`}
                   />
                 </TabsContent>
 
                 <div className="grid grid-cols-1 gap-3 mt-4">
-                  {stats
+                  {currentStats
                     .sort((a, b) => b.total - a.total)
-                    .map((stat, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg border shadow-sm hover:shadow-md transition-shadow"
-                        style={{
-                          borderLeftWidth: "4px",
-                          borderLeftColor: getCategoryColor(stat.category_name),
-                        }}
-                      >
-                        <div className="flex items-center gap-3">
+                    .map((stat, index) => {
+                      const categoryId = stat.category_id || stat.category_name;
+                      const categoryName = getCategoryName(categoryId);
+                      const categoryColor = getCategoryColor(categoryId);
+
+                      return (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg border shadow-sm hover:shadow-md transition-shadow"
+                          style={{
+                            borderLeftWidth: "4px",
+                            borderLeftColor: categoryColor,
+                          }}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div
+                              className="w-3 h-3 rounded-full"
+                              style={{
+                                backgroundColor: categoryColor,
+                              }}
+                            />
+                            <span className="font-medium dark:text-white">
+                              {categoryName}
+                            </span>
+                            <Badge variant="outline" className="ml-2">
+                              {stat.percentage.toFixed(1)}%
+                            </Badge>
+                            {stat.category_name && (
+                              <Badge
+                                variant="outline"
+                                className={`ml-1 ${
+                                  stat.category_name === "income"
+                                    ? "bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800"
+                                    : "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800"
+                                }`}
+                              >
+                                {stat.category_name === "income"
+                                  ? "Thu"
+                                  : "Chi"}
+                              </Badge>
+                            )}
+                          </div>
                           <div
-                            className="w-3 h-3 rounded-full"
-                            style={{
-                              backgroundColor: getCategoryColor(
-                                stat.category_name
-                              ),
-                            }}
-                          />
-                          <span className="font-medium dark:text-white">
-                            {stat.category_name}
-                          </span>
-                          <Badge variant="outline" className="ml-2">
-                            {stat.percentage.toFixed(1)}%
-                          </Badge>
+                            className={`font-bold ${
+                              stat.category_name === "income"
+                                ? "text-green-600 dark:text-green-400"
+                                : "text-red-600 dark:text-red-400"
+                            }`}
+                          >
+                            {stat.total.toLocaleString()} đ
+                          </div>
                         </div>
-                        <div className="font-bold text-primary dark:text-green-400">
-                          {stat.total.toLocaleString()} đ
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                 </div>
               </div>
             </Tabs>
