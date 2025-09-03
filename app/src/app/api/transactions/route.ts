@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { databaseService } from "@/services/database/databaseService";
+import { toUTC } from "@/lib/timezone";
 
 export async function GET(request: Request) {
   try {
@@ -44,7 +45,7 @@ export async function POST(request: Request) {
       amount: parseFloat(amount),
       category_id,
       note,
-      created_at: created_at ? new Date(created_at).toISOString() : undefined,
+      created_at: created_at ? toUTC(created_at) : undefined,
     });
 
     return NextResponse.json({ success: true, result });
@@ -81,8 +82,7 @@ export async function PUT(request: Request) {
     if (category_id !== undefined) updateData.category_id = category_id;
     if (note !== undefined) updateData.note = note;
     if (is_resolved !== undefined) updateData.is_resolved = is_resolved;
-    if (created_at !== undefined)
-      updateData.created_at = new Date(created_at).toISOString();
+    if (created_at !== undefined) updateData.created_at = toUTC(created_at);
 
     const result = await databaseService.updateTransaction(id, updateData);
 

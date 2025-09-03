@@ -9,6 +9,7 @@ import {
 } from "@/db/schema";
 import { eq, desc, and, gte, lt, sql } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
+import { nowUTC, getMonthBoundsUTC, toUTC, UTCString } from "@/lib/timezone";
 
 export class DatabaseService {
   // Categories methods
@@ -99,8 +100,7 @@ export class DatabaseService {
     month: number,
     year: number
   ): Promise<(Transaction & { category: Category })[]> {
-    const startDate = new Date(year, month - 1, 1).toISOString();
-    const endDate = new Date(year, month, 1).toISOString();
+    const { start, end } = getMonthBoundsUTC(month, year);
 
     const result = await db
       .select()
@@ -108,8 +108,8 @@ export class DatabaseService {
       .leftJoin(categories, eq(transactions.category_id, categories.id))
       .where(
         and(
-          gte(transactions.created_at, startDate),
-          lt(transactions.created_at, endDate)
+          gte(transactions.created_at, start),
+          lt(transactions.created_at, end)
         )
       )
       .orderBy(desc(transactions.created_at));
@@ -124,15 +124,16 @@ export class DatabaseService {
     amount: number;
     category_id: string;
     note?: string;
-    created_at?: string;
+    created_at?: string | UTCString;
   }): Promise<Transaction> {
+    const now = nowUTC();
     const newTransaction: NewTransaction = {
       id: uuidv4(),
       amount: Math.round(data.amount),
       category_id: data.category_id,
       note: data.note,
-      created_at: data.created_at || new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      created_at: data.created_at ? toUTC(data.created_at) : now,
+      updated_at: now,
       is_resolved: true,
     };
 
@@ -150,11 +151,11 @@ export class DatabaseService {
       category_id: string;
       note: string;
       is_resolved: boolean;
-      created_at: string;
+      created_at: string | UTCString;
     }>
   ): Promise<Transaction | null> {
     const updateData: Partial<NewTransaction> = {
-      updated_at: new Date().toISOString(),
+      updated_at: nowUTC(),
     };
 
     if (data.amount !== undefined) {
@@ -170,7 +171,7 @@ export class DatabaseService {
       updateData.is_resolved = data.is_resolved;
     }
     if (data.created_at !== undefined) {
-      updateData.created_at = data.created_at;
+      updateData.created_at = toUTC(data.created_at);
     }
 
     const result = await db
@@ -200,8 +201,7 @@ export class DatabaseService {
       color: string;
     }[]
   > {
-    const startDate = new Date(year, month - 1, 1).toISOString();
-    const endDate = new Date(year, month, 1).toISOString();
+    const { start, end } = getMonthBoundsUTC(month, year);
 
     const result = await db
       .select({
@@ -214,8 +214,8 @@ export class DatabaseService {
       .leftJoin(categories, eq(transactions.category_id, categories.id))
       .where(
         and(
-          gte(transactions.created_at, startDate),
-          lt(transactions.created_at, endDate),
+          gte(transactions.created_at, start),
+          lt(transactions.created_at, end),
           eq(categories.type, "expense")
         )
       )
@@ -240,8 +240,7 @@ export class DatabaseService {
     expense: number;
     balance: number;
   }> {
-    const startDate = new Date(year, month - 1, 1).toISOString();
-    const endDate = new Date(year, month, 1).toISOString();
+    const { start, end } = getMonthBoundsUTC(month, year);
 
     const result = await db
       .select({
@@ -252,8 +251,8 @@ export class DatabaseService {
       .leftJoin(categories, eq(transactions.category_id, categories.id))
       .where(
         and(
-          gte(transactions.created_at, startDate),
-          lt(transactions.created_at, endDate)
+          gte(transactions.created_at, start),
+          lt(transactions.created_at, end)
         )
       )
       .groupBy(categories.type);

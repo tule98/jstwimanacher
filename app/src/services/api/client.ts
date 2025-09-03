@@ -3,6 +3,8 @@
  * Client-side service để tương tác với các API endpoints
  */
 
+import { UTCString, parseUserDateToUTC } from "@/lib/timezone";
+
 export interface Category {
   id: string;
   name: string;
@@ -15,8 +17,10 @@ export interface Transaction {
   amount: number;
   category_id: string;
   note?: string;
-  created_at: string;
-  updated_at: string;
+  /** UTC ISO string - always stored and transmitted in UTC */
+  created_at: UTCString;
+  /** UTC ISO string - always stored and transmitted in UTC */
+  updated_at: UTCString;
   is_resolved: boolean;
   category: Category; // Joined category data
 }
@@ -25,7 +29,8 @@ export interface TransactionCreateData {
   amount: number;
   category_id: string;
   note?: string;
-  created_at?: string;
+  /** UTC ISO string - will be converted to UTC if provided, otherwise uses current UTC time */
+  created_at?: UTCString | string;
 }
 
 export interface TransactionUpdateData {
@@ -34,7 +39,8 @@ export interface TransactionUpdateData {
   category_id?: string;
   note?: string;
   is_resolved?: boolean;
-  created_at?: string;
+  /** UTC ISO string - will be converted to UTC if provided */
+  created_at?: UTCString | string;
 }
 
 export interface CategoryStats {
@@ -187,12 +193,20 @@ export const TransactionsAPI = {
    * Thêm giao dịch mới
    */
   async create(data: TransactionCreateData): Promise<Transaction> {
+    // Convert created_at to UTC if provided
+    const requestData = {
+      ...data,
+      created_at: data.created_at
+        ? parseUserDateToUTC(data.created_at)
+        : undefined,
+    };
+
     const response = await fetch("/api/transactions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(data),
+      body: JSON.stringify(requestData),
     });
 
     const result = await response.json();
@@ -206,12 +220,20 @@ export const TransactionsAPI = {
    * Cập nhật giao dịch
    */
   async update(data: TransactionUpdateData): Promise<Transaction> {
+    // Convert created_at to UTC if provided
+    const requestData = {
+      ...data,
+      created_at: data.created_at
+        ? parseUserDateToUTC(data.created_at)
+        : data.created_at,
+    };
+
     const response = await fetch("/api/transactions", {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(data),
+      body: JSON.stringify(requestData),
     });
 
     const result = await response.json();
