@@ -41,5 +41,8 @@
     "eslint-config-next": "15.5.2",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "overrides": {
+    "libsql": "v0.6.0-pre.18"
   }
 }
