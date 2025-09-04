@@ -23,6 +23,16 @@ export function toUTC(
       : date
     : new Date();
 
+  // If date is a string and already in UTC format, return as is
+  if (typeof date === "string" && isValidUTCString(date)) {
+    return date as UTCString;
+  }
+
+  // If date is a Date object and already in UTC, return its ISO string
+  if (date instanceof Date && isDateInUTC(date)) {
+    return date.toISOString() as UTCString;
+  }
+
   // If the date is already in local timezone, convert to UTC
   const utcDate = fromZonedTime(sourceDate, sourceTimezone);
 
@@ -120,11 +130,21 @@ export function getTodayBoundsUTC(sourceTimezone: string = VN_TIMEZONE): {
 
 /**
  * Parse user input date and convert to UTC
- * Assumes input is in Vietnam timezone
+ * Assumes input is in Vietnam timezone unless already UTC
  * @param dateInput - Date string or Date object from user input
  * @returns UTC ISO string
  */
 export function parseUserDateToUTC(dateInput: string | Date): UTCString {
+  // If input is already a valid UTC string, return as is
+  if (typeof dateInput === "string" && isValidUTCString(dateInput)) {
+    return dateInput as UTCString;
+  }
+
+  // If input is a Date object already in UTC, return its ISO string
+  if (dateInput instanceof Date && isDateInUTC(dateInput)) {
+    return dateInput.toISOString() as UTCString;
+  }
+
   const inputDate =
     typeof dateInput === "string" ? parseISO(dateInput) : dateInput;
   return toUTC(inputDate, VN_TIMEZONE);
@@ -160,4 +180,13 @@ export function isValidUTCString(dateString: string): dateString is UTCString {
   } catch {
     return false;
   }
+}
+
+/**
+ * Check if a Date object is already in UTC (has timezone offset of 0)
+ * @param date - Date object to check
+ * @returns Boolean indicating if date is in UTC
+ */
+export function isDateInUTC(date: Date): boolean {
+  return date.getTimezoneOffset() === 0;
 }

@@ -80,7 +80,8 @@ export class DatabaseService {
   }
 
   async getTransactions(
-    limit?: number
+    limit?: number,
+    offset?: number
   ): Promise<(Transaction & { category: Category })[]> {
     const baseQuery = db
       .select()
@@ -88,7 +89,15 @@ export class DatabaseService {
       .leftJoin(categories, eq(transactions.category_id, categories.id))
       .orderBy(desc(transactions.created_at));
 
-    const result = limit ? await baseQuery.limit(limit) : await baseQuery;
+    if (offset !== undefined) {
+      baseQuery.offset(offset);
+    }
+
+    if (limit !== undefined) {
+      baseQuery.limit(limit);
+    }
+
+    const result = await baseQuery;
 
     return result.map((row) => ({
       ...row.transactions,

@@ -8,6 +8,7 @@ export async function GET(request: Request) {
     const month = searchParams.get("month");
     const year = searchParams.get("year");
     const limit = searchParams.get("limit");
+    const offset = searchParams.get("offset");
 
     if (month && year) {
       // Nếu có tham số month và year, lấy transactions theo tháng
@@ -17,9 +18,13 @@ export async function GET(request: Request) {
       );
       return NextResponse.json(transactions);
     } else {
-      // Nếu không có tham số month/year, lấy transactions với limit tùy chọn
+      // Nếu không có tham số month/year, lấy transactions với limit và offset tùy chọn
       const limitNum = limit ? parseInt(limit, 10) : undefined;
-      const transactions = await databaseService.getTransactions(limitNum);
+      const offsetNum = offset ? parseInt(offset, 10) : undefined;
+      const transactions = await databaseService.getTransactions(
+        limitNum,
+        offsetNum
+      );
       return NextResponse.json(transactions);
     }
   } catch (error) {

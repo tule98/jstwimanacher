@@ -177,6 +177,22 @@ export const TransactionsAPI = {
   },
 
   /**
+   * Lấy giao dịch với offset và limit (cho infinite scroll)
+   */
+  async getWithPagination(
+    limit: number,
+    offset: number
+  ): Promise<Transaction[]> {
+    const response = await fetch(
+      `/api/transactions?limit=${limit}&offset=${offset}`
+    );
+    if (!response.ok) {
+      throw new Error("Failed to fetch transactions with pagination");
+    }
+    return response.json();
+  },
+
+  /**
    * Lấy giao dịch theo tháng
    */
   async getByMonth(month: number, year: number): Promise<Transaction[]> {

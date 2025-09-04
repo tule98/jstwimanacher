@@ -1,6 +1,11 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  useInfiniteQuery,
+} from "@tanstack/react-query";
 import {
   Card,
   CardContent,
@@ -84,15 +89,33 @@ export default function TransactionsPage() {
     (cat) => cat.type === "expense"
   );
 
+  // Infinite query for transactions - proper React Query pattern
+  const PAGE_SIZE = 20;
+
   const {
-    data: transactions = [],
+    data: transactionPages,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
     isLoading: isLoadingTransactions,
     isError: isErrorTransactions,
     error: transactionsError,
-  } = useQuery<Transaction[]>({
-    queryKey: ["transactions", "limited", 20],
-    queryFn: () => API.transactions.getWithLimit(30),
+  } = useInfiniteQuery({
+    queryKey: ["transactions", "infinite"],
+    queryFn: ({ pageParam = 0 }) =>
+      API.transactions.getWithPagination(PAGE_SIZE, pageParam),
+    getNextPageParam: (lastPage, allPages) => {
+      // If last page has fewer items than PAGE_SIZE, no more pages
+      if (lastPage.length < PAGE_SIZE) return undefined;
+      // Otherwise, return offset for next page
+      return allPages.length * PAGE_SIZE;
+    },
+    initialPageParam: 0,
+    staleTime: 30000, // 30 seconds
   });
+
+  // Flatten all pages into a single array
+  const transactions = transactionPages?.pages.flat() ?? [];
 
   // Mutations for add, update, delete
   const addMutation = useMutation({
@@ -127,6 +150,13 @@ export default function TransactionsPage() {
       queryClient.invalidateQueries({ queryKey: ["balance-stats"] });
     },
   });
+
+  // Load more transactions function - using React Query pattern
+  const loadMoreTransactions = () => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  };
 
   const [form, setForm] = useState({
     amount: "",
@@ -817,7 +847,10 @@ export default function TransactionsPage() {
             <List size={20} />
             Danh sách giao dịch
           </CardTitle>
-          <CardDescription>20 giao dịch gần nhất của bạn</CardDescription>
+          <CardDescription>
+            {transactions.length} giao dịch{hasNextPage ? " gần nhất" : ""} của
+            bạn
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <TransactionList
@@ -833,6 +866,36 @@ export default function TransactionsPage() {
               toggleResolvedMutation.variables?.id as string | undefined
             }
           />
+
+          {/* Load More Button */}
+          {hasNextPage && (
+            <div className="flex justify-center mt-6">
+              <Button
+                onClick={loadMoreTransactions}
+                disabled={isFetchingNextPage}
+                variant="outline"
+                className="border-primary text-primary hover:bg-primary hover:text-white dark:border-green-400 dark:text-green-400 dark:hover:bg-green-400 dark:hover:text-gray-900"
+              >
+                {isFetchingNextPage ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Đang tải...
+                  </>
+                ) : (
+                  <>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Tải thêm giao dịch
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
+
+          {!hasNextPage && transactions.length > 0 && (
+            <div className="text-center mt-6 text-sm text-gray-500 dark:text-gray-400">
+              Đã hiển thị tất cả giao dịch
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
