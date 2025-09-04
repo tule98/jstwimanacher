@@ -28,7 +28,7 @@ export default function AppNav() {
         }`}
       >
         <CreditCard size={18} />
-        <span className="text-xs sm:text-sm">Khoản chi</span>
+        <span className="text-xs sm:text-sm">Giao dịch</span>
       </Link>
       <Link
         href="/stats"
