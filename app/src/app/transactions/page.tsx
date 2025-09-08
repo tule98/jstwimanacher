@@ -111,6 +111,7 @@ export default function TransactionsPage() {
     mutationFn: API.transactions.create,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["virtual-transactions"] });
       queryClient.invalidateQueries({ queryKey: ["balance-stats"] });
     },
   });
@@ -119,6 +120,7 @@ export default function TransactionsPage() {
     mutationFn: API.transactions.update,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["virtual-transactions"] });
       queryClient.invalidateQueries({ queryKey: ["balance-stats"] });
     },
   });
@@ -127,6 +129,7 @@ export default function TransactionsPage() {
     mutationFn: API.transactions.delete,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["virtual-transactions"] });
       queryClient.invalidateQueries({ queryKey: ["balance-stats"] });
     },
   });
@@ -136,6 +139,17 @@ export default function TransactionsPage() {
       API.transactions.update(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["virtual-transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["balance-stats"] });
+    },
+  });
+
+  const toggleVirtualMutation = useMutation({
+    mutationFn: (data: { id: string; is_virtual: boolean }) =>
+      API.transactions.update(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["virtual-transactions"] });
       queryClient.invalidateQueries({ queryKey: ["balance-stats"] });
     },
   });
@@ -183,6 +197,19 @@ export default function TransactionsPage() {
     }
   };
 
+  const handleToggleVirtual = (id: string) => {
+    const transaction = transactions.find((tx) => tx.id === id);
+    if (transaction) {
+      // Toggle logic: undefined/false -> true, true -> false
+      const currentVirtual = transaction.is_virtual === true;
+      const newVirtualState = !currentVirtual;
+      toggleVirtualMutation.mutate({
+        id: id,
+        is_virtual: newVirtualState,
+      });
+    }
+  };
+
   if (isLoadingTransactions || isLoadingBalance) {
     return <div className="max-w-md mx-auto p-4">Đang tải dữ liệu...</div>;
   }
@@ -223,59 +250,125 @@ export default function TransactionsPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Thu nhập */}
               <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
-                <h3 className="text-sm font-medium text-green-700 dark:text-green-300 mb-1">
+                <h3 className="text-sm font-medium text-green-700 dark:text-green-300 mb-2">
                   Thu nhập
                 </h3>
-                <p className="text-xl font-bold text-green-600 dark:text-green-400">
+
+                {/* Thu nhập tổng - Primary field */}
+                <p className="text-xl font-bold text-green-600 dark:text-green-400 mb-2">
                   {hideBalance
                     ? "•••••••"
                     : formatCurrency(balanceStats.income)}
                 </p>
+
+                {/* Thu nhập chi tiết */}
+                <div className="space-y-1 text-xs">
+                  <div className="flex justify-between text-green-600 dark:text-green-400">
+                    <span>Thực tế:</span>
+                    <span className="font-medium">
+                      {hideBalance
+                        ? "••••••"
+                        : formatCurrency(balanceStats.income_real)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-green-500 dark:text-green-500">
+                    <span>Ảo:</span>
+                    <span className="font-medium">
+                      {hideBalance
+                        ? "••••••"
+                        : formatCurrency(balanceStats.income_virtual)}
+                    </span>
+                  </div>
+                </div>
               </div>
 
               {/* Chi tiêu */}
               <div className="text-center p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
-                <h3 className="text-sm font-medium text-red-700 dark:text-red-300 mb-1">
+                <h3 className="text-sm font-medium text-red-700 dark:text-red-300 mb-2">
                   Chi tiêu
                 </h3>
-                <p className="text-xl font-bold text-red-600 dark:text-red-400">
-                  {formatCurrency(balanceStats.expense)}
+
+                {/* Chi tiêu tổng - Primary field */}
+                <p className="text-xl font-bold text-red-600 dark:text-red-400 mb-2">
+                  {hideBalance
+                    ? "•••••••"
+                    : formatCurrency(balanceStats.expense)}
                 </p>
+
+                {/* Chi tiêu chi tiết */}
+                <div className="space-y-1 text-xs">
+                  <div className="flex justify-between text-red-600 dark:text-red-400">
+                    <span>Thực tế:</span>
+                    <span className="font-medium">
+                      {hideBalance
+                        ? "••••••"
+                        : formatCurrency(balanceStats.expense_real)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-red-500 dark:text-red-500">
+                    <span>Ảo:</span>
+                    <span className="font-medium">
+                      {hideBalance
+                        ? "••••••"
+                        : formatCurrency(balanceStats.expense_virtual)}
+                    </span>
+                  </div>
+                </div>
               </div>
 
               {/* Số dư */}
-              <div
-                className={`text-center p-4 rounded-lg border ${
-                  balanceStats.balance >= 0
-                    ? "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800"
-                    : "bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800"
-                }`}
-              >
-                <h3
-                  className={`text-sm font-medium mb-1 ${
-                    balanceStats.balance >= 0
-                      ? "text-blue-700 dark:text-blue-300"
-                      : "text-orange-700 dark:text-orange-300"
-                  }`}
-                >
+              <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                <h3 className="text-sm font-medium text-blue-700 dark:text-blue-300 mb-2">
                   Số dư
                 </h3>
-                <p
-                  className={`text-xl font-bold ${
-                    balanceStats.balance >= 0
-                      ? "text-blue-600 dark:text-blue-400"
-                      : "text-orange-600 dark:text-orange-400"
-                  }`}
-                >
-                  {hideBalance ? (
-                    "•••••••"
-                  ) : (
-                    <>
-                      {balanceStats.balance >= 0 ? "+" : ""}
-                      {formatCurrency(balanceStats.balance)}
-                    </>
-                  )}
-                </p>
+
+                {/* Số dư hiện tại (thực tế) */}
+                <div className="mb-3">
+                  <p className="text-lg font-bold text-blue-600 dark:text-blue-400 mb-1">
+                    {hideBalance ? (
+                      "•••••••"
+                    ) : (
+                      <>
+                        {balanceStats.income_real - balanceStats.expense_real >=
+                        0
+                          ? "+"
+                          : ""}
+                        {formatCurrency(
+                          balanceStats.income_real - balanceStats.expense_real
+                        )}
+                      </>
+                    )}
+                  </p>
+                  <div className="text-xs text-blue-600 dark:text-blue-400">
+                    Hiện tại (thực tế)
+                  </div>
+                </div>
+
+                {/* Số dư tổng */}
+                <div>
+                  <p className="text-sm font-semibold text-blue-500 dark:text-blue-300 mb-1">
+                    {hideBalance ? (
+                      "••••••"
+                    ) : (
+                      <>
+                        {balanceStats.income_real -
+                          balanceStats.expense_real +
+                          balanceStats.expense_virtual >=
+                        0
+                          ? "+"
+                          : ""}
+                        {formatCurrency(
+                          balanceStats.income_real -
+                            balanceStats.expense_real +
+                            balanceStats.expense_virtual
+                        )}
+                      </>
+                    )}
+                  </p>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                    Tổng (bao gồm ảo)
+                  </div>
+                </div>
               </div>
             </div>
           ) : (
@@ -307,7 +400,8 @@ export default function TransactionsPage() {
 
           {(addMutation.isError ||
             deleteMutation.isError ||
-            toggleResolvedMutation.isError) && (
+            toggleResolvedMutation.isError ||
+            toggleVirtualMutation.isError) && (
             <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-lg flex items-start">
               <AlertCircle className="h-5 w-5 mr-2 flex-shrink-0 mt-0.5" />
               <div>
@@ -327,6 +421,12 @@ export default function TransactionsPage() {
                   <p>
                     {(toggleResolvedMutation.error as Error)?.message ||
                       "Không thể cập nhật trạng thái giao dịch"}
+                  </p>
+                )}
+                {toggleVirtualMutation.isError && (
+                  <p>
+                    {(toggleVirtualMutation.error as Error)?.message ||
+                      "Không thể cập nhật trạng thái giao dịch ảo"}
                   </p>
                 )}
               </div>
@@ -353,11 +453,16 @@ export default function TransactionsPage() {
             onEdit={handleEdit}
             onDelete={handleDelete}
             onToggleResolved={handleToggleResolved}
+            onToggleVirtual={handleToggleVirtual}
             isDeleting={deleteMutation.isPending}
             deletingId={deleteMutation.variables as string}
             isTogglingResolved={toggleResolvedMutation.isPending}
             togglingId={
               toggleResolvedMutation.variables?.id as string | undefined
+            }
+            isTogglingVirtual={toggleVirtualMutation.isPending}
+            togglingVirtualId={
+              toggleVirtualMutation.variables?.id as string | undefined
             }
           />
 

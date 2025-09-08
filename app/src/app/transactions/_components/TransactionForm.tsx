@@ -45,6 +45,7 @@ export default function TransactionForm({
     category_id: "",
     note: "",
     created_at: format(new Date(), "yyyy-MM-dd'T'00:00"),
+    is_virtual: false,
   });
   const [rawAmount, setRawAmount] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -71,6 +72,7 @@ export default function TransactionForm({
           parseISO(editTransaction.created_at),
           "yyyy-MM-dd'T'00:00"
         ),
+        is_virtual: editTransaction.is_virtual || false,
       });
     } else if (currentCategories.length > 0 && form.category_id === "") {
       // For new transactions, set default category
@@ -123,7 +125,7 @@ export default function TransactionForm({
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target as HTMLInputElement;
 
     if (name === "amount") {
       const numericValue = value.replace(/[^\d]/g, "");
@@ -135,6 +137,8 @@ export default function TransactionForm({
       } else {
         setForm({ ...form, amount: "" });
       }
+    } else if (type === "checkbox") {
+      setForm({ ...form, [name]: checked });
     } else {
       setForm({ ...form, [name]: value });
     }
@@ -160,6 +164,7 @@ export default function TransactionForm({
       category_id: form.category_id,
       note: form.note,
       created_at: form.created_at,
+      is_virtual: form.is_virtual,
     };
 
     onSubmit(createData);
@@ -176,6 +181,7 @@ export default function TransactionForm({
         category_id: defaultCategory?.id || currentCategories[0]?.id || "",
         note: "",
         created_at: currentCreatedAt,
+        is_virtual: false,
       });
       setRawAmount("");
     }
@@ -213,6 +219,7 @@ export default function TransactionForm({
                 category_id: defaultCategory?.id || newCategories[0]?.id || "",
                 note: "",
                 created_at: currentCreatedAt,
+                is_virtual: false,
               });
               setRawAmount("");
             }}
@@ -393,6 +400,31 @@ export default function TransactionForm({
               })}
             </div>
           )}
+        </div>
+
+        {/* Virtual Transaction Checkbox */}
+        <div className="flex items-center gap-2">
+          <input
+            id="is_virtual"
+            type="checkbox"
+            name="is_virtual"
+            checked={form.is_virtual}
+            onChange={handleChange}
+            className="w-4 h-4 text-primary bg-gray-100 border-gray-300 rounded focus:ring-primary dark:focus:ring-primary dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+          />
+          <label
+            htmlFor="is_virtual"
+            className="text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            Giao dịch ảo
+            <span className="text-xs text-gray-500 dark:text-gray-400 block">
+              (Không tính vào{" "}
+              {activeType === "income"
+                ? "thu nhập thực tế"
+                : "chi tiêu thực tế"}
+              )
+            </span>
+          </label>
         </div>
 
         <div className="flex flex-col gap-2">

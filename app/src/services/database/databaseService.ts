@@ -133,6 +133,7 @@ export class DatabaseService {
     amount: number;
     category_id: string;
     note?: string;
+    is_virtual?: boolean;
     created_at?: string | UTCString;
   }): Promise<Transaction> {
     const now = nowUTC();
@@ -144,6 +145,7 @@ export class DatabaseService {
       created_at: data.created_at ? toUTC(data.created_at) : now,
       updated_at: now,
       is_resolved: true,
+      is_virtual: data.is_virtual || false,
     };
 
     const result = await db
@@ -160,6 +162,7 @@ export class DatabaseService {
       category_id: string;
       note: string;
       is_resolved: boolean;
+      is_virtual: boolean;
       created_at: string | UTCString;
     }>
   ): Promise<Transaction | null> {
@@ -179,6 +182,9 @@ export class DatabaseService {
     if (data.is_resolved !== undefined) {
       updateData.is_resolved = data.is_resolved;
     }
+    if (data.is_virtual !== undefined) {
+      updateData.is_virtual = data.is_virtual;
+    }
     if (data.created_at !== undefined) {
       updateData.created_at = toUTC(data.created_at);
     }
@@ -195,6 +201,23 @@ export class DatabaseService {
   async deleteTransaction(id: string): Promise<boolean> {
     const result = await db.delete(transactions).where(eq(transactions.id, id));
     return result.rowsAffected > 0;
+  }
+
+  // Get all virtual transactions (not limited by time)
+  async getVirtualTransactions(): Promise<
+    (Transaction & { category: Category })[]
+  > {
+    const result = await db
+      .select()
+      .from(transactions)
+      .leftJoin(categories, eq(transactions.category_id, categories.id))
+      .where(eq(transactions.is_virtual, true))
+      .orderBy(desc(transactions.created_at));
+
+    return result.map((row) => ({
+      ...row.transactions,
+      category: row.categories!,
+    }));
   }
 
   // Statistics methods
@@ -245,13 +268,18 @@ export class DatabaseService {
     month: number,
     year: number
   ): Promise<{
+    income_real: number;
+    income_virtual: number;
     income: number;
+    expense_real: number;
+    expense_virtual: number;
     expense: number;
     balance: number;
   }> {
     const { start, end } = getMonthBoundsUTC(month, year);
 
-    const result = await db
+    // Get real transactions for the specific month
+    const realResult = await db
       .select({
         type: categories.type,
         total: sql<number>`sum(${transactions.amount})`,
@@ -261,26 +289,59 @@ export class DatabaseService {
       .where(
         and(
           gte(transactions.created_at, start),
-          lt(transactions.created_at, end)
+          lt(transactions.created_at, end),
+          eq(transactions.is_virtual, false)
         )
       )
       .groupBy(categories.type);
 
-    let income = 0;
-    let expense = 0;
+    // Get virtual transactions (all time, not limited by month)
+    const virtualResult = await db
+      .select({
+        type: categories.type,
+        total: sql<number>`sum(${transactions.amount})`,
+      })
+      .from(transactions)
+      .leftJoin(categories, eq(transactions.category_id, categories.id))
+      .where(eq(transactions.is_virtual, true))
+      .groupBy(categories.type);
 
-    result.forEach((item) => {
+    let income_real = 0;
+    let expense_real = 0;
+    let income_virtual = 0;
+    let expense_virtual = 0;
+
+    // Process real transactions
+    realResult.forEach((item) => {
+      const amount = item.total || 0;
       if (item.type === "income") {
-        income = item.total;
+        income_real += amount;
       } else if (item.type === "expense") {
-        expense = item.total;
+        expense_real += amount;
       }
     });
 
+    // Process virtual transactions
+    virtualResult.forEach((item) => {
+      const amount = item.total || 0;
+      if (item.type === "income") {
+        income_virtual += amount;
+      } else if (item.type === "expense") {
+        expense_virtual += amount;
+      }
+    });
+
+    const income_total = income_real + income_virtual;
+    const expense_total = expense_real + expense_virtual;
+
     return {
-      income,
-      expense,
-      balance: income - expense,
+      income_real,
+      income_virtual,
+      income: income_total,
+      expense_real,
+      expense_virtual,
+      expense: expense_total,
+      balance: income_total - expense_total,
     };
   }
 }

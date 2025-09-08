@@ -1,4 +1,5 @@
 import React from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import {
   Edit,
@@ -8,9 +9,12 @@ import {
   CheckCircle,
   TrendingUp,
   TrendingDown,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { format, parseISO, isSameDay } from "date-fns";
 import { Category, Transaction } from "@/services/api/client";
+import API from "@/services/api/client";
 
 interface TransactionListProps {
   transactions: Transaction[];
@@ -18,10 +22,13 @@ interface TransactionListProps {
   onEdit: (transaction: Transaction) => void;
   onDelete: (id: string) => void;
   onToggleResolved: (id: string) => void;
+  onToggleVirtual?: (id: string) => void;
   isDeleting: boolean;
   deletingId?: string;
   isTogglingResolved: boolean;
   togglingId?: string;
+  isTogglingVirtual?: boolean;
+  togglingVirtualId?: string;
 }
 
 // Format currency function
@@ -65,11 +72,21 @@ export default function TransactionList({
   onEdit,
   onDelete,
   onToggleResolved,
+  onToggleVirtual,
   isDeleting,
   deletingId,
   isTogglingResolved,
   togglingId,
+  isTogglingVirtual,
+  togglingVirtualId,
 }: TransactionListProps) {
+  // Fetch all virtual transactions separately (not limited by time)
+  const { data: virtualTransactions = [] } = useQuery<Transaction[]>({
+    queryKey: ["virtual-transactions"],
+    queryFn: API.transactions.getVirtualTransactions,
+    staleTime: 30000, // 30 seconds
+  });
+
   const getCategoryColor = (categoryId: string): string => {
     const category = categories.find((cat) => cat.id === categoryId);
     return category?.color || "#000000";
@@ -91,6 +108,20 @@ export default function TransactionList({
   ).length;
   const unresolvedTotal = transactions
     .filter((tx) => tx.is_resolved === false)
+    .reduce((sum, tx) => sum + tx.amount, 0);
+
+  // Virtual transactions statistics - use separate API data
+  const virtualIncomeCount = virtualTransactions.filter(
+    (tx) => tx.category.type === "income"
+  ).length;
+  const virtualExpenseCount = virtualTransactions.filter(
+    (tx) => tx.category.type === "expense"
+  ).length;
+  const virtualIncomeTotal = virtualTransactions
+    .filter((tx) => tx.category.type === "income")
+    .reduce((sum, tx) => sum + tx.amount, 0);
+  const virtualExpenseTotal = virtualTransactions
+    .filter((tx) => tx.category.type === "expense")
     .reduce((sum, tx) => sum + tx.amount, 0);
 
   if (transactions.length === 0) {
@@ -115,6 +146,30 @@ export default function TransactionList({
               {formatCurrency(unresolvedTotal)})
             </span>
           </div>
+        </div>
+      )}
+
+      {/* Summary for virtual transactions */}
+      {(virtualIncomeCount > 0 || virtualExpenseCount > 0) && (
+        <div className="bg-purple-50 dark:bg-purple-900/10 border border-purple-200 dark:border-purple-800/50 rounded-lg p-3 space-y-2">
+          {virtualIncomeCount > 0 && (
+            <div className="flex items-center gap-2 text-green-700 dark:text-green-300">
+              <Eye className="w-4 h-4" />
+              <span className="text-sm font-medium">
+                Có {virtualIncomeCount} giao dịch thu ảo (
+                {formatCurrency(virtualIncomeTotal)})
+              </span>
+            </div>
+          )}
+          {virtualExpenseCount > 0 && (
+            <div className="flex items-center gap-2 text-red-700 dark:text-red-300">
+              <EyeOff className="w-4 h-4" />
+              <span className="text-sm font-medium">
+                Có {virtualExpenseCount} giao dịch chi ảo (
+                {formatCurrency(virtualExpenseTotal)})
+              </span>
+            </div>
+          )}
         </div>
       )}
 
@@ -287,10 +342,15 @@ export default function TransactionList({
                         </div>
 
                         {/* Note column */}
-                        <div className="col-span-4 flex items-center">
-                          <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                        <div className="col-span-4 flex items-center gap-2">
+                          <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate flex-1">
                             {tx.note || "Không có ghi chú"}
                           </span>
+                          {tx.is_virtual && (
+                            <span className="text-xs px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full whitespace-nowrap">
+                              Ảo
+                            </span>
+                          )}
                         </div>
 
                         {/* Category column */}
@@ -360,6 +420,37 @@ export default function TransactionList({
                               <AlertCircle className="h-4 w-4" />
                             )}
                           </Button>
+                          {onToggleVirtual && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className={`h-8 w-8 p-0 transition-colors ${
+                                tx.is_virtual
+                                  ? "text-purple-600 hover:bg-purple-50 hover:text-purple-700 dark:text-purple-400 dark:hover:bg-purple-900/20"
+                                  : "text-gray-400 hover:bg-gray-50 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-gray-800"
+                              }`}
+                              onClick={() => onToggleVirtual(tx.id)}
+                              disabled={
+                                isDeleting ||
+                                isTogglingResolved ||
+                                isTogglingVirtual
+                              }
+                              title={
+                                tx.is_virtual
+                                  ? "Chuyển thành giao dịch thực tế"
+                                  : "Đánh dấu là giao dịch ảo"
+                              }
+                            >
+                              {isTogglingVirtual &&
+                              togglingVirtualId === tx.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : tx.is_virtual ? (
+                                <EyeOff className="h-4 w-4" />
+                              ) : (
+                                <Eye className="h-4 w-4" />
+                              )}
+                            </Button>
+                          )}
                           <Button
                             variant="ghost"
                             size="sm"
@@ -422,6 +513,11 @@ export default function TransactionList({
                             <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
                               {tx.note || "Không có ghi chú"}
                             </span>
+                            {tx.is_virtual && (
+                              <span className="text-xs px-1.5 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full whitespace-nowrap flex-shrink-0">
+                                Ảo
+                              </span>
+                            )}
                           </div>
                           <span
                             className={`px-2 py-1 text-sm font-semibold rounded-full whitespace-nowrap ${
@@ -486,6 +582,37 @@ export default function TransactionList({
                                 <AlertCircle className="h-4 w-4" />
                               )}
                             </Button>
+                            {onToggleVirtual && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className={`h-8 w-8 p-0 transition-colors ${
+                                  tx.is_virtual
+                                    ? "text-purple-600 hover:bg-purple-50 hover:text-purple-700 dark:text-purple-400 dark:hover:bg-purple-900/20"
+                                    : "text-gray-400 hover:bg-gray-50 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-gray-800"
+                                }`}
+                                onClick={() => onToggleVirtual(tx.id)}
+                                disabled={
+                                  isDeleting ||
+                                  isTogglingResolved ||
+                                  isTogglingVirtual
+                                }
+                                title={
+                                  tx.is_virtual
+                                    ? "Chuyển thành giao dịch thực tế"
+                                    : "Đánh dấu là giao dịch ảo"
+                                }
+                              >
+                                {isTogglingVirtual &&
+                                togglingVirtualId === tx.id ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : tx.is_virtual ? (
+                                  <EyeOff className="h-4 w-4" />
+                                ) : (
+                                  <Eye className="h-4 w-4" />
+                                )}
+                              </Button>
+                            )}
                             <Button
                               variant="ghost"
                               size="sm"

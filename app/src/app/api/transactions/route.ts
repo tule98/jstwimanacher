@@ -37,7 +37,8 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const { amount, category_id, note, created_at } = await request.json();
+    const { amount, category_id, note, is_virtual, created_at } =
+      await request.json();
 
     if (amount === undefined || !category_id) {
       return NextResponse.json(
@@ -50,6 +51,7 @@ export async function POST(request: Request) {
       amount: parseFloat(amount),
       category_id,
       note,
+      is_virtual: is_virtual || false,
       created_at: created_at ? toUTC(created_at) : undefined,
     });
 
@@ -64,8 +66,15 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
   try {
-    const { id, amount, category_id, note, is_resolved, created_at } =
-      await request.json();
+    const {
+      id,
+      amount,
+      category_id,
+      note,
+      is_resolved,
+      is_virtual,
+      created_at,
+    } = await request.json();
 
     if (!id) {
       return NextResponse.json(
@@ -80,6 +89,7 @@ export async function PUT(request: Request) {
       category_id?: string;
       note?: string;
       is_resolved?: boolean;
+      is_virtual?: boolean;
       created_at?: string;
     } = {};
 
@@ -87,6 +97,7 @@ export async function PUT(request: Request) {
     if (category_id !== undefined) updateData.category_id = category_id;
     if (note !== undefined) updateData.note = note;
     if (is_resolved !== undefined) updateData.is_resolved = is_resolved;
+    if (is_virtual !== undefined) updateData.is_virtual = is_virtual;
     if (created_at !== undefined) updateData.created_at = toUTC(created_at);
 
     const result = await databaseService.updateTransaction(id, updateData);

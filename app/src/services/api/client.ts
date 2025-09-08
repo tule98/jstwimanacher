@@ -1,6 +1,6 @@
 /**
  * API Client Service
- * Client-side service để tương tác với các API endpoints
+ * Client-side service for interacting with API endpoints
  */
 
 import { UTCString, parseUserDateToUTC } from "@/lib/timezone";
@@ -22,6 +22,7 @@ export interface Transaction {
   /** UTC ISO string - always stored and transmitted in UTC */
   updated_at: UTCString;
   is_resolved: boolean;
+  is_virtual: boolean; // Mark virtual transaction
   category: Category; // Joined category data
 }
 
@@ -29,6 +30,7 @@ export interface TransactionCreateData {
   amount: number;
   category_id: string;
   note?: string;
+  is_virtual?: boolean; // Mark virtual transaction
   /** UTC ISO string - will be converted to UTC if provided, otherwise uses current UTC time */
   created_at?: UTCString | string;
 }
@@ -39,6 +41,7 @@ export interface TransactionUpdateData {
   category_id?: string;
   note?: string;
   is_resolved?: boolean;
+  is_virtual?: boolean; // Mark virtual transaction
   /** UTC ISO string - will be converted to UTC if provided */
   created_at?: UTCString | string;
 }
@@ -59,9 +62,18 @@ export interface MonthlyStats {
 }
 
 export interface BalanceStats {
-  income: number;
-  expense: number;
-  balance: number;
+  // Income
+  income_real: number; // Real income (excluding virtual)
+  income_virtual: number; // Virtual income
+  income: number; // Total income (real + virtual) - primary field
+
+  // Expenses
+  expense_real: number; // Real expenses (excluding virtual)
+  expense_virtual: number; // Virtual expenses
+  expense: number; // Total expenses (real + virtual) - primary field
+
+  // Balance
+  balance: number; // Total income - total expenses
 }
 
 /**
@@ -69,7 +81,7 @@ export interface BalanceStats {
  */
 export const CategoriesAPI = {
   /**
-   * Lấy tất cả danh mục
+   * Get all categories
    */
   async getAll(): Promise<Category[]> {
     const response = await fetch("/api/categories");
@@ -80,7 +92,7 @@ export const CategoriesAPI = {
   },
 
   /**
-   * Lấy danh mục theo loại (income/expense)
+   * Get categories by type (income/expense)
    */
   async getByType(type: "income" | "expense"): Promise<Category[]> {
     const response = await fetch(`/api/categories?type=${type}`);
@@ -91,7 +103,7 @@ export const CategoriesAPI = {
   },
 
   /**
-   * Thêm danh mục mới
+   * Create new category
    */
   async create(
     name: string,
@@ -114,7 +126,7 @@ export const CategoriesAPI = {
   },
 
   /**
-   * Cập nhật danh mục
+   * Update category
    */
   async update(id: string, name: string, color: string): Promise<Category> {
     const response = await fetch("/api/categories", {
@@ -133,7 +145,7 @@ export const CategoriesAPI = {
   },
 
   /**
-   * Xóa danh mục
+   * Delete category
    */
   async delete(id: string): Promise<void> {
     const response = await fetch(
@@ -155,7 +167,7 @@ export const CategoriesAPI = {
  */
 export const TransactionsAPI = {
   /**
-   * Lấy tất cả giao dịch
+   * Get all transactions
    */
   async getAll(): Promise<Transaction[]> {
     const response = await fetch("/api/transactions");
@@ -166,7 +178,7 @@ export const TransactionsAPI = {
   },
 
   /**
-   * Lấy giao dịch với giới hạn số lượng
+   * Get transactions with limit
    */
   async getWithLimit(limit: number): Promise<Transaction[]> {
     const response = await fetch(`/api/transactions?limit=${limit}`);
@@ -177,7 +189,7 @@ export const TransactionsAPI = {
   },
 
   /**
-   * Lấy giao dịch với offset và limit (cho infinite scroll)
+   * Get transactions with offset and limit (for infinite scroll)
    */
   async getWithPagination(
     limit: number,
@@ -193,7 +205,7 @@ export const TransactionsAPI = {
   },
 
   /**
-   * Lấy giao dịch theo tháng
+   * Get transactions by month
    */
   async getByMonth(month: number, year: number): Promise<Transaction[]> {
     const response = await fetch(
@@ -206,7 +218,18 @@ export const TransactionsAPI = {
   },
 
   /**
-   * Thêm giao dịch mới
+   * Get all virtual transactions (not limited by time)
+   */
+  async getVirtualTransactions(): Promise<Transaction[]> {
+    const response = await fetch("/api/transactions/virtual");
+    if (!response.ok) {
+      throw new Error("Failed to fetch virtual transactions");
+    }
+    return response.json();
+  },
+
+  /**
+   * Create new transaction
    */
   async create(data: TransactionCreateData): Promise<Transaction> {
     // Convert created_at to UTC if provided
@@ -233,7 +256,7 @@ export const TransactionsAPI = {
   },
 
   /**
-   * Cập nhật giao dịch
+   * Update transaction
    */
   async update(data: TransactionUpdateData): Promise<Transaction> {
     // Convert created_at to UTC if provided
@@ -260,7 +283,7 @@ export const TransactionsAPI = {
   },
 
   /**
-   * Xóa giao dịch
+   * Delete transaction
    */
   async delete(id: string): Promise<void> {
     const response = await fetch(`/api/transactions?id=${id}`, {
@@ -279,7 +302,7 @@ export const TransactionsAPI = {
  */
 export const StatsAPI = {
   /**
-   * Lấy thống kê theo danh mục trong tháng
+   * Get category statistics for a specific month
    */
   async getCategoryStats(
     month: number,
@@ -293,7 +316,7 @@ export const StatsAPI = {
   },
 
   /**
-   * Lấy thống kê tài chính tổng thể (income + expense + balance)
+   * Get overall financial statistics (income + expense + balance)
    */
   async getBalanceStats(month: number, year: number): Promise<BalanceStats> {
     const response = await fetch(
@@ -306,7 +329,7 @@ export const StatsAPI = {
   },
 
   /**
-   * Lấy thống kê lịch sử theo tháng
+   * Get historical monthly statistics
    */
   async getHistoricalStats(months: number): Promise<MonthlyStats[]> {
     const response = await fetch(`/api/stats?months=${months}`);
