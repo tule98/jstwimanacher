@@ -58,7 +58,7 @@ export default function KeyInputForm({ onValidKey }: KeyInputFormProps) {
             <Lock size={40} className="text-white" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-            jstwimoniluver
+            jstwimanacher
           </h1>
           <p className="text-gray-600 dark:text-gray-300">
             Vui lòng nhập key bảo vệ để truy cập ứng dụng

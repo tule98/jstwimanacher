@@ -5,8 +5,8 @@ import AppNav from "./_components/AppNav";
 import AuthGuard from "./_components/AuthGuard";
 
 export const metadata = {
-  title: "jstwimoniluver",
-  description: "Ứng dụng quản lý tài chính cá nhân",
+  title: "jstwimanacher",
+  description: "Tự trị",
 };
 
 export const viewport = {

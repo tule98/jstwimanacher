@@ -55,13 +55,13 @@ async function queryNotionPlans() {
             {
               property: "status",
               status: {
-                equals: "inProgress",
+                equals: "todo",
               },
             },
             {
               property: "status",
               status: {
-                equals: "todo",
+                equals: "inLoop",
               },
             },
           ],

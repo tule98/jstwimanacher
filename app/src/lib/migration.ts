@@ -185,7 +185,7 @@ export async function backupData(): Promise<void> {
   // For now, just log the backup data structure
   if (typeof window !== "undefined") {
     // Client-side: save to localStorage as emergency backup
-    localStorage.setItem("jstwimoniluver_backup", JSON.stringify(backup));
+    localStorage.setItem("jstwimanacher_backup", JSON.stringify(backup));
     console.log("💾 Emergency backup saved to localStorage");
   }
 }

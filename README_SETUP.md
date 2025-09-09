@@ -1,4 +1,4 @@
-# jstwimoniluver
+# jstwimanacher
 
 Ứng dụng quản lý tài chính cá nhân - Next.js + TailwindCSS + TypeScript
 
@@ -31,7 +31,7 @@ npm start
 - Font mặc định: Poppins (cấu hình thêm trong globals.css).
 - UI sử dụng TailwindCSS, mobile first.
 - Hỗ trợ Progressive Web App (PWA) (cấu hình thêm).
-- Kết nối Google Sheets API sẽ được hướng dẫn ở các bước tiếp theo.
+
 
 ## Thư mục chính
 - `src/app/` - Chứa các file chính của ứng dụng.

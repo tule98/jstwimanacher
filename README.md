@@ -1,23 +1,24 @@
-# jstwimoniluver
+# jstwimanacher
 
-Ứng dụng đa chức năng kết hợp quản lý tài chính cá nhân và tổ chức lịch trình thông minh, sử dụng Next.js với Google Sheets và Notion API làm backend.
+Ứng dụng đa chức năng kết hợp quản lý tài chính cá nhân và tổ chức lịch trình thông minh, sử dụng Next.js với Turso (LibSQL) cho tài chính và Notion API cho lịch trình.
 
 ## Tính năng
 
 ### 💰 Quản lý Tài chính
-- Quản lý danh mục chi tiêu với màu sắc tùy chỉnh
-- Nhập và theo dõi khoản chi tiêu/thu nhập
-- Đánh dấu giao dịch resolved/unresolved
-- Thống kê chi tiêu theo tháng và danh mục
+- Quản lý danh mục chi tiêu/thu nhập với màu sắc tùy chỉnh
+- Nhập và theo dõi khoản chi tiêu/thu nhập (thực tế và ảo)
+- Đánh dấy giao dịch resolved/unresolved
+- Giao dịch ảo (Virtual Transactions) cho dự báo tài chính
+- Thống kê chi tiêu theo tháng và danh mục với balance riêng biệt
 - Biểu đồ trực quan (Pie Chart, Bar Chart)
 - Lịch sử và xu hướng chi tiêu
 
 ### 🗓️ Noxon Schedule Organizer
 - Tích hợp với Notion API để quản lý lịch trình
 - Tự động lấy dữ liệu từ 3 nguồn:
-  - **Tasks**: Công việc cần làm hàng ngày
-  - **Projects**: Dự án đang triển khai
-  - **Plans**: Sự kiện và kế hoạch tương lai
+  - **Tasks**: Công việc cần làm hàng ngày (status: backlog, thisWeek, today, inProgress, inLoop)
+  - **Projects**: Dự án đang triển khai (status: inProgress, reachable = false)
+  - **Plans**: Sự kiện và kế hoạch tương lai (status: inProgress, todo, inLoop)
 - Tạo prompt AI thông minh cho việc sắp xếp lịch trình
 - Phân tích tổng quan và đề xuất ưu tiên công việc
 - Lập kế hoạch chi tiết cho ngày hiện tại
@@ -29,7 +30,7 @@
 - Hỗ trợ dark/light mode
 - Thiết kế hiện đại với Shadcn UI
 - Animation mượt mà và user-friendly
-- Navigation intuituve giữa các module
+- Navigation intuitive giữa các module
 
 ## Công nghệ
 
@@ -42,14 +43,15 @@
 - **Lucide Icons**: Icon library nhẹ và đẹp
 
 ### Backend & APIs
-- **Google Sheets API**: Database cho quản lý tài chính
+- **Turso (LibSQL)**: Database chính cho financial data với Drizzle ORM
 - **Notion API**: Database cho tasks, projects, plans
 - **Next.js API Routes**: RESTful endpoints
-- **OAuth2 Authentication**: Bảo mật API access
+- **Authentication**: Protection key cho app security
 
 ### Tools & Libraries  
 - **React Charts**: Biểu đồ và visualization
-- **date-fns/dayjs**: Xử lý ngày tháng
+- **date-fns**: Xử lý ngày tháng
+- **uuid**: Unique ID generation
 - **ESLint + Prettier**: Code quality và formatting
 
 ## Cài đặt
@@ -57,15 +59,14 @@
 ### Yêu cầu hệ thống
 - Node.js 18+ 
 - npm hoặc yarn
-- Google Account (cho Sheets API)
 - Notion Account (cho workspace integration)
 
 ### Các bước cài đặt
 
 1. **Clone repository**
    ```bash
-   git clone https://github.com/tule98/jstwimoniluver.git
-   cd jstwimoniluver
+   git clone https://github.com/tule98/jstwimanacher.git
+   cd jstwimanacher
    ```
 
 2. **Cài đặt dependencies**
@@ -73,13 +74,6 @@
    cd app
    npm install
    ```
-
-3. **Cấu hình Google Sheets API**
-   - Tạo project trên [Google Cloud Console](https://console.cloud.google.com/)
-   - Enable Google Sheets API
-   - Tạo Service Account và download credentials JSON
-   - Đặt file credentials trong thư mục `app/`
-   - Share Google Sheet với email Service Account
 
 4. **Cấu hình Notion API**
    - Tạo Integration trên [Notion Developers](https://developers.notion.com/)
@@ -109,10 +103,6 @@
    NOTION_TASKS_DATABASE_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
    NOTION_PROJECTS_DATABASE_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
    NOTION_PLANS_DATABASE_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-   
-   # Google Sheets (Legacy)
-   GOOGLE_SHEET_ID=your_google_sheet_id
-   GOOGLE_CREDENTIALS_FILE=your_credentials_file.json
    ```
 
 6. **Chạy development server**
@@ -150,10 +140,6 @@
    NOTION_TASKS_DATABASE_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
    NOTION_PROJECTS_DATABASE_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
    NOTION_PLANS_DATABASE_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-   
-   # Google Sheets (Legacy - optional)
-   GOOGLE_SHEET_ID=your_google_sheet_id
-   GOOGLE_CREDENTIALS={"type":"service_account",...} # JSON string
    ```
 
 5. **Deploy**: Vercel sẽ tự động build và deploy
@@ -165,29 +151,27 @@
 
 ## Cấu trúc Database
 
-### 📊 Google Sheets - Financial Management
+### 💰 Turso (LibSQL) - Financial Management
 
-#### Sheet: Categories
-Quản lý danh mục chi tiêu với màu sắc tùy chỉnh.
+#### Categories Table
+| Column | Type | Mô tả | Ví dụ |
+|--------|------|-------|-------|
+| id | string (PK) | ID duy nhất | "cat-uuid-123" |
+| name | string | Tên danh mục | "Ăn uống", "Lương" |
+| color | string | Màu sắc hex | "#ff6b6b" |
+| type | string | Loại danh mục | "expense", "income" |
 
-| Cột | Kiểu dữ liệu | Mô tả | Ví dụ |
-|-----|-------------|--------|-------|
-| name | string (PK) | Tên danh mục | "Thiết yếu: Ăn uống cá nhân" |
-| color | string | Mã màu hex | "#388E3C" |
-| type | string | Loại: 'expense'/'income' | "expense" |
-
-#### Sheet: Transactions  
-Quản lý các khoản chi tiêu/thu nhập với trạng thái resolved.
-
-| Cột | Kiểu dữ liệu | Mô tả | Ví dụ |
-|-----|-------------|--------|-------|
-| id | string (PK) | ID duy nhất | "uuid-string" |
-| amount | number | Số tiền | 50000 |
-| category_id | string (FK) | Liên kết danh mục | "uuid-ref" |
-| note | string | Ghi chú (optional) | "Mua cà phê" |
-| created_at | datetime | Thời gian tạo | "2025-09-08T09:00:00Z" |
-| updated_at | datetime | Thời gian cập nhật | "2025-09-08T09:00:00Z" |
-| is_resolved | boolean | Đã xác nhận hay chưa | true/false |
+#### Transactions Table  
+| Column | Type | Mô tả | Ví dụ |
+|--------|------|-------|-------|
+| id | string (PK) | ID duy nhất | "txn-uuid-456" |
+| amount | integer | Số tiền (VND) | 50000 |
+| category_id | string (FK) | Liên kết danh mục | "cat-uuid-123" |
+| note | string | Ghi chú | "Cơm trưa" |
+| created_at | datetime | Thời gian tạo | "2025-09-09 12:00:00" |
+| updated_at | datetime | Thời gian cập nhật | "2025-09-09 12:00:00" |
+| is_resolved | boolean | Đã xác nhận | true/false |
+| is_virtual | boolean | Giao dịch ảo | true/false |
 
 ### 🗓️ Notion Database - Schedule Management
 
@@ -203,9 +187,9 @@ Chứa tất cả tasks, projects và plans với các properties:
 | plans | relation | Liên kết kế hoạch | [plan-ids] |
 
 #### Database Properties cho filtering:
-- **Tasks**: `status` ≠ "In progress" AND ≠ "Complete"  
-- **Projects**: `xhhe` = false AND `SoAS` in past year AND `mcuf` = "In progress"
-- **Plans**: `dbJi` ≠ "In progress" AND ≠ "Complete"
+- **Tasks**: `status` in ["backlog", "thisWeek", "today", "inProgress", "inLoop"]
+- **Projects**: `reachable` = false AND `status` = "inProgress"
+- **Plans**: `status` in ["inProgress", "todo", "inLoop"]
 
 ## API Endpoints
 
@@ -221,8 +205,10 @@ POST /api/transactions        # Tạo giao dịch mới
 PUT  /api/transactions        # Cập nhật giao dịch
 DEL  /api/transactions        # Xóa giao dịch
 
+GET  /api/transactions/virtual # Lấy giao dịch ảo
+
 GET  /api/stats              # Thống kê tổng quan
-GET  /api/stats/balance      # Số dư hiện tại
+GET  /api/stats/balance      # Số dư hiện tại và dự kiến
 ```
 
 ### Noxon Schedule APIs
@@ -242,14 +228,18 @@ POST /api/migration         # Migration dữ liệu
 
 ### 💰 Quản lý Tài chính
 1. **Truy cập**: `http://localhost:3000`
-2. **Tạo danh mục**: Vào `/categories` để tạo và quản lý danh mục chi tiêu
-3. **Nhập giao dịch**: Vào `/transactions` để thêm khoản chi/thu
+2. **Tạo danh mục**: Vào `/categories` để tạo và quản lý danh mục chi tiêu/thu nhập
+3. **Nhập giao dịch**: Vào `/transactions` để thêm khoản chi/thu (thực tế hoặc ảo)
 4. **Xem thống kê**: Vào `/stats` để xem biểu đồ và phân tích
 5. **Toggle resolved**: Click icon trên mỗi giao dịch để đánh dấu đã xác nhận
+6. **Virtual transactions**: Sử dụng để lập kế hoạch tài chính dự báo
 
 ### 🗓️ Noxon Schedule Organizer  
 1. **Truy cập**: `http://localhost:3000/noxon` (không hiển thị trong menu)
 2. **Xem tổng quan**: Hệ thống tự động lấy dữ liệu từ Notion
+   - Tasks: backlog, thisWeek, today, inProgress, inLoop
+   - Projects: inProgress với reachable = false
+   - Plans: inProgress, todo, inLoop
 3. **Sinh prompt**: AI prompt được tạo tự động với 5 sections:
    - Đánh giá tổng quan 
    - Kế hoạch ngày mới
