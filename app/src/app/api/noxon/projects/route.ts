@@ -15,9 +15,10 @@ function extractProjectData(page: any) {
   const titleProperty = page.properties.title;
   const title = titleProperty?.title?.[0]?.plain_text || "Không có tiêu đề";
 
-  // Lấy date từ date property
-  const dateProperty = page.properties.date;
-  const date = dateProperty?.date?.start || null;
+  // Lấy startDate từ startDate property (có thể có cả start và end)
+  const startDateProperty = page.properties.startDate;
+  const startDate = startDateProperty?.date?.start || null;
+  const endDate = startDateProperty?.date?.end || null;
 
   // Lấy projects từ relation property
   const projectsProperty = page.properties.projects;
@@ -30,7 +31,8 @@ function extractProjectData(page: any) {
   return {
     id,
     title,
-    date,
+    startDate,
+    endDate,
     projects,
     plans,
   };

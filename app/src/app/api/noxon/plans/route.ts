@@ -12,9 +12,9 @@ function extractPlanData(page: any) {
   const titleProperty = page.properties.title;
   const title = titleProperty?.title?.[0]?.plain_text || "Không có tiêu đề";
 
-  // Lấy date từ date property
-  const dateProperty = page.properties.date;
-  const date = dateProperty?.date?.start || null;
+  // Lấy startDate từ startDate property
+  const startDateProperty = page.properties.startDate;
+  const date = startDateProperty?.date?.start || null;
 
   // Lấy projects từ relation property
   const projectsProperty = page.properties.projects;

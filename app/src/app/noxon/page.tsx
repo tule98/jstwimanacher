@@ -8,7 +8,9 @@ import { Card } from "@/components/ui/card";
 interface NoxonData {
   id?: string;
   title: string;
-  date: string | null;
+  date?: string | null;
+  startDate?: string | null;
+  endDate?: string | null;
   projects: any[];
   plans: any[];
 }
@@ -106,7 +108,12 @@ export default function NoxonPage() {
       projects.forEach((project, index) => {
         promptText += `${index + 1}. **${project.title}**\n`;
         promptText += `   - ID: ${project.id || "N/A"}\n`;
-        if (project.date) promptText += `   - Ngày: ${project.date}\n`;
+        if (project.startDate) {
+          promptText += `   - Ngày bắt đầu: ${project.startDate}\n`;
+        }
+        if (project.endDate) {
+          promptText += `   - Ngày kết thúc: ${project.endDate}\n`;
+        }
         if (project.projects.length > 0) {
           promptText += `   - Liên quan đến projects: ${project.projects.length} mục\n`;
           project.projects.forEach((proj, idx) => {
@@ -194,6 +201,30 @@ export default function NoxonPage() {
     }
   };
 
+  const formatDate = (dateStr: string | null | undefined) => {
+    if (!dateStr) return "N/A";
+    const date = new Date(dateStr);
+    return date.toLocaleDateString("vi-VN", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+  };
+
+  const formatDateRange = (
+    startDate: string | null | undefined,
+    endDate: string | null | undefined
+  ) => {
+    if (!startDate && !endDate) return null;
+    if (startDate && endDate) {
+      return `${formatDate(startDate)} - ${formatDate(endDate)}`;
+    }
+    if (startDate) {
+      return `Từ ${formatDate(startDate)}`;
+    }
+    return null;
+  };
+
   if (loading) {
     return (
       <div className="container mx-auto p-6">
@@ -211,10 +242,24 @@ export default function NoxonPage() {
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
           🗓️ Noxon Schedule Organizer
         </h1>
-        <p className="text-gray-600">
+        <p className="text-gray-600 mb-4">
           Tạo prompt lịch trình thông minh từ tasks (công việc cần làm),
           projects (dự án đang chạy) và plans (sự kiện tương lai)
         </p>
+        {/* Quick Stats */}
+        <div className="text-sm text-gray-500 bg-gray-50 p-3 rounded-lg">
+          📊 Tổng quan: {tasks.length + projects.length + plans.length} mục dữ
+          liệu
+          {(tasks.length > 0 || projects.length > 0 || plans.length > 0) && (
+            <span className="ml-2">
+              • Tasks với ngày: {tasks.filter((t) => t.date).length}/
+              {tasks.length}• Projects với timeline:{" "}
+              {projects.filter((p) => p.startDate || p.endDate).length}/
+              {projects.length}• Plans với ngày:{" "}
+              {plans.filter((p) => p.date).length}/{plans.length}
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Summary Cards */}
@@ -233,6 +278,151 @@ export default function NoxonPage() {
           <h3 className="font-semibold text-purple-600 mb-2">📅 Plans</h3>
           <p className="text-2xl font-bold">{plans.length}</p>
           <p className="text-sm text-gray-500">sự kiện tương lai</p>
+        </Card>
+      </div>
+
+      {/* Detailed Items Display */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        {/* Tasks */}
+        <Card className="p-6">
+          <h3 className="font-semibold text-blue-600 mb-4 flex items-center">
+            📋 Tasks ({tasks.length})
+          </h3>
+          <div className="space-y-3 max-h-80 overflow-y-auto">
+            {tasks.length > 0 ? (
+              tasks.map((task, index) => (
+                <div
+                  key={task.id || index}
+                  className="bg-blue-50 p-3 rounded-lg border-l-4 border-blue-400"
+                >
+                  <h4 className="font-medium text-sm text-gray-800 mb-1">
+                    {task.title}
+                  </h4>
+                  <div className="text-xs text-gray-600">
+                    {task.date ? (
+                      <p>📅 {formatDate(task.date)}</p>
+                    ) : (
+                      <p className="text-gray-400">⚪ Chưa có ngày</p>
+                    )}
+                    {(task.projects.length > 0 || task.plans.length > 0) && (
+                      <p className="mt-1 text-gray-500">
+                        {task.projects.length > 0 &&
+                          `� ${task.projects.length} project(s)`}
+                        {task.projects.length > 0 &&
+                          task.plans.length > 0 &&
+                          " • "}
+                        {task.plans.length > 0 &&
+                          `📋 ${task.plans.length} plan(s)`}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="text-gray-500 text-sm italic">Không có tasks</p>
+            )}
+          </div>
+        </Card>
+
+        {/* Projects */}
+        <Card className="p-6">
+          <h3 className="font-semibold text-green-600 mb-4 flex items-center">
+            🚀 Projects ({projects.length})
+          </h3>
+          <div className="space-y-3 max-h-80 overflow-y-auto">
+            {projects.length > 0 ? (
+              projects.map((project, index) => (
+                <div
+                  key={project.id || index}
+                  className="bg-green-50 p-3 rounded-lg border-l-4 border-green-400"
+                >
+                  <h4 className="font-medium text-sm text-gray-800 mb-2">
+                    {project.title}
+                  </h4>
+                  <div className="text-xs text-gray-600 space-y-1">
+                    {project.startDate || project.endDate ? (
+                      <div className="space-y-1">
+                        {project.startDate && (
+                          <p>🚀 Bắt đầu: {formatDate(project.startDate)}</p>
+                        )}
+                        {project.endDate && (
+                          <p>🎯 Kết thúc: {formatDate(project.endDate)}</p>
+                        )}
+                        {project.startDate && project.endDate && (
+                          <p className="font-medium text-green-700">
+                            ⏱️ Thời hạn:{" "}
+                            {formatDateRange(
+                              project.startDate,
+                              project.endDate
+                            )}
+                          </p>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-gray-400">
+                        ⚪ Không có thông tin ngày
+                      </p>
+                    )}
+                    {(project.projects.length > 0 ||
+                      project.plans.length > 0) && (
+                      <p className="mt-1 text-gray-500 border-t pt-1">
+                        {project.projects.length > 0 &&
+                          `🔗 ${project.projects.length} project(s)`}
+                        {project.projects.length > 0 &&
+                          project.plans.length > 0 &&
+                          " • "}
+                        {project.plans.length > 0 &&
+                          `📋 ${project.plans.length} plan(s)`}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="text-gray-500 text-sm italic">Không có projects</p>
+            )}
+          </div>
+        </Card>
+
+        {/* Plans */}
+        <Card className="p-6">
+          <h3 className="font-semibold text-purple-600 mb-4 flex items-center">
+            📅 Plans ({plans.length})
+          </h3>
+          <div className="space-y-3 max-h-80 overflow-y-auto">
+            {plans.length > 0 ? (
+              plans.map((plan, index) => (
+                <div
+                  key={plan.id || index}
+                  className="bg-purple-50 p-3 rounded-lg border-l-4 border-purple-400"
+                >
+                  <h4 className="font-medium text-sm text-gray-800 mb-1">
+                    {plan.title}
+                  </h4>
+                  <div className="text-xs text-gray-600">
+                    {plan.date ? (
+                      <p>📅 {formatDate(plan.date)}</p>
+                    ) : (
+                      <p className="text-gray-400">⚪ Không có ngày</p>
+                    )}
+                    {(plan.projects.length > 0 || plan.plans.length > 0) && (
+                      <p className="mt-1 text-gray-500">
+                        {plan.projects.length > 0 &&
+                          `🔗 ${plan.projects.length} project(s)`}
+                        {plan.projects.length > 0 &&
+                          plan.plans.length > 0 &&
+                          " • "}
+                        {plan.plans.length > 0 &&
+                          `📋 ${plan.plans.length} plan(s)`}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="text-gray-500 text-sm italic">Không có plans</p>
+            )}
+          </div>
         </Card>
       </div>
 
