@@ -6,13 +6,7 @@ import {
   useQueryClient,
   useInfiniteQuery,
 } from "@tanstack/react-query";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { AppCard } from "@/components/ui/app-card";
 import { Button } from "@/components/ui/button";
 import {
   CreditCard,
@@ -227,276 +221,255 @@ export default function TransactionsPage() {
   return (
     <div className="w-full max-w-3xl mx-auto space-y-6 pb-16">
       {/* Balance Overview Card */}
-      <Card className="shadow-md border-blue-100 dark:border-blue-900/50 bg-gradient-to-br from-blue-50 to-white dark:from-blue-950/20 dark:to-gray-900">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
-              <Wallet size={20} />
-              Số dư {currentMonth}/{currentYear}
-            </CardTitle>
+      <AppCard
+        title={`Số dư ${currentMonth}/${currentYear}`}
+        description="Tổng quan tài chính tháng này"
+        icon={Wallet}
+        footer={
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setHideBalance(!hideBalance)}
+            className="text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/20 ml-auto"
+          >
+            {hideBalance ? <Eye size={16} /> : <EyeOff size={16} />}
+          </Button>
+        }
+      >
+        {balanceStats ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Thu nhập */}
+            <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+              <h3 className="text-sm font-medium text-green-700 dark:text-green-300 mb-2">
+                Thu nhập
+              </h3>
+
+              {/* Thu nhập tổng - Primary field */}
+              <p className="text-xl font-bold text-green-600 dark:text-green-400 mb-2">
+                {hideBalance ? "•••••••" : formatCurrency(balanceStats.income)}
+              </p>
+
+              {/* Thu nhập chi tiết */}
+              <div className="space-y-1 text-xs">
+                <div className="flex justify-between text-green-600 dark:text-green-400">
+                  <span>Thực tế:</span>
+                  <span className="font-medium">
+                    {hideBalance
+                      ? "••••••"
+                      : formatCurrency(balanceStats.income_real)}
+                  </span>
+                </div>
+                <div className="flex justify-between text-green-500 dark:text-green-500">
+                  <span>Ảo:</span>
+                  <span className="font-medium">
+                    {hideBalance
+                      ? "••••••"
+                      : formatCurrency(balanceStats.income_virtual)}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Chi tiêu */}
+            <div className="text-center p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+              <h3 className="text-sm font-medium text-red-700 dark:text-red-300 mb-2">
+                Chi tiêu
+              </h3>
+
+              {/* Chi tiêu tổng - Primary field */}
+              <p className="text-xl font-bold text-red-600 dark:text-red-400 mb-2">
+                {hideBalance ? "•••••••" : formatCurrency(balanceStats.expense)}
+              </p>
+
+              {/* Chi tiêu chi tiết */}
+              <div className="space-y-1 text-xs">
+                <div className="flex justify-between text-red-600 dark:text-red-400">
+                  <span>Thực tế:</span>
+                  <span className="font-medium">
+                    {hideBalance
+                      ? "••••••"
+                      : formatCurrency(balanceStats.expense_real)}
+                  </span>
+                </div>
+                <div className="flex justify-between text-red-500 dark:text-red-500">
+                  <span>Ảo:</span>
+                  <span className="font-medium">
+                    {hideBalance
+                      ? "••••••"
+                      : formatCurrency(balanceStats.expense_virtual)}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Số dư */}
+            <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+              <h3 className="text-sm font-medium text-blue-700 dark:text-blue-300 mb-2">
+                Số dư
+              </h3>
+
+              {/* Số dư hiện tại (thực tế) */}
+              <div className="mb-3">
+                <p className="text-lg font-bold text-blue-600 dark:text-blue-400 mb-1">
+                  {hideBalance ? (
+                    "•••••••"
+                  ) : (
+                    <>
+                      {balanceStats.income_real - balanceStats.expense_real >= 0
+                        ? "+"
+                        : ""}
+                      {formatCurrency(
+                        balanceStats.income_real - balanceStats.expense_real
+                      )}
+                    </>
+                  )}
+                </p>
+                <div className="text-xs text-blue-600 dark:text-blue-400">
+                  Hiện tại (thực tế)
+                </div>
+              </div>
+
+              {/* Số dư tổng */}
+              <div>
+                <p className="text-sm font-semibold text-blue-500 dark:text-blue-300 mb-1">
+                  {hideBalance ? (
+                    "••••••"
+                  ) : (
+                    <>
+                      {balanceStats.income_real -
+                        balanceStats.expense_real +
+                        balanceStats.expense_virtual >=
+                      0
+                        ? "+"
+                        : ""}
+                      {formatCurrency(
+                        balanceStats.income_real -
+                          balanceStats.expense_real +
+                          balanceStats.expense_virtual
+                      )}
+                    </>
+                  )}
+                </p>
+                <div className="text-xs text-gray-500 dark:text-gray-400">
+                  Tổng (bao gồm ảo)
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="flex justify-center items-center h-20">
+            <p className="text-gray-500 dark:text-gray-400 text-center">
+              Đang tải thông tin số dư...
+            </p>
+          </div>
+        )}
+      </AppCard>
+
+      <AppCard
+        title="Quản lý giao dịch"
+        description="Thêm giao dịch mới"
+        icon={CreditCard}
+      >
+        <TransactionForm
+          categories={allCategories}
+          transactions={transactions}
+          onSubmit={handleAddTransaction}
+          isLoading={addMutation.isPending}
+          showTypeSelector={true}
+        />
+
+        {(addMutation.isError ||
+          deleteMutation.isError ||
+          toggleResolvedMutation.isError ||
+          toggleVirtualMutation.isError) && (
+          <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-lg flex items-start">
+            <AlertCircle className="h-5 w-5 mr-2 flex-shrink-0 mt-0.5" />
+            <div>
+              {addMutation.isError && (
+                <p>
+                  {(addMutation.error as Error)?.message ||
+                    "Không thể thêm giao dịch"}
+                </p>
+              )}
+              {deleteMutation.isError && (
+                <p>
+                  {(deleteMutation.error as Error)?.message ||
+                    "Không thể xóa giao dịch"}
+                </p>
+              )}
+              {toggleResolvedMutation.isError && (
+                <p>
+                  {(toggleResolvedMutation.error as Error)?.message ||
+                    "Không thể cập nhật trạng thái giao dịch"}
+                </p>
+              )}
+              {toggleVirtualMutation.isError && (
+                <p>
+                  {(toggleVirtualMutation.error as Error)?.message ||
+                    "Không thể cập nhật trạng thái giao dịch ảo"}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+      </AppCard>
+
+      <AppCard
+        title="Danh sách giao dịch"
+        description={`${transactions.length} giao dịch${
+          hasNextPage ? " gần nhất" : ""
+        } của bạn`}
+        icon={List}
+      >
+        <TransactionList
+          transactions={transactions}
+          categories={allCategories} // Pass all categories so TransactionList can handle both types
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onToggleResolved={handleToggleResolved}
+          onToggleVirtual={handleToggleVirtual}
+          isDeleting={deleteMutation.isPending}
+          deletingId={deleteMutation.variables as string}
+          isTogglingResolved={toggleResolvedMutation.isPending}
+          togglingId={
+            toggleResolvedMutation.variables?.id as string | undefined
+          }
+          isTogglingVirtual={toggleVirtualMutation.isPending}
+          togglingVirtualId={
+            toggleVirtualMutation.variables?.id as string | undefined
+          }
+        />
+
+        {/* Load More Button */}
+        {hasNextPage && (
+          <div className="flex justify-center mt-6">
             <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setHideBalance(!hideBalance)}
-              className="text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/20"
+              onClick={loadMoreTransactions}
+              disabled={isFetchingNextPage}
+              variant="outline"
+              className="border-primary text-primary hover:bg-primary hover:text-white dark:border-green-400 dark:text-green-400 dark:hover:bg-green-400 dark:hover:text-gray-900"
             >
-              {hideBalance ? <Eye size={16} /> : <EyeOff size={16} />}
+              {isFetchingNextPage ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Đang tải...
+                </>
+              ) : (
+                <>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Tải thêm giao dịch
+                </>
+              )}
             </Button>
           </div>
-          <CardDescription>Tổng quan tài chính tháng này</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {balanceStats ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Thu nhập */}
-              <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
-                <h3 className="text-sm font-medium text-green-700 dark:text-green-300 mb-2">
-                  Thu nhập
-                </h3>
+        )}
 
-                {/* Thu nhập tổng - Primary field */}
-                <p className="text-xl font-bold text-green-600 dark:text-green-400 mb-2">
-                  {hideBalance
-                    ? "•••••••"
-                    : formatCurrency(balanceStats.income)}
-                </p>
-
-                {/* Thu nhập chi tiết */}
-                <div className="space-y-1 text-xs">
-                  <div className="flex justify-between text-green-600 dark:text-green-400">
-                    <span>Thực tế:</span>
-                    <span className="font-medium">
-                      {hideBalance
-                        ? "••••••"
-                        : formatCurrency(balanceStats.income_real)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-green-500 dark:text-green-500">
-                    <span>Ảo:</span>
-                    <span className="font-medium">
-                      {hideBalance
-                        ? "••••••"
-                        : formatCurrency(balanceStats.income_virtual)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Chi tiêu */}
-              <div className="text-center p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
-                <h3 className="text-sm font-medium text-red-700 dark:text-red-300 mb-2">
-                  Chi tiêu
-                </h3>
-
-                {/* Chi tiêu tổng - Primary field */}
-                <p className="text-xl font-bold text-red-600 dark:text-red-400 mb-2">
-                  {hideBalance
-                    ? "•••••••"
-                    : formatCurrency(balanceStats.expense)}
-                </p>
-
-                {/* Chi tiêu chi tiết */}
-                <div className="space-y-1 text-xs">
-                  <div className="flex justify-between text-red-600 dark:text-red-400">
-                    <span>Thực tế:</span>
-                    <span className="font-medium">
-                      {hideBalance
-                        ? "••••••"
-                        : formatCurrency(balanceStats.expense_real)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-red-500 dark:text-red-500">
-                    <span>Ảo:</span>
-                    <span className="font-medium">
-                      {hideBalance
-                        ? "••••••"
-                        : formatCurrency(balanceStats.expense_virtual)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Số dư */}
-              <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                <h3 className="text-sm font-medium text-blue-700 dark:text-blue-300 mb-2">
-                  Số dư
-                </h3>
-
-                {/* Số dư hiện tại (thực tế) */}
-                <div className="mb-3">
-                  <p className="text-lg font-bold text-blue-600 dark:text-blue-400 mb-1">
-                    {hideBalance ? (
-                      "•••••••"
-                    ) : (
-                      <>
-                        {balanceStats.income_real - balanceStats.expense_real >=
-                        0
-                          ? "+"
-                          : ""}
-                        {formatCurrency(
-                          balanceStats.income_real - balanceStats.expense_real
-                        )}
-                      </>
-                    )}
-                  </p>
-                  <div className="text-xs text-blue-600 dark:text-blue-400">
-                    Hiện tại (thực tế)
-                  </div>
-                </div>
-
-                {/* Số dư tổng */}
-                <div>
-                  <p className="text-sm font-semibold text-blue-500 dark:text-blue-300 mb-1">
-                    {hideBalance ? (
-                      "••••••"
-                    ) : (
-                      <>
-                        {balanceStats.income_real -
-                          balanceStats.expense_real +
-                          balanceStats.expense_virtual >=
-                        0
-                          ? "+"
-                          : ""}
-                        {formatCurrency(
-                          balanceStats.income_real -
-                            balanceStats.expense_real +
-                            balanceStats.expense_virtual
-                        )}
-                      </>
-                    )}
-                  </p>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">
-                    Tổng (bao gồm ảo)
-                  </div>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="flex justify-center items-center h-20">
-              <p className="text-gray-500 dark:text-gray-400 text-center">
-                Đang tải thông tin số dư...
-              </p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      <Card className="shadow-md">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-primary dark:text-green-400">
-            <CreditCard size={20} />
-            Quản lý giao dịch
-          </CardTitle>
-          <CardDescription>Thêm giao dịch mới</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <TransactionForm
-            categories={allCategories}
-            transactions={transactions}
-            onSubmit={handleAddTransaction}
-            isLoading={addMutation.isPending}
-            showTypeSelector={true}
-          />
-
-          {(addMutation.isError ||
-            deleteMutation.isError ||
-            toggleResolvedMutation.isError ||
-            toggleVirtualMutation.isError) && (
-            <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-lg flex items-start">
-              <AlertCircle className="h-5 w-5 mr-2 flex-shrink-0 mt-0.5" />
-              <div>
-                {addMutation.isError && (
-                  <p>
-                    {(addMutation.error as Error)?.message ||
-                      "Không thể thêm giao dịch"}
-                  </p>
-                )}
-                {deleteMutation.isError && (
-                  <p>
-                    {(deleteMutation.error as Error)?.message ||
-                      "Không thể xóa giao dịch"}
-                  </p>
-                )}
-                {toggleResolvedMutation.isError && (
-                  <p>
-                    {(toggleResolvedMutation.error as Error)?.message ||
-                      "Không thể cập nhật trạng thái giao dịch"}
-                  </p>
-                )}
-                {toggleVirtualMutation.isError && (
-                  <p>
-                    {(toggleVirtualMutation.error as Error)?.message ||
-                      "Không thể cập nhật trạng thái giao dịch ảo"}
-                  </p>
-                )}
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      <Card className="shadow-md">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-primary dark:text-green-400">
-            <List size={20} />
-            Danh sách giao dịch
-          </CardTitle>
-          <CardDescription>
-            {transactions.length} giao dịch{hasNextPage ? " gần nhất" : ""} của
-            bạn
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <TransactionList
-            transactions={transactions}
-            categories={allCategories} // Pass all categories so TransactionList can handle both types
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            onToggleResolved={handleToggleResolved}
-            onToggleVirtual={handleToggleVirtual}
-            isDeleting={deleteMutation.isPending}
-            deletingId={deleteMutation.variables as string}
-            isTogglingResolved={toggleResolvedMutation.isPending}
-            togglingId={
-              toggleResolvedMutation.variables?.id as string | undefined
-            }
-            isTogglingVirtual={toggleVirtualMutation.isPending}
-            togglingVirtualId={
-              toggleVirtualMutation.variables?.id as string | undefined
-            }
-          />
-
-          {/* Load More Button */}
-          {hasNextPage && (
-            <div className="flex justify-center mt-6">
-              <Button
-                onClick={loadMoreTransactions}
-                disabled={isFetchingNextPage}
-                variant="outline"
-                className="border-primary text-primary hover:bg-primary hover:text-white dark:border-green-400 dark:text-green-400 dark:hover:bg-green-400 dark:hover:text-gray-900"
-              >
-                {isFetchingNextPage ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Đang tải...
-                  </>
-                ) : (
-                  <>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Tải thêm giao dịch
-                  </>
-                )}
-              </Button>
-            </div>
-          )}
-
-          {!hasNextPage && transactions.length > 0 && (
-            <div className="text-center mt-6 text-sm text-gray-500 dark:text-gray-400">
-              Đã hiển thị tất cả giao dịch
-            </div>
-          )}
-        </CardContent>
-      </Card>
+        {!hasNextPage && transactions.length > 0 && (
+          <div className="text-center mt-6 text-sm text-gray-500 dark:text-gray-400">
+            Đã hiển thị tất cả giao dịch
+          </div>
+        )}
+      </AppCard>
 
       {/* Edit Dialog */}
       {editingTransaction && (

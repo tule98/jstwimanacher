@@ -12,6 +12,62 @@ export interface Category {
   type: "income" | "expense";
 }
 
+export interface Asset {
+  id: string;
+  name: string;
+  color: string;
+  unit: string;
+  created_at: UTCString;
+}
+
+export interface AssetCreateData {
+  name: string;
+  color: string;
+  unit?: string;
+}
+
+export interface AssetUpdateData {
+  id: string;
+  name?: string;
+  color?: string;
+  unit?: string;
+}
+
+export interface AssetConversion {
+  id: string;
+  asset_id: string;
+  transaction_id: string;
+  conversion_type: "buy" | "sell";
+  quantity: number;
+  created_at: UTCString;
+  updated_at: UTCString;
+  asset: Asset;
+  transaction: Transaction & { category: Category };
+}
+
+export interface AssetConversionCreateData {
+  assetId: string;
+  amount: number;
+  quantity: number;
+  categoryId: string;
+  note?: string;
+  conversionType: "buy" | "sell";
+  created_at?: UTCString | string;
+}
+
+export interface AssetPortfolio {
+  asset_id: string;
+  asset_name: string;
+  asset_color: string;
+  buy_count: number;
+  sell_count: number;
+  total_invested: number;
+  total_received: number;
+  total_quantity: number;
+  unit: string;
+  current_status: "owned" | "sold";
+}
+
 export interface Transaction {
   id: string;
   amount: number;
@@ -298,6 +354,165 @@ export const TransactionsAPI = {
 };
 
 /**
+ * Assets API Client
+ */
+export const AssetsAPI = {
+  /**
+   * Get all assets
+   */
+  async getAll(): Promise<Asset[]> {
+    const response = await fetch("/api/assets");
+    if (!response.ok) {
+      throw new Error("Failed to fetch assets");
+    }
+    return response.json();
+  },
+
+  /**
+   * Create new asset
+   */
+  async create(data: AssetCreateData): Promise<Asset> {
+    const response = await fetch("/api/assets", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result.error || "Failed to create asset");
+    }
+    return result;
+  },
+
+  /**
+   * Update asset
+   */
+  async update(data: AssetUpdateData): Promise<Asset> {
+    const response = await fetch("/api/assets", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result.error || "Failed to update asset");
+    }
+    return result;
+  },
+
+  /**
+   * Delete asset
+   */
+  async delete(id: string): Promise<void> {
+    const response = await fetch(`/api/assets?id=${id}`, {
+      method: "DELETE",
+    });
+
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result.error || "Failed to delete asset");
+    }
+  },
+
+  /**
+   * Get asset portfolio summary
+   */
+  async getPortfolio(): Promise<AssetPortfolio[]> {
+    const response = await fetch("/api/assets/portfolio");
+    if (!response.ok) {
+      throw new Error("Failed to fetch asset portfolio");
+    }
+    return response.json();
+  },
+};
+
+/**
+ * Conversions API Client
+ */
+export const ConversionsAPI = {
+  /**
+   * Get all conversions
+   */
+  async getAll(): Promise<AssetConversion[]> {
+    const response = await fetch("/api/conversions");
+    if (!response.ok) {
+      throw new Error("Failed to fetch conversions");
+    }
+    return response.json();
+  },
+
+  /**
+   * Get conversions by asset ID
+   */
+  async getByAsset(assetId: string): Promise<AssetConversion[]> {
+    const response = await fetch(`/api/conversions?asset_id=${assetId}`);
+    if (!response.ok) {
+      throw new Error("Failed to fetch conversions for asset");
+    }
+    return response.json();
+  },
+
+  /**
+   * Get conversions by type
+   */
+  async getByType(type: "buy" | "sell"): Promise<AssetConversion[]> {
+    const response = await fetch(`/api/conversions?type=${type}`);
+    if (!response.ok) {
+      throw new Error("Failed to fetch conversions by type");
+    }
+    return response.json();
+  },
+
+  /**
+   * Create new conversion
+   * This creates both a transaction and a conversion in one operation
+   */
+  async create(data: AssetConversionCreateData): Promise<AssetConversion> {
+    // Convert created_at to UTC if provided
+    const requestData = {
+      ...data,
+      created_at: data.created_at
+        ? parseUserDateToUTC(data.created_at)
+        : undefined,
+    };
+
+    const response = await fetch("/api/conversions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(requestData),
+    });
+
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result.error || "Failed to create conversion");
+    }
+    return result;
+  },
+
+  /**
+   * Delete conversion
+   */
+  async delete(id: string): Promise<void> {
+    const response = await fetch(`/api/conversions?id=${id}`, {
+      method: "DELETE",
+    });
+
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result.error || "Failed to delete conversion");
+    }
+  },
+};
+
+/**
  * Stats API Client
  */
 export const StatsAPI = {
@@ -347,6 +562,8 @@ export const API = {
   categories: CategoriesAPI,
   transactions: TransactionsAPI,
   stats: StatsAPI,
+  assets: AssetsAPI,
+  conversions: ConversionsAPI,
 };
 
 export default API;

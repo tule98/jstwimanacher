@@ -47,7 +47,20 @@ Xây dựng ứng dụng đa chức năng kết hợp quản lý tài chính cá
 - Biểu đồ trực quan: Pie Chart (phân bổ chi tiêu), Bar Chart (lịch sử theo tháng).
 - Hỗ trợ filter theo tháng/năm, tùy chỉnh hiển thị biểu đồ.
 
-### 1.4. Noxon Schedule Organizer
+### 1.5. Quản lý tài sản (Assets Management)
+
+- **Quản lý loại tài sản**: Tạo, sửa, xóa các loại tài sản (vàng, crypto, cổ phiếu, bất động sản, v.v.)
+- **Asset Conversions**: Chuyển đổi tiền từ transactions thành tài sản
+- **Danh sách tài sản hiện có**: Hiển thị các tài sản đang sở hữu với thông tin đầu tư
+- **Tích hợp với transactions**: Liên kết chặt chẽ với hệ thống quản lý tài chính hiện có
+- **UI đơn giản**: Card-based design với màu sắc phân biệt theo loại tài sản
+
+### 1.6. Cấu hình hệ thống (Configuration)
+
+- **Quản lý Categories**: Tạo, sửa, xóa danh mục chi tiêu/thu nhập
+- **Quản lý Assets**: Tạo, sửa, xóa các loại tài sản
+- **Giao diện thống nhất**: Trang cấu hình chung cho Categories và Assets
+- **Phân quyền truy cập**: Trang cấu hình riêng biệt với navigation độc lập
 
 - **Tích hợp Notion API** để quản lý lịch trình thông minh.
 - **3 nguồn dữ liệu chính**:
@@ -61,7 +74,8 @@ Xây dựng ứng dụng đa chức năng kết hợp quản lý tài chính cá
   - Đề xuất ưu tiên công việc và time-blocking.
 - **Copy prompt** để sử dụng với AI assistant.
 - **Refresh data** để cập nhật thông tin mới nhất từ Notion.
-- **UI độc lập** không hiển thị trong navigation chính.
+
+### 1.7. Noxon Schedule Organizer
 
 ---
 

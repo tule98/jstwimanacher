@@ -2,10 +2,16 @@ import { db } from "@/db";
 import {
   categories,
   transactions,
+  assets,
+  assetConversions,
   type Category,
   type Transaction,
+  type Asset,
+  type AssetConversion,
   type NewCategory,
   type NewTransaction,
+  type NewAsset,
+  type NewAssetConversion,
 } from "@/db/schema";
 import { eq, desc, and, gte, lt, sql } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
@@ -13,6 +19,10 @@ import { nowUTC, getMonthBoundsUTC, toUTC, UTCString } from "@/lib/timezone";
 
 export class DatabaseService {
   // Categories methods
+  async getCategories(): Promise<Category[]> {
+    return await db.select().from(categories);
+  }
+
   async getAllCategories(): Promise<Category[]> {
     return await db.select().from(categories);
   }
@@ -343,6 +353,246 @@ export class DatabaseService {
       expense: expense_total,
       balance: income_total - expense_total,
     };
+  }
+
+  // Assets methods
+  async getAssets(): Promise<Asset[]> {
+    return await db.select().from(assets).orderBy(desc(assets.created_at));
+  }
+
+  async getAssetById(id: string): Promise<Asset | null> {
+    const result = await db
+      .select()
+      .from(assets)
+      .where(eq(assets.id, id))
+      .limit(1);
+    return result[0] || null;
+  }
+
+  async createAsset(data: {
+    name: string;
+    color?: string;
+    unit?: string;
+  }): Promise<Asset> {
+    const newAsset: NewAsset = {
+      id: uuidv4(),
+      name: data.name,
+      color: data.color || "#6366f1",
+      unit: data.unit || "đơn vị",
+      created_at: nowUTC(),
+    };
+
+    const result = await db.insert(assets).values(newAsset).returning();
+    return result[0];
+  }
+
+  async updateAsset(
+    id: string,
+    data: Partial<{
+      name: string;
+      color: string;
+      unit: string;
+    }>
+  ): Promise<Asset | null> {
+    const result = await db
+      .update(assets)
+      .set(data)
+      .where(eq(assets.id, id))
+      .returning();
+
+    return result[0] || null;
+  }
+
+  async deleteAsset(id: string): Promise<boolean> {
+    // Check if asset has conversions
+    const existingConversions = await db
+      .select()
+      .from(assetConversions)
+      .where(eq(assetConversions.asset_id, id))
+      .limit(1);
+
+    if (existingConversions.length > 0) {
+      throw new Error("Cannot delete asset with existing conversions");
+    }
+
+    const result = await db.delete(assets).where(eq(assets.id, id));
+    return result.rowsAffected > 0;
+  }
+
+  // Asset Conversions methods
+  async getAssetConversions(filters?: {
+    assetId?: string;
+    conversionType?: "buy" | "sell";
+  }): Promise<
+    (AssetConversion & {
+      asset: Asset;
+      transaction: Transaction & { category: Category };
+    })[]
+  > {
+    // Build where conditions
+    const conditions = [];
+
+    if (filters?.assetId) {
+      conditions.push(eq(assetConversions.asset_id, filters.assetId));
+    }
+
+    if (filters?.conversionType) {
+      conditions.push(
+        eq(assetConversions.conversion_type, filters.conversionType)
+      );
+    }
+
+    const baseQuery = db
+      .select()
+      .from(assetConversions)
+      .leftJoin(assets, eq(assetConversions.asset_id, assets.id))
+      .leftJoin(
+        transactions,
+        eq(assetConversions.transaction_id, transactions.id)
+      )
+      .leftJoin(categories, eq(transactions.category_id, categories.id));
+
+    const query =
+      conditions.length > 0
+        ? baseQuery.where(
+            conditions.length === 1 ? conditions[0] : and(...conditions)
+          )
+        : baseQuery;
+
+    const result = await query.orderBy(desc(assetConversions.created_at));
+
+    return result.map((row) => ({
+      ...row.asset_conversions,
+      asset: row.assets!,
+      transaction: {
+        ...row.transactions!,
+        category: row.categories!,
+      },
+    }));
+  }
+
+  async createAssetConversion(data: {
+    assetId: string;
+    transactionId: string;
+    conversionType: "buy" | "sell";
+    quantity: number;
+  }): Promise<AssetConversion> {
+    const newConversion: NewAssetConversion = {
+      id: uuidv4(),
+      asset_id: data.assetId,
+      transaction_id: data.transactionId,
+      conversion_type: data.conversionType,
+      quantity: data.quantity,
+      created_at: nowUTC(),
+      updated_at: nowUTC(),
+    };
+
+    const result = await db
+      .insert(assetConversions)
+      .values(newConversion)
+      .returning();
+
+    return result[0];
+  }
+
+  async deleteAssetConversion(id: string): Promise<boolean> {
+    const result = await db
+      .delete(assetConversions)
+      .where(eq(assetConversions.id, id));
+
+    return result.rowsAffected > 0;
+  }
+
+  // Get assets portfolio summary
+  async getAssetPortfolio(): Promise<
+    {
+      asset_id: string;
+      asset_name: string;
+      asset_color: string;
+      buy_count: number;
+      sell_count: number;
+      total_invested: number;
+      total_received: number;
+      total_quantity: number;
+      unit: string;
+      current_status: "owned" | "sold";
+    }[]
+  > {
+    const result = await db
+      .select({
+        asset_id: assets.id,
+        asset_name: assets.name,
+        asset_color: assets.color,
+        asset_unit: assets.unit,
+        conversion_type: assetConversions.conversion_type,
+        transaction_amount: transactions.amount,
+        quantity: assetConversions.quantity,
+      })
+      .from(assets)
+      .leftJoin(assetConversions, eq(assets.id, assetConversions.asset_id))
+      .leftJoin(
+        transactions,
+        eq(assetConversions.transaction_id, transactions.id)
+      )
+      .where(
+        and(
+          eq(transactions.is_resolved, true),
+          eq(transactions.is_virtual, false)
+        )
+      );
+
+    // Group and calculate portfolio data
+    const portfolioMap = new Map<
+      string,
+      {
+        asset_id: string;
+        asset_name: string;
+        asset_color: string;
+        buy_count: number;
+        sell_count: number;
+        total_invested: number;
+        total_received: number;
+        total_quantity: number;
+        unit: string;
+      }
+    >();
+
+    result.forEach((row) => {
+      if (!row.asset_id) return;
+
+      const key = row.asset_id;
+      if (!portfolioMap.has(key)) {
+        portfolioMap.set(key, {
+          asset_id: row.asset_id,
+          asset_name: row.asset_name,
+          asset_color: row.asset_color,
+          buy_count: 0,
+          sell_count: 0,
+          total_invested: 0,
+          total_received: 0,
+          total_quantity: 0,
+          unit: row.asset_unit || "đơn vị", // Get unit from asset
+        });
+      }
+
+      const portfolio = portfolioMap.get(key)!;
+
+      if (row.conversion_type === "buy") {
+        portfolio.buy_count++;
+        portfolio.total_invested += Math.abs(row.transaction_amount || 0);
+        portfolio.total_quantity += row.quantity || 0;
+      } else if (row.conversion_type === "sell") {
+        portfolio.sell_count++;
+        portfolio.total_received += Math.abs(row.transaction_amount || 0);
+        portfolio.total_quantity -= row.quantity || 0;
+      }
+    });
+
+    return Array.from(portfolioMap.values()).map((portfolio) => ({
+      ...portfolio,
+      current_status:
+        portfolio.total_quantity > 0 ? "owned" : ("sold" as "owned" | "sold"),
+    }));
   }
 }
 

@@ -4,6 +4,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { formatDateRange, formatDate } from "@/lib/utils";
 
 interface NoxonData {
   id?: string;
@@ -199,30 +200,6 @@ export default function NoxonPage() {
     } catch (error) {
       console.error("Failed to copy:", error);
     }
-  };
-
-  const formatDate = (dateStr: string | null | undefined) => {
-    if (!dateStr) return "N/A";
-    const date = new Date(dateStr);
-    return date.toLocaleDateString("vi-VN", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    });
-  };
-
-  const formatDateRange = (
-    startDate: string | null | undefined,
-    endDate: string | null | undefined
-  ) => {
-    if (!startDate && !endDate) return null;
-    if (startDate && endDate) {
-      return `${formatDate(startDate)} - ${formatDate(endDate)}`;
-    }
-    if (startDate) {
-      return `Từ ${formatDate(startDate)}`;
-    }
-    return null;
   };
 
   if (loading) {

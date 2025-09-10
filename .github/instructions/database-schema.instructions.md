@@ -2,7 +2,7 @@
 applyTo: "**"
 ---
 
-## 1. Sheet: Categories
+## 1. Table: Categories
 
 Quản lý danh mục chi tiêu.
 
@@ -13,7 +13,7 @@ type (string: 'expense' hoặc 'income')
 
 ---
 
-## 2. Sheet: Transactions
+## 2. Table: Transactions
 
 Quản lý các khoản chi tiêu/thu nhập.
 
@@ -47,10 +47,52 @@ is_virtual (boolean, mặc định false)
 
 ---
 
+---
+
+## 3. Table: Assets
+
+Quản lý các loại tài sản.
+
+id (string, khóa chính)
+name (string)
+color (string)
+created_at (datetime)
+
+---
+
+## 4. Table: Asset Conversions
+
+Quản lý chuyển đổi tiền thành tài sản.
+
+id (string, khóa chính)
+asset_id (string, khóa ngoại)
+transaction_id (string, khóa ngoại)
+conversion_type (string: 'buy' hoặc 'sell')
+created_at (datetime)
+updated_at (datetime)
+
+---
+
+## Business Rules cho Asset Conversions
+
+- **Asset Conversions**: Liên kết giao dịch tiền với tài sản
+- **conversion_type = 'buy'**: Chuyển đổi tiền → tài sản (giao dịch chi tiêu)
+- **conversion_type = 'sell'**: Chuyển đổi tài sản → tiền (giao dịch thu nhập)
+
+### API endpoints mở rộng:
+
+- `/api/assets`: CRUD quản lý tài sản
+- `/api/conversions`: Quản lý chuyển đổi asset-transaction
+- `/api/config`: Cấu hình chung categories và assets
+
+---
+
 ## Tổng kết
 
 - **Categories**: Quản lý danh mục chi tiêu, dùng name làm khóa.
 - **Transactions**: Quản lý các khoản chi tiêu/thu nhập, liên kết với category_id.
+- **Assets**: Quản lý các loại tài sản có thể đầu tư.
+- **Asset Conversions**: Liên kết giao dịch tiền với việc mua/bán tài sản.
 - **Transactions.is_resolved**: Đánh dấu giao dịch cần xem xét lại (false) hoặc đã xác nhận (true).
 - **Transactions.is_virtual**: Đánh dấu giao dịch ảo/dự định (true) hoặc thực tế (false).
 
@@ -60,4 +102,11 @@ is_virtual (boolean, mặc định false)
 2. Số dư thực tế chỉ tính transactions thực tế của tháng hiện tại
 3. Số dư tổng bao gồm cả virtual expenses để dự báo tài chính
 
-Các sheet này đáp ứng đầy đủ các tính năng quản lý, nhập liệu, thống kê cho app.
+### Quy tắc nghiệp vụ Asset Conversions:
+
+1. Mỗi asset conversion phải liên kết với 1 transaction
+2. Buy conversion tạo transaction chi tiêu (amount âm)
+3. Sell conversion tạo transaction thu nhập (amount dương)
+4. Assets hiển thị danh sách tài sản đang sở hữu dựa trên buy/sell count
+
+Các sheet này đáp ứng đầy đủ các tính năng quản lý, nhập liệu, thống kê và quản lý tài sản cho app.
