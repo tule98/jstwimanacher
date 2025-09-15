@@ -20,6 +20,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import {
   Link2,
   Plus,
@@ -323,14 +326,14 @@ export default function ConversionsPage() {
 
             {/* Asset */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">Tài sản</label>
+              <Label htmlFor="asset">Tài sản</Label>
               <Select
                 value={conversionForm.assetId}
                 onValueChange={(value) =>
                   setConversionForm({ ...conversionForm, assetId: value })
                 }
               >
-                <SelectTrigger className="w-full border-input">
+                <SelectTrigger id="asset" className="w-full border-input">
                   <SelectValue placeholder="Chọn tài sản" />
                 </SelectTrigger>
                 <SelectContent>
@@ -351,9 +354,10 @@ export default function ConversionsPage() {
 
             {/* Amount */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">Số tiền (VND)</label>
+              <Label htmlFor="amount">Số tiền (VND)</Label>
               <div className="relative">
-                <input
+                <Input
+                  id="amount"
                   type="number"
                   value={conversionForm.amount}
                   onChange={(e) =>
@@ -363,7 +367,6 @@ export default function ConversionsPage() {
                     })
                   }
                   placeholder="Nhập số tiền"
-                  className="w-full rounded-lg px-3 py-2 border focus:outline-none focus:ring-2 focus:ring-primary/50 shadow"
                   required
                 />
               </div>
@@ -371,8 +374,9 @@ export default function ConversionsPage() {
 
             {/* Quantity */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">Số lượng</label>
-              <input
+              <Label htmlFor="quantity">Số lượng</Label>
+              <Input
+                id="quantity"
                 type="number"
                 value={conversionForm.quantity}
                 onChange={(e) =>
@@ -382,7 +386,6 @@ export default function ConversionsPage() {
                   })
                 }
                 placeholder="Số lượng"
-                className="w-full rounded-lg px-3 py-2 border focus:outline-none focus:ring-2 focus:ring-primary/50 shadow"
                 required
               />
               {conversionForm.assetId && (
@@ -396,14 +399,14 @@ export default function ConversionsPage() {
 
             {/* Category */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">Danh mục</label>
+              <Label htmlFor="category">Danh mục</Label>
               <Select
                 value={conversionForm.categoryId}
                 onValueChange={(value) =>
                   setConversionForm({ ...conversionForm, categoryId: value })
                 }
               >
-                <SelectTrigger className="w-full border-input">
+                <SelectTrigger id="category" className="w-full border-input">
                   <SelectValue placeholder="Chọn danh mục" />
                 </SelectTrigger>
                 <SelectContent>
@@ -450,14 +453,15 @@ export default function ConversionsPage() {
 
             {/* Note */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">Ghi chú (tùy chọn)</label>
-              <textarea
+              <Label htmlFor="note">Ghi chú (tùy chọn)</Label>
+              <Textarea
+                id="note"
                 value={conversionForm.note}
                 onChange={(e) =>
                   setConversionForm({ ...conversionForm, note: e.target.value })
                 }
                 placeholder="Thêm ghi chú"
-                className="w-full rounded-lg px-3 py-2 border focus:outline-none focus:ring-2 focus:ring-primary/50 shadow min-h-[80px]"
+                className="min-h-[80px]"
               />
             </div>
 

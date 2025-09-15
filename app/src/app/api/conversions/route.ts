@@ -57,8 +57,7 @@ export async function POST(request: NextRequest) {
     // Create transaction based on conversion type
     // For buy: negative amount (expense)
     // For sell: positive amount (income)
-    const transactionAmount =
-      conversionType === "buy" ? -Math.abs(amount) : Math.abs(amount);
+    const transactionAmount = amount;
 
     // Get asset name and unit for the note
     const asset = await databaseService.getAssetById(assetId);

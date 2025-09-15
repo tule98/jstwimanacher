@@ -285,6 +285,17 @@ export const TransactionsAPI = {
   },
 
   /**
+   * Get all unresolved transactions (not limited by time)
+   */
+  async getUnresolvedTransactions(): Promise<Transaction[]> {
+    const response = await fetch("/api/transactions/unresolved");
+    if (!response.ok) {
+      throw new Error("Failed to fetch unresolved transactions");
+    }
+    return response.json();
+  },
+
+  /**
    * Create new transaction
    */
   async create(data: TransactionCreateData): Promise<Transaction> {

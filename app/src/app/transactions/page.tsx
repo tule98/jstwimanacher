@@ -106,6 +106,7 @@ export default function TransactionsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["virtual-transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["unresolved-transactions"] });
       queryClient.invalidateQueries({ queryKey: ["balance-stats"] });
     },
   });
@@ -115,6 +116,7 @@ export default function TransactionsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["virtual-transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["unresolved-transactions"] });
       queryClient.invalidateQueries({ queryKey: ["balance-stats"] });
     },
   });
@@ -124,6 +126,7 @@ export default function TransactionsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["virtual-transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["unresolved-transactions"] });
       queryClient.invalidateQueries({ queryKey: ["balance-stats"] });
     },
   });
@@ -134,6 +137,7 @@ export default function TransactionsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["virtual-transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["unresolved-transactions"] });
       queryClient.invalidateQueries({ queryKey: ["balance-stats"] });
     },
   });
@@ -144,6 +148,7 @@ export default function TransactionsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["virtual-transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["unresolved-transactions"] });
       queryClient.invalidateQueries({ queryKey: ["balance-stats"] });
     },
   });

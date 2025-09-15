@@ -299,8 +299,7 @@ export class DatabaseService {
       .where(
         and(
           gte(transactions.created_at, start),
-          lt(transactions.created_at, end),
-          eq(transactions.is_virtual, false)
+          lt(transactions.created_at, end)
         )
       )
       .groupBy(categories.type);

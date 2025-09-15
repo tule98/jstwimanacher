@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,6 +15,8 @@ import {
 import { format, parseISO, isSameDay } from "date-fns";
 import { Category, Transaction } from "@/services/api/client";
 import API from "@/services/api/client";
+import VirtualTransactionViewerDialog from "./VirtualTransactionViewerDialog";
+import UnresolvedTransactionViewerDialog from "./UnresolvedTransactionViewerDialog";
 
 interface TransactionListProps {
   transactions: Transaction[];
@@ -87,6 +89,19 @@ export default function TransactionList({
     staleTime: 30000, // 30 seconds
   });
 
+  // Fetch all unresolved transactions separately (not limited by time)
+  const { data: unresolvedTransactions = [] } = useQuery<Transaction[]>({
+    queryKey: ["unresolved-transactions"],
+    queryFn: API.transactions.getUnresolvedTransactions,
+    staleTime: 30000, // 30 seconds
+  });
+
+  // State for virtual transactions dialog
+  const [showVirtualDialog, setShowVirtualDialog] = useState(false);
+
+  // State for unresolved transactions dialog
+  const [showUnresolvedDialog, setShowUnresolvedDialog] = useState(false);
+
   const getCategoryColor = (categoryId: string): string => {
     const category = categories.find((cat) => cat.id === categoryId);
     return category?.color || "#000000";
@@ -103,12 +118,13 @@ export default function TransactionList({
   };
 
   const groupedTransactions = groupTransactionsByDay(transactions);
-  const unresolvedCount = transactions.filter(
-    (tx) => tx.is_resolved === false
-  ).length;
-  const unresolvedTotal = transactions
-    .filter((tx) => tx.is_resolved === false)
-    .reduce((sum, tx) => sum + tx.amount, 0);
+
+  // Use the global unresolved transactions data instead of filtering current transactions
+  const unresolvedCount = unresolvedTransactions.length;
+  const unresolvedTotal = unresolvedTransactions.reduce(
+    (sum, tx) => sum + tx.amount,
+    0
+  );
 
   // Virtual transactions statistics - use separate API data
   const virtualIncomeCount = virtualTransactions.filter(
@@ -139,37 +155,76 @@ export default function TransactionList({
       {/* Summary for unresolved transactions */}
       {unresolvedCount > 0 && (
         <div className="bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-200 dark:border-yellow-800/50 rounded-lg p-3">
-          <div className="flex items-center gap-2 text-yellow-800 dark:text-yellow-200">
-            <AlertCircle className="w-4 h-4" />
-            <span className="text-sm font-medium">
-              Có {unresolvedCount} giao dịch cần xem xét lại (
-              {formatCurrency(unresolvedTotal)})
-            </span>
+          <div className="flex justify-between items-start">
+            <div className="flex items-center gap-2 text-yellow-800 dark:text-yellow-200">
+              <AlertCircle className="w-4 h-4" />
+              <span className="text-sm font-medium">
+                Có {unresolvedCount} giao dịch cần xem xét lại (
+                {formatCurrency(unresolvedTotal)})
+              </span>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              className="text-yellow-700 dark:text-yellow-300 border-yellow-200 dark:border-yellow-800/50 hover:bg-yellow-100 dark:hover:bg-yellow-900/20"
+              onClick={() => setShowUnresolvedDialog(true)}
+            >
+              Xem tất cả
+            </Button>
           </div>
+
+          <UnresolvedTransactionViewerDialog
+            open={showUnresolvedDialog}
+            onOpenChange={setShowUnresolvedDialog}
+            unresolvedTransactions={unresolvedTransactions}
+            categories={categories}
+            onToggleResolved={onToggleResolved}
+            isTogglingResolved={isTogglingResolved}
+            togglingId={togglingId}
+          />
         </div>
       )}
 
       {/* Summary for virtual transactions */}
       {(virtualIncomeCount > 0 || virtualExpenseCount > 0) && (
         <div className="bg-purple-50 dark:bg-purple-900/10 border border-purple-200 dark:border-purple-800/50 rounded-lg p-3 space-y-2">
-          {virtualIncomeCount > 0 && (
-            <div className="flex items-center gap-2 text-green-700 dark:text-green-300">
-              <Eye className="w-4 h-4" />
-              <span className="text-sm font-medium">
-                Có {virtualIncomeCount} giao dịch thu ảo (
-                {formatCurrency(virtualIncomeTotal)})
-              </span>
+          <div className="flex justify-between items-start">
+            <div className="space-y-2">
+              {virtualIncomeCount > 0 && (
+                <div className="flex items-center gap-2 text-green-700 dark:text-green-300">
+                  <Eye className="w-4 h-4" />
+                  <span className="text-sm font-medium">
+                    Có {virtualIncomeCount} giao dịch thu ảo (
+                    {formatCurrency(virtualIncomeTotal)})
+                  </span>
+                </div>
+              )}
+              {virtualExpenseCount > 0 && (
+                <div className="flex items-center gap-2 text-red-700 dark:text-red-300">
+                  <EyeOff className="w-4 h-4" />
+                  <span className="text-sm font-medium">
+                    Có {virtualExpenseCount} giao dịch chi ảo (
+                    {formatCurrency(virtualExpenseTotal)})
+                  </span>
+                </div>
+              )}
             </div>
-          )}
-          {virtualExpenseCount > 0 && (
-            <div className="flex items-center gap-2 text-red-700 dark:text-red-300">
-              <EyeOff className="w-4 h-4" />
-              <span className="text-sm font-medium">
-                Có {virtualExpenseCount} giao dịch chi ảo (
-                {formatCurrency(virtualExpenseTotal)})
-              </span>
-            </div>
-          )}
+            <Button
+              size="sm"
+              variant="outline"
+              className="text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800/50 hover:bg-purple-100 dark:hover:bg-purple-900/20"
+              onClick={() => setShowVirtualDialog(true)}
+            >
+              Xem tất cả
+            </Button>
+
+            <VirtualTransactionViewerDialog
+              open={showVirtualDialog}
+              onOpenChange={setShowVirtualDialog}
+              virtualTransactions={virtualTransactions}
+              categories={categories}
+            />
+          </div>
         </div>
       )}
 
