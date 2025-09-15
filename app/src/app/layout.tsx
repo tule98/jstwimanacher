@@ -5,8 +5,8 @@ import AppNav from "./_components/AppNav";
 import AuthGuard from "./_components/AuthGuard";
 
 export const metadata = {
-  title: "jstwimanacher",
-  description: "Tự trị",
+  title: "💂 Doorkeeper",
+  description: "💂 Doorkeeper",
 };
 
 export const viewport = {
@@ -26,6 +26,8 @@ export default function RootLayout({
           rel="stylesheet"
         />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        {/* App logo favicon */}
+        <link rel="icon" type="image/png" href="/jstwi-logo.png" />
       </head>
       <body className="font-poppins bg-gradient-to-b from-green-50 to-green-100 min-h-screen dark:from-gray-900 dark:to-gray-800 transition-colors duration-300">
         <AppProvider>

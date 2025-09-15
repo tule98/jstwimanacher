@@ -19,7 +19,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, color } = body;
+    const { name, color, unit } = body;
 
     if (!name) {
       return NextResponse.json({ error: "Name is required" }, { status: 400 });
@@ -28,6 +28,7 @@ export async function POST(request: NextRequest) {
     const asset = await databaseService.createAsset({
       name,
       color: color || "#6366f1",
+      unit,
     });
 
     return NextResponse.json(asset, { status: 201 });
@@ -44,7 +45,7 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
-    const { id, name, color } = body;
+    const { id, name, color, unit } = body;
 
     if (!id) {
       return NextResponse.json(
@@ -56,6 +57,7 @@ export async function PUT(request: NextRequest) {
     const asset = await databaseService.updateAsset(id, {
       name,
       color,
+      unit,
     });
 
     return NextResponse.json(asset);
