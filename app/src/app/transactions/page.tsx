@@ -1,45 +1,28 @@
 "use client";
 import React, { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useCategories, useTransactions } from "@/services/react-query/queries";
 import {
-  useQuery,
-  useMutation,
-  useQueryClient,
-  useInfiniteQuery,
-} from "@tanstack/react-query";
-import { AppCard } from "@/components/ui/app-card";
+  useCreateTransaction,
+  useUpdateTransaction,
+  useDeleteTransaction,
+  useToggleResolvedTransaction,
+  useToggleVirtualTransaction,
+} from "@/services/react-query/mutations";
+import { queryKeys } from "@/services/react-query/query-keys";
+import { AppHighlightBlock } from "@/components/ui/app-highlight-block";
 import { Button } from "@/components/ui/button";
-import {
-  CreditCard,
-  List,
-  Plus,
-  AlertCircle,
-  Loader2,
-  Wallet,
-  Eye,
-  EyeOff,
-} from "lucide-react";
+import { CreditCard, List, Plus, AlertCircle, Loader2 } from "lucide-react";
 import TransactionList from "./_components/TransactionList";
 import TransactionForm from "./_components/TransactionForm";
 import TransactionEditDialog from "./_components/TransactionEditDialog";
+import TransactionStatsSections from "./_components/TransactionStatsSections";
 import API, {
-  Category,
   Transaction,
   TransactionCreateData,
   TransactionUpdateData,
   BalanceStats,
 } from "@/services/api/client";
-
-// Format currency function
-const formatCurrency = (amount: number): string => {
-  return new Intl.NumberFormat("vi-VN", {
-    style: "currency",
-    currency: "VND",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount);
-};
-
-// Format currency function (moved to TransactionList component)
 
 export default function TransactionsPage() {
   const queryClient = useQueryClient();
@@ -53,13 +36,9 @@ export default function TransactionsPage() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] =
     useState<Transaction | null>(null);
-  const [hideBalance, setHideBalance] = useState(true);
 
   // Query categories and transactions
-  const { data: allCategories = [] } = useQuery<Category[]>({
-    queryKey: ["categories"],
-    queryFn: API.categories.getAll,
-  });
+  const { data: allCategories = [] } = useCategories();
 
   // Query current month balance
   const {
@@ -68,7 +47,7 @@ export default function TransactionsPage() {
     isError: isErrorBalance,
     error: balanceError,
   } = useQuery<BalanceStats>({
-    queryKey: ["balance-stats", currentMonth, currentYear],
+    queryKey: queryKeys.balance.stats(currentMonth, currentYear),
     queryFn: () => API.stats.getBalanceStats(currentMonth, currentYear),
   });
 
@@ -83,75 +62,17 @@ export default function TransactionsPage() {
     isLoading: isLoadingTransactions,
     isError: isErrorTransactions,
     error: transactionsError,
-  } = useInfiniteQuery({
-    queryKey: ["transactions", "infinite"],
-    queryFn: ({ pageParam = 0 }) =>
-      API.transactions.getWithPagination(PAGE_SIZE, pageParam),
-    getNextPageParam: (lastPage, allPages) => {
-      // If last page has fewer items than PAGE_SIZE, no more pages
-      if (lastPage.length < PAGE_SIZE) return undefined;
-      // Otherwise, return offset for next page
-      return allPages.length * PAGE_SIZE;
-    },
-    initialPageParam: 0,
-    staleTime: 30000, // 30 seconds
-  });
+  } = useTransactions(PAGE_SIZE);
 
   // Flatten all pages into a single array
   const transactions = transactionPages?.pages.flat() ?? [];
 
   // Mutations for add, update, delete
-  const addMutation = useMutation({
-    mutationFn: API.transactions.create,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["transactions"] });
-      queryClient.invalidateQueries({ queryKey: ["virtual-transactions"] });
-      queryClient.invalidateQueries({ queryKey: ["unresolved-transactions"] });
-      queryClient.invalidateQueries({ queryKey: ["balance-stats"] });
-    },
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: API.transactions.update,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["transactions"] });
-      queryClient.invalidateQueries({ queryKey: ["virtual-transactions"] });
-      queryClient.invalidateQueries({ queryKey: ["unresolved-transactions"] });
-      queryClient.invalidateQueries({ queryKey: ["balance-stats"] });
-    },
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: API.transactions.delete,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["transactions"] });
-      queryClient.invalidateQueries({ queryKey: ["virtual-transactions"] });
-      queryClient.invalidateQueries({ queryKey: ["unresolved-transactions"] });
-      queryClient.invalidateQueries({ queryKey: ["balance-stats"] });
-    },
-  });
-
-  const toggleResolvedMutation = useMutation({
-    mutationFn: (data: { id: string; is_resolved: boolean }) =>
-      API.transactions.update(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["transactions"] });
-      queryClient.invalidateQueries({ queryKey: ["virtual-transactions"] });
-      queryClient.invalidateQueries({ queryKey: ["unresolved-transactions"] });
-      queryClient.invalidateQueries({ queryKey: ["balance-stats"] });
-    },
-  });
-
-  const toggleVirtualMutation = useMutation({
-    mutationFn: (data: { id: string; is_virtual: boolean }) =>
-      API.transactions.update(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["transactions"] });
-      queryClient.invalidateQueries({ queryKey: ["virtual-transactions"] });
-      queryClient.invalidateQueries({ queryKey: ["unresolved-transactions"] });
-      queryClient.invalidateQueries({ queryKey: ["balance-stats"] });
-    },
-  });
+  const addMutation = useCreateTransaction();
+  const updateMutation = useUpdateTransaction();
+  const deleteMutation = useDeleteTransaction();
+  const toggleResolvedMutation = useToggleResolvedTransaction();
+  const toggleVirtualMutation = useToggleVirtualTransaction();
 
   // Load more transactions function - using React Query pattern
   const loadMoreTransactions = () => {
@@ -162,7 +83,13 @@ export default function TransactionsPage() {
 
   // Handlers for add/edit/delete operations
   const handleAddTransaction = (data: TransactionCreateData) => {
-    addMutation.mutate(data);
+    addMutation.mutate(data, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.balance.stats(currentMonth, currentYear),
+        });
+      },
+    });
   };
 
   const handleEdit = (transaction: Transaction) => {
@@ -173,6 +100,9 @@ export default function TransactionsPage() {
   const handleUpdateTransaction = (data: TransactionUpdateData) => {
     updateMutation.mutate(data, {
       onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.balance.stats(currentMonth, currentYear),
+        });
         setEditDialogOpen(false);
         setEditingTransaction(null);
       },
@@ -180,7 +110,13 @@ export default function TransactionsPage() {
   };
 
   const handleDelete = (id: string) => {
-    deleteMutation.mutate(id);
+    deleteMutation.mutate(id, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.balance.stats(currentMonth, currentYear),
+        });
+      },
+    });
   };
 
   const handleToggleResolved = (id: string) => {
@@ -189,10 +125,19 @@ export default function TransactionsPage() {
       // Toggle logic: undefined/true -> false, false -> true
       const currentResolved = transaction.is_resolved !== false;
       const newResolvedState = !currentResolved;
-      toggleResolvedMutation.mutate({
-        id: id,
-        is_resolved: newResolvedState,
-      });
+      toggleResolvedMutation.mutate(
+        {
+          id: id,
+          is_resolved: newResolvedState,
+        },
+        {
+          onSuccess: () => {
+            queryClient.invalidateQueries({
+              queryKey: queryKeys.balance.stats(currentMonth, currentYear),
+            });
+          },
+        }
+      );
     }
   };
 
@@ -202,10 +147,19 @@ export default function TransactionsPage() {
       // Toggle logic: undefined/false -> true, true -> false
       const currentVirtual = transaction.is_virtual === true;
       const newVirtualState = !currentVirtual;
-      toggleVirtualMutation.mutate({
-        id: id,
-        is_virtual: newVirtualState,
-      });
+      toggleVirtualMutation.mutate(
+        {
+          id: id,
+          is_virtual: newVirtualState,
+        },
+        {
+          onSuccess: () => {
+            queryClient.invalidateQueries({
+              queryKey: queryKeys.balance.stats(currentMonth, currentYear),
+            });
+          },
+        }
+      );
     }
   };
 
@@ -226,154 +180,18 @@ export default function TransactionsPage() {
   return (
     <div className="w-full max-w-3xl mx-auto space-y-6 pb-16">
       {/* Balance Overview Card */}
-      <AppCard
-        title={`Số dư ${currentMonth}/${currentYear}`}
-        description="Tổng quan tài chính tháng này"
-        icon={Wallet}
-        footer={
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setHideBalance(!hideBalance)}
-            className="text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/20 ml-auto"
-          >
-            {hideBalance ? <Eye size={16} /> : <EyeOff size={16} />}
-          </Button>
-        }
-      >
-        {balanceStats ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Thu nhập */}
-            <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
-              <h3 className="text-sm font-medium text-green-700 dark:text-green-300 mb-2">
-                Thu nhập
-              </h3>
+      <TransactionStatsSections
+        balanceStats={balanceStats}
+        currentMonth={currentMonth}
+        currentYear={currentYear}
+      />
 
-              {/* Thu nhập tổng - Primary field */}
-              <p className="text-xl font-bold text-green-600 dark:text-green-400 mb-2">
-                {hideBalance ? "•••••••" : formatCurrency(balanceStats.income)}
-              </p>
-
-              {/* Thu nhập chi tiết */}
-              <div className="space-y-1 text-xs">
-                <div className="flex justify-between text-green-600 dark:text-green-400">
-                  <span>Thực tế:</span>
-                  <span className="font-medium">
-                    {hideBalance
-                      ? "••••••"
-                      : formatCurrency(balanceStats.income_real)}
-                  </span>
-                </div>
-                <div className="flex justify-between text-green-500 dark:text-green-500">
-                  <span>Ảo:</span>
-                  <span className="font-medium">
-                    {hideBalance
-                      ? "••••••"
-                      : formatCurrency(balanceStats.income_virtual)}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Chi tiêu */}
-            <div className="text-center p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
-              <h3 className="text-sm font-medium text-red-700 dark:text-red-300 mb-2">
-                Chi tiêu
-              </h3>
-
-              {/* Chi tiêu tổng - Primary field */}
-              <p className="text-xl font-bold text-red-600 dark:text-red-400 mb-2">
-                {hideBalance ? "•••••••" : formatCurrency(balanceStats.expense)}
-              </p>
-
-              {/* Chi tiêu chi tiết */}
-              <div className="space-y-1 text-xs">
-                <div className="flex justify-between text-red-600 dark:text-red-400">
-                  <span>Thực tế:</span>
-                  <span className="font-medium">
-                    {hideBalance
-                      ? "••••••"
-                      : formatCurrency(balanceStats.expense_real)}
-                  </span>
-                </div>
-                <div className="flex justify-between text-red-500 dark:text-red-500">
-                  <span>Ảo:</span>
-                  <span className="font-medium">
-                    {hideBalance
-                      ? "••••••"
-                      : formatCurrency(balanceStats.expense_virtual)}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Số dư */}
-            <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-              <h3 className="text-sm font-medium text-blue-700 dark:text-blue-300 mb-2">
-                Số dư
-              </h3>
-
-              {/* Số dư hiện tại (thực tế) */}
-              <div className="mb-3">
-                <p className="text-lg font-bold text-blue-600 dark:text-blue-400 mb-1">
-                  {hideBalance ? (
-                    "•••••••"
-                  ) : (
-                    <>
-                      {balanceStats.income_real - balanceStats.expense_real >= 0
-                        ? "+"
-                        : ""}
-                      {formatCurrency(
-                        balanceStats.income_real - balanceStats.expense_real
-                      )}
-                    </>
-                  )}
-                </p>
-                <div className="text-xs text-blue-600 dark:text-blue-400">
-                  Hiện tại (thực tế)
-                </div>
-              </div>
-
-              {/* Số dư tổng */}
-              <div>
-                <p className="text-sm font-semibold text-blue-500 dark:text-blue-300 mb-1">
-                  {hideBalance ? (
-                    "••••••"
-                  ) : (
-                    <>
-                      {balanceStats.income_real -
-                        balanceStats.expense_real +
-                        balanceStats.expense_virtual >=
-                      0
-                        ? "+"
-                        : ""}
-                      {formatCurrency(
-                        balanceStats.income_real -
-                          balanceStats.expense_real +
-                          balanceStats.expense_virtual
-                      )}
-                    </>
-                  )}
-                </p>
-                <div className="text-xs text-gray-500 dark:text-gray-400">
-                  Tổng (bao gồm ảo)
-                </div>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="flex justify-center items-center h-20">
-            <p className="text-gray-500 dark:text-gray-400 text-center">
-              Đang tải thông tin số dư...
-            </p>
-          </div>
-        )}
-      </AppCard>
-
-      <AppCard
+      <AppHighlightBlock
         title="Quản lý giao dịch"
         description="Thêm giao dịch mới"
         icon={CreditCard}
+        variant="success"
+        size="lg"
       >
         <TransactionForm
           categories={allCategories}
@@ -417,18 +235,19 @@ export default function TransactionsPage() {
             </div>
           </div>
         )}
-      </AppCard>
+      </AppHighlightBlock>
 
-      <AppCard
+      <AppHighlightBlock
         title="Danh sách giao dịch"
         description={`${transactions.length} giao dịch${
           hasNextPage ? " gần nhất" : ""
         } của bạn`}
         icon={List}
+        variant="default"
       >
         <TransactionList
           transactions={transactions}
-          categories={allCategories} // Pass all categories so TransactionList can handle both types
+          categories={allCategories}
           onEdit={handleEdit}
           onDelete={handleDelete}
           onToggleResolved={handleToggleResolved}
@@ -474,7 +293,7 @@ export default function TransactionsPage() {
             Đã hiển thị tất cả giao dịch
           </div>
         )}
-      </AppCard>
+      </AppHighlightBlock>
 
       {/* Edit Dialog */}
       {editingTransaction && (

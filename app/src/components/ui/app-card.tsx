@@ -42,14 +42,10 @@ const AppCard = React.forwardRef<HTMLDivElement, AppCardProps>(
     return (
       <Card
         ref={ref}
-        className={cn(
-          shadow && "shadow-md",
-          //   variantStyles[variant],
-          className
-        )}
+        className={cn(shadow && "shadow-md", className)}
         {...props}
       >
-        <CardHeader className="p-2 pt-4 pb-0">
+        <CardHeader className="p-2 md:p-4 pt-4 pb-0">
           <div className="flex items-center justify-between">
             <CardTitle
               className={cn(
@@ -64,7 +60,7 @@ const AppCard = React.forwardRef<HTMLDivElement, AppCardProps>(
           {description && <CardDescription>{description}</CardDescription>}
         </CardHeader>
 
-        <CardContent className="p-2 md:p-2">{children}</CardContent>
+        <CardContent className="p-2 md:p-4">{children}</CardContent>
       </Card>
     );
   }
