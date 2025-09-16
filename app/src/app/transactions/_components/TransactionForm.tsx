@@ -1,8 +1,12 @@
 "use client";
-import React, { useState, useEffect, useRef } from "react";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, X, Save, Loader2, TrendingUp, TrendingDown } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import AppCurrencyInput from "@/components/ui/app-currency-input";
+import AppButton from "@/components/ui/app-button";
+import { Plus, X, Save } from "lucide-react";
+import TransactionFormTabs from "./TransactionFormTabs";
 import {
   subDays,
   format,
@@ -11,48 +15,70 @@ import {
   startOfDay,
   compareDesc,
 } from "date-fns";
-import {
-  Category,
-  Transaction,
-  TransactionCreateData,
-} from "@/services/api/client";
+import { Transaction, TransactionCreateData } from "@/services/api/client";
+import { useCategories, useTransactions } from "@/services/react-query/queries";
+
+// Validation schema
+const transactionFormSchema = z.object({
+  amount: z.string().min(1, "Số tiền là bắt buộc"),
+  category_id: z.string().min(1, "Danh mục là bắt buộc"),
+  note: z.string().min(1, "Ghi chú là bắt buộc"),
+  created_at: z.string().min(1, "Thời gian là bắt buộc"),
+  is_virtual: z.boolean(),
+});
+
+type TransactionFormData = z.infer<typeof transactionFormSchema>;
 
 interface TransactionFormProps {
-  categories: Category[];
-  transactions: Transaction[];
   onSubmit: (data: TransactionCreateData) => void;
   onCancel?: () => void;
-  isLoading?: boolean;
   editTransaction?: Transaction | null;
   showTypeSelector?: boolean;
 }
 
 export default function TransactionForm({
-  categories,
-  transactions,
   onSubmit,
   onCancel,
-  isLoading = false,
   editTransaction = null,
   showTypeSelector = true,
 }: TransactionFormProps) {
   // Separate income and expense categories
-  const incomeCategories = categories.filter((cat) => cat.type === "income");
-  const expenseCategories = categories.filter((cat) => cat.type === "expense");
+  const { data: categories } = useCategories();
+  const { data: _transactions } = useTransactions();
+  const transactions = _transactions?.pages.flat() || [];
+  const incomeCategories = (categories || []).filter(
+    (cat) => cat.type === "income"
+  );
+  const expenseCategories = (categories || []).filter(
+    (cat) => cat.type === "expense"
+  );
 
-  const [form, setForm] = useState({
-    amount: "",
-    category_id: "",
-    note: "",
-    created_at: format(new Date(), "yyyy-MM-dd'T'00:00"),
-    is_virtual: false,
-  });
   const [rawAmount, setRawAmount] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestions, setSuggestions] = useState<Transaction[]>([]);
   const [activeType, setActiveType] = useState<"income" | "expense">("expense");
-  const noteInputRef = useRef<HTMLInputElement>(null);
-  const datetimeInputRef = useRef<HTMLInputElement>(null);
+
+  // Initialize React Hook Form
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    reset,
+    formState: { isSubmitting },
+  } = useForm<TransactionFormData>({
+    resolver: zodResolver(transactionFormSchema),
+    defaultValues: {
+      amount: "",
+      category_id: "",
+      note: "",
+      created_at: format(new Date(), "yyyy-MM-dd'T'00:00"),
+      is_virtual: false,
+    },
+  });
+
+  const watchedNote = watch("note");
+  const watchedCategoryId = watch("category_id");
 
   // Get current categories based on active type
   const currentCategories =
@@ -64,35 +90,33 @@ export default function TransactionForm({
       const amountStr = editTransaction.amount.toString();
       setRawAmount(amountStr);
       setActiveType(editTransaction.category.type || "expense");
-      setForm({
-        amount: Number(amountStr).toLocaleString("vi-VN"),
-        category_id: editTransaction.category_id,
-        note: editTransaction.note || "",
-        created_at: format(
-          parseISO(editTransaction.created_at),
-          "yyyy-MM-dd'T'00:00"
-        ),
-        is_virtual: editTransaction.is_virtual || false,
-      });
-    } else if (currentCategories.length > 0 && form.category_id === "") {
+      setValue("amount", Number(amountStr).toLocaleString("vi-VN"));
+      setValue("category_id", editTransaction.category_id);
+      setValue("note", editTransaction.note || "");
+      setValue(
+        "created_at",
+        format(parseISO(editTransaction.created_at), "yyyy-MM-dd'T'00:00")
+      );
+      setValue("is_virtual", editTransaction.is_virtual || false);
+    } else if (currentCategories.length > 0 && !watchedCategoryId) {
       // For new transactions, set default category
       const defaultCategory =
         activeType === "expense"
           ? currentCategories.find((cat) => cat.name === "Ăn uống cá nhân")
           : null;
-      setForm((prev) => ({
-        ...prev,
-        category_id: defaultCategory?.id || currentCategories[0]?.id || "",
-      }));
+      setValue(
+        "category_id",
+        defaultCategory?.id || currentCategories[0]?.id || ""
+      );
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editTransaction, activeType, form.category_id]);
+  }, [editTransaction, activeType, watchedCategoryId, setValue]);
 
   // Update suggestions when note changes or on focus
   useEffect(() => {
     if (showSuggestions) {
       const yesterday = startOfDay(subDays(new Date(), 1));
-      const yesterdayTransactions = transactions
+      const yesterdayTransactions = (transactions || [])
         .filter((tx) => {
           const txDate = startOfDay(parseISO(tx.created_at));
           return (
@@ -107,10 +131,10 @@ export default function TransactionForm({
         )
         .slice(0, 5);
 
-      if (form.note.trim()) {
+      if (watchedNote?.trim()) {
         const filteredSuggestions = yesterdayTransactions.filter(
           (tx) =>
-            tx.note && tx.note.toLowerCase().includes(form.note.toLowerCase())
+            tx.note && tx.note.toLowerCase().includes(watchedNote.toLowerCase())
         );
         setSuggestions(filteredSuggestions);
       } else {
@@ -120,63 +144,57 @@ export default function TransactionForm({
       setSuggestions([]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [form.note, showSuggestions, activeType]);
-
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    const { name, value, type, checked } = e.target as HTMLInputElement;
-
-    if (name === "amount") {
-      const numericValue = value.replace(/[^\d]/g, "");
-      setRawAmount(numericValue);
-
-      if (numericValue) {
-        const formattedValue = Number(numericValue).toLocaleString("vi-VN");
-        setForm({ ...form, amount: formattedValue });
-      } else {
-        setForm({ ...form, amount: "" });
-      }
-    } else if (type === "checkbox") {
-      setForm({ ...form, [name]: checked });
-    } else {
-      setForm({ ...form, [name]: value });
-    }
-  };
+  }, [watchedNote, showSuggestions, activeType]);
 
   const handleSuggestionSelect = (transaction: Transaction) => {
     const amountStr = transaction.amount.toString();
     setRawAmount(amountStr);
-    setForm((prev) => ({
-      ...prev,
-      note: transaction.note || "",
-      amount: Number(amountStr).toLocaleString("vi-VN"),
-      category_id: transaction.category_id,
-    }));
+    setValue("note", transaction.note || "");
+    setValue("amount", Number(amountStr).toLocaleString("vi-VN"));
+    setValue("category_id", transaction.category_id);
     setShowSuggestions(false);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleFormReset = (newType: "income" | "expense") => {
+    // Reset form when changing type
+    const currentCreatedAt = watch("created_at");
+    const newCategories =
+      newType === "income" ? incomeCategories : expenseCategories;
+    const defaultCategory =
+      newType === "expense"
+        ? newCategories.find((cat) => cat.name === "Ăn uống cá nhân")
+        : null;
 
+    reset({
+      amount: "",
+      category_id: defaultCategory?.id || newCategories[0]?.id || "",
+      note: "",
+      created_at: currentCreatedAt,
+      is_virtual: false,
+    });
+    setRawAmount("");
+  };
+
+  const onFormSubmit = (data: TransactionFormData) => {
     const createData: TransactionCreateData = {
       amount: Number(rawAmount),
-      category_id: form.category_id,
-      note: form.note,
-      created_at: form.created_at,
-      is_virtual: form.is_virtual,
+      category_id: data.category_id,
+      note: data.note,
+      created_at: data.created_at,
+      is_virtual: data.is_virtual,
     };
 
     onSubmit(createData);
 
     // Reset form if not editing
     if (!editTransaction) {
-      const currentCreatedAt = form.created_at;
+      const currentCreatedAt = data.created_at;
       const defaultCategory =
         activeType === "expense"
           ? currentCategories.find((cat) => cat.name === "Ăn uống cá nhân")
           : null;
-      setForm({
+
+      reset({
         amount: "",
         category_id: defaultCategory?.id || currentCategories[0]?.id || "",
         note: "",
@@ -200,61 +218,29 @@ export default function TransactionForm({
     <div className="space-y-6">
       {/* Transaction Type Selector */}
       {showTypeSelector && (
-        <div>
-          <Tabs
-            value={activeType}
-            onValueChange={(value: string) => {
-              const newType = value as "income" | "expense";
-              setActiveType(newType);
-              // Reset form when changing type
-              const currentCreatedAt = form.created_at;
-              const newCategories =
-                newType === "income" ? incomeCategories : expenseCategories;
-              const defaultCategory =
-                newType === "expense"
-                  ? newCategories.find((cat) => cat.name === "Ăn uống cá nhân")
-                  : null;
-              setForm({
-                amount: "",
-                category_id: defaultCategory?.id || newCategories[0]?.id || "",
-                note: "",
-                created_at: currentCreatedAt,
-                is_virtual: false,
-              });
-              setRawAmount("");
-            }}
-            className="w-full"
-          >
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="expense" className="flex items-center gap-2">
-                <TrendingDown size={16} />
-                Chi tiêu ({expenseCategories.length} danh mục)
-              </TabsTrigger>
-              <TabsTrigger value="income" className="flex items-center gap-2">
-                <TrendingUp size={16} />
-                Thu nhập ({incomeCategories.length} danh mục)
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
-        </div>
+        <TransactionFormTabs
+          activeType={activeType}
+          onTypeChange={setActiveType}
+          onFormReset={handleFormReset}
+        />
       )}
 
-      <form className="flex flex-col gap-3" onSubmit={handleSubmit}>
+      <form
+        className="flex flex-col gap-3"
+        onSubmit={handleSubmit(onFormSubmit)}
+      >
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="flex flex-col gap-2 relative">
             <label
               htmlFor="note"
               className="text-sm font-medium text-gray-700 dark:text-gray-300"
             >
-              Ghi chú
+              Mô tả giao dịch
             </label>
             <input
-              ref={noteInputRef}
               id="note"
               type="text"
-              name="note"
-              value={form.note}
-              onChange={handleChange}
+              {...register("note")}
               onFocus={() => {
                 if (!editTransaction) {
                   const yesterday = startOfDay(subDays(new Date(), 1));
@@ -294,8 +280,9 @@ export default function TransactionForm({
               <div className="absolute top-full left-0 right-0 z-10 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-48 overflow-y-auto">
                 {suggestions.map((suggestion, idx) => {
                   const categoryColor =
-                    categories.find((cat) => cat.id === suggestion.category_id)
-                      ?.color || "#000000";
+                    (categories || []).find(
+                      (cat) => cat.id === suggestion.category_id
+                    )?.color || "#000000";
                   return (
                     <button
                       key={idx}
@@ -318,7 +305,7 @@ export default function TransactionForm({
                             style={{ backgroundColor: categoryColor }}
                           />
                           <span className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                            {categories.find(
+                            {(categories || []).find(
                               (cat) => cat.id === suggestion.category_id
                             )?.name || "Unknown"}
                           </span>
@@ -343,14 +330,14 @@ export default function TransactionForm({
             >
               Số tiền
             </label>
-            <input
+            <AppCurrencyInput
               id="amount"
-              type="text"
-              name="amount"
-              value={form.amount}
-              onChange={handleChange}
+              value={watch("amount")}
+              onChange={(formattedValue, rawValue) => {
+                setRawAmount(rawValue);
+                setValue("amount", formattedValue);
+              }}
               placeholder="Nhập số tiền"
-              className="rounded-lg px-3 py-2 border focus:outline-none focus:ring-2 focus:ring-primary/50 shadow dark:bg-gray-800 dark:border-gray-700 dark:text-white"
               required
             />
           </div>
@@ -373,15 +360,14 @@ export default function TransactionForm({
           ) : (
             <div className="flex flex-wrap gap-1.5">
               {currentCategories.map((cat) => {
-                const isSelected = form.category_id === cat.id;
+                const isSelected = watch("category_id") === cat.id;
                 return (
                   <button
                     key={cat.id}
                     type="button"
                     tabIndex={-1}
                     onClick={() => {
-                      setForm({ ...form, category_id: cat.id });
-                      setTimeout(() => noteInputRef.current?.focus(), 0);
+                      setValue("category_id", cat.id);
                     }}
                     className={`px-2.5 py-1 rounded-full border-2 text-xs font-medium transition-all duration-200 hover:shadow-md whitespace-nowrap ${
                       isSelected
@@ -407,9 +393,7 @@ export default function TransactionForm({
           <input
             id="is_virtual"
             type="checkbox"
-            name="is_virtual"
-            checked={form.is_virtual}
-            onChange={handleChange}
+            {...register("is_virtual")}
             className="w-4 h-4 text-primary bg-gray-100 border-gray-300 rounded focus:ring-primary dark:focus:ring-primary dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
           />
           <label
@@ -435,12 +419,9 @@ export default function TransactionForm({
             Thời gian
           </label>
           <input
-            ref={datetimeInputRef}
             id="created_at"
             type="datetime-local"
-            name="created_at"
-            value={form.created_at}
-            onChange={handleChange}
+            {...register("created_at")}
             className="rounded-lg px-3 py-2 border focus:outline-none focus:ring-2 focus:ring-primary/50 shadow dark:bg-gray-800 dark:border-gray-700 dark:text-white"
             required
           />
@@ -452,11 +433,10 @@ export default function TransactionForm({
               tabIndex={-1}
               onClick={() => {
                 const twoDaysAgo = subDays(new Date(), 2);
-                setForm({
-                  ...form,
-                  created_at: format(twoDaysAgo, "yyyy-MM-dd'T'00:00"),
-                });
-                setTimeout(() => datetimeInputRef.current?.focus(), 0);
+                setValue(
+                  "created_at",
+                  format(twoDaysAgo, "yyyy-MM-dd'T'00:00")
+                );
               }}
               className="px-2 py-1 rounded-md text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300 transition-colors"
             >
@@ -467,11 +447,7 @@ export default function TransactionForm({
               tabIndex={-1}
               onClick={() => {
                 const yesterday = subDays(new Date(), 1);
-                setForm({
-                  ...form,
-                  created_at: format(yesterday, "yyyy-MM-dd'T'00:00"),
-                });
-                setTimeout(() => datetimeInputRef.current?.focus(), 0);
+                setValue("created_at", format(yesterday, "yyyy-MM-dd'T'00:00"));
               }}
               className="px-2 py-1 rounded-md text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300 transition-colors"
             >
@@ -482,11 +458,7 @@ export default function TransactionForm({
               tabIndex={-1}
               onClick={() => {
                 const today = new Date();
-                setForm({
-                  ...form,
-                  created_at: format(today, "yyyy-MM-dd'T'00:00"),
-                });
-                setTimeout(() => datetimeInputRef.current?.focus(), 0);
+                setValue("created_at", format(today, "yyyy-MM-dd'T'00:00"));
               }}
               className="px-2 py-1 rounded-md text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300 transition-colors"
             >
@@ -496,16 +468,8 @@ export default function TransactionForm({
         </div>
 
         <div className="flex flex-col sm:flex-row gap-2 mt-4">
-          <Button
-            type="submit"
-            disabled={isLoading}
-            className="bg-green-600 hover:bg-green-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Đang xử lý
-              </>
-            ) : editTransaction ? (
+          <AppButton type="submit" loading={isSubmitting} size="md">
+            {editTransaction ? (
               <>
                 <Save className="mr-2 h-4 w-4" /> Cập nhật
               </>
@@ -514,17 +478,17 @@ export default function TransactionForm({
                 <Plus className="mr-2 h-4 w-4" /> Thêm mới
               </>
             )}
-          </Button>
+          </AppButton>
 
           {(editTransaction || onCancel) && (
-            <Button
+            <AppButton
               type="button"
               variant="outline"
-              className="border-gray-300 text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800"
+              size="md"
               onClick={onCancel}
             >
               <X className="mr-2 h-4 w-4" /> Huỷ
-            </Button>
+            </AppButton>
           )}
         </div>
       </form>

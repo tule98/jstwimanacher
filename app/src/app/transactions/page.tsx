@@ -193,13 +193,7 @@ export default function TransactionsPage() {
         variant="success"
         size="lg"
       >
-        <TransactionForm
-          categories={allCategories}
-          transactions={transactions}
-          onSubmit={handleAddTransaction}
-          isLoading={addMutation.isPending}
-          showTypeSelector={true}
-        />
+        <TransactionForm onSubmit={handleAddTransaction} showTypeSelector />
 
         {(addMutation.isError ||
           deleteMutation.isError ||
