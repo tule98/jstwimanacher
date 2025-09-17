@@ -6,6 +6,13 @@ applyTo: "**"
 
 ## App Name: jstwimanacher
 
+## App Direction: /Users/michalele/Documents/jstwi/Personal projects/jstwimanacher/app
+
+## Notes
+
+- Không tạo demo file
+- Không tạo file README.md
+
 ### Mục tiêu
 
 Xây dựng ứng dụng đa chức năng kết hợp quản lý tài chính cá nhân và tổ chức lịch trình thông minh. Ứng dụng sử dụng Turso (SQLite) làm backend cho phần tài chính và tích hợp Notion API cho phần quản lý lịch trình.

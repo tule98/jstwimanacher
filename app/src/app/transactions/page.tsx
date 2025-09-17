@@ -295,10 +295,7 @@ export default function TransactionsPage() {
           open={editDialogOpen}
           onOpenChange={setEditDialogOpen}
           transaction={editingTransaction}
-          categories={allCategories}
-          transactions={transactions}
           onUpdate={handleUpdateTransaction}
-          isLoading={updateMutation.isPending}
         />
       )}
     </div>

@@ -17,6 +17,7 @@ import {
 } from "date-fns";
 import { Transaction, TransactionCreateData } from "@/services/api/client";
 import { useCategories, useTransactions } from "@/services/react-query/queries";
+import TransactionFormDescriptionSuggestionPopover from "./TransactionFormDescriptionSuggestionPopover";
 
 // Validation schema
 const transactionFormSchema = z.object({
@@ -115,30 +116,14 @@ export default function TransactionForm({
   // Update suggestions when note changes or on focus
   useEffect(() => {
     if (showSuggestions) {
-      const yesterday = startOfDay(subDays(new Date(), 1));
-      const yesterdayTransactions = (transactions || [])
-        .filter((tx) => {
-          const txDate = startOfDay(parseISO(tx.created_at));
-          return (
-            isEqual(txDate, yesterday) &&
-            tx.note &&
-            tx.note.trim() &&
-            tx.category.type === activeType
-          );
-        })
-        .sort((a, b) =>
-          compareDesc(parseISO(a.created_at), parseISO(b.created_at))
-        )
-        .slice(0, 5);
-
       if (watchedNote?.trim()) {
-        const filteredSuggestions = yesterdayTransactions.filter(
+        const filteredSuggestions = transactions.filter(
           (tx) =>
             tx.note && tx.note.toLowerCase().includes(watchedNote.toLowerCase())
         );
         setSuggestions(filteredSuggestions);
       } else {
-        setSuggestions(yesterdayTransactions);
+        setSuggestions(transactions);
       }
     } else {
       setSuggestions([]);
@@ -205,15 +190,6 @@ export default function TransactionForm({
     }
   };
 
-  const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
-
   return (
     <div className="space-y-6">
       {/* Transaction Type Selector */}
@@ -277,50 +253,11 @@ export default function TransactionForm({
 
             {/* Suggestions dropdown */}
             {showSuggestions && suggestions.length > 0 && !editTransaction && (
-              <div className="absolute top-full left-0 right-0 z-10 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                {suggestions.map((suggestion, idx) => {
-                  const categoryColor =
-                    (categories || []).find(
-                      (cat) => cat.id === suggestion.category_id
-                    )?.color || "#000000";
-                  return (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => handleSuggestionSelect(suggestion)}
-                      className="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 border-b border-gray-100 dark:border-gray-700 last:border-b-0"
-                    >
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-900 dark:text-gray-100 truncate flex-1">
-                          {suggestion.note}
-                        </span>
-                        <span className="text-xs text-green-600 dark:text-green-400 ml-2 whitespace-nowrap">
-                          {formatCurrency(suggestion.amount)}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between mt-1">
-                        <div className="flex items-center">
-                          <div
-                            className="w-2 h-2 rounded-full mr-1"
-                            style={{ backgroundColor: categoryColor }}
-                          />
-                          <span className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                            {(categories || []).find(
-                              (cat) => cat.id === suggestion.category_id
-                            )?.name || "Unknown"}
-                          </span>
-                        </div>
-                        <span className="text-xs text-gray-400 ml-2">
-                          {format(
-                            parseISO(suggestion.created_at),
-                            "dd/MM/yyyy"
-                          )}
-                        </span>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
+              <TransactionFormDescriptionSuggestionPopover
+                showSuggestions={showSuggestions}
+                suggestions={suggestions}
+                onSuggestionSelect={handleSuggestionSelect}
+              />
             )}
           </div>
           <div className="flex flex-col gap-2">
@@ -362,16 +299,17 @@ export default function TransactionForm({
               {currentCategories.map((cat) => {
                 const isSelected = watch("category_id") === cat.id;
                 return (
-                  <button
+                  <AppButton
                     key={cat.id}
                     type="button"
-                    tabIndex={-1}
+                    variant="ghost"
+                    size="sm"
                     onClick={() => {
                       setValue("category_id", cat.id);
                     }}
-                    className={`px-2.5 py-1 rounded-full border-2 text-xs font-medium transition-all duration-200 hover:shadow-md whitespace-nowrap ${
+                    className={`px-2.5 py-1 text-xs font-medium transition-all duration-200 whitespace-nowrap border-2 ${
                       isSelected
-                        ? "border-transparent shadow-md text-white"
+                        ? "border-transparent text-white"
                         : "bg-white dark:bg-gray-800 hover:shadow-sm"
                     }`}
                     style={{
@@ -381,7 +319,7 @@ export default function TransactionForm({
                     }}
                   >
                     {cat.name}
-                  </button>
+                  </AppButton>
                 );
               })}
             </div>
@@ -428,9 +366,10 @@ export default function TransactionForm({
 
           {/* Quick time selection tags */}
           <div className="flex gap-2 mt-1">
-            <button
+            <AppButton
               type="button"
-              tabIndex={-1}
+              variant="ghost"
+              size="sm"
               onClick={() => {
                 const twoDaysAgo = subDays(new Date(), 2);
                 setValue(
@@ -438,32 +377,34 @@ export default function TransactionForm({
                   format(twoDaysAgo, "yyyy-MM-dd'T'00:00")
                 );
               }}
-              className="px-2 py-1 rounded-md text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300 transition-colors"
+              className="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300"
             >
               2 ngày trước
-            </button>
-            <button
+            </AppButton>
+            <AppButton
               type="button"
-              tabIndex={-1}
+              variant="ghost"
+              size="sm"
               onClick={() => {
                 const yesterday = subDays(new Date(), 1);
                 setValue("created_at", format(yesterday, "yyyy-MM-dd'T'00:00"));
               }}
-              className="px-2 py-1 rounded-md text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300 transition-colors"
+              className="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300"
             >
               Hôm qua
-            </button>
-            <button
+            </AppButton>
+            <AppButton
               type="button"
-              tabIndex={-1}
+              variant="ghost"
+              size="sm"
               onClick={() => {
                 const today = new Date();
                 setValue("created_at", format(today, "yyyy-MM-dd'T'00:00"));
               }}
-              className="px-2 py-1 rounded-md text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300 transition-colors"
+              className="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300"
             >
               Hôm nay
-            </button>
+            </AppButton>
           </div>
         </div>
 
