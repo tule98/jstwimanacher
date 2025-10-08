@@ -1,7 +1,21 @@
 import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
 import API from "@/services/api/client";
-import { Category } from "@/services/api/client";
+import { Category, LearningWord, StorySession } from "@/services/api/client";
 import { queryKeys } from "./query-keys";
+
+export function useWords() {
+  return useQuery<LearningWord[]>({
+    queryKey: queryKeys.words.all,
+    queryFn: API.words.getAll,
+  });
+}
+
+export function useStories() {
+  return useQuery<StorySession[]>({
+    queryKey: queryKeys.stories.all,
+    queryFn: API.stories.getAll,
+  });
+}
 
 export function useCategories() {
   return useQuery<Category[]>({

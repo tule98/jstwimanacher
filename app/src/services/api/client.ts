@@ -87,6 +87,7 @@ export interface TransactionCreateData {
   category_id: string;
   note?: string;
   is_virtual?: boolean; // Mark virtual transaction
+  is_resolved?: boolean; // Mark transaction as resolved
   /** UTC ISO string - will be converted to UTC if provided, otherwise uses current UTC time */
   created_at?: UTCString | string;
 }
@@ -566,6 +567,101 @@ export const StatsAPI = {
   },
 };
 
+// --- Learning Word ---
+export interface LearningWord {
+  id: string;
+  word: string;
+  phonetic?: string;
+  meaning?: string;
+  added_at: UTCString;
+  study_dates?: string[];
+  is_mastered?: boolean;
+}
+
+export interface LearningWordCreateData {
+  word: string;
+  phonetic?: string;
+  meaning?: string;
+}
+
+// --- Story Session ---
+export interface StorySession {
+  id: string;
+  created_at: UTCString;
+  words: string; // JSON array of LearningWord ids
+  story_text: string;
+  submitted_at?: UTCString;
+  status: "draft" | "submitted";
+}
+
+export interface StorySessionCreateData {
+  words: string[]; // Mảng ID của các từ đã chọn
+  story_text: string; // Nội dung truyện
+  status?: "draft" | "submitted"; // Trạng thái, mặc định là draft
+}
+
+export const LearningWordsAPI = {
+  /**
+   * Get all learning words
+   */
+  async getAll(): Promise<LearningWord[]> {
+    const response = await fetch("/api/words");
+    if (!response.ok) {
+      throw new Error("Failed to fetch learning words");
+    }
+    return response.json();
+  },
+
+  /**
+   * Create new learning word
+   */
+  async create(data: LearningWordCreateData): Promise<LearningWord> {
+    const response = await fetch("/api/words", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result.error || "Failed to create learning word");
+    }
+    return result.result;
+  },
+};
+
+export const StoryAPI = {
+  /**
+   * Get all story sessions
+   */
+  async getAll(): Promise<StorySession[]> {
+    const response = await fetch("/api/stories");
+    if (!response.ok) {
+      throw new Error("Failed to fetch story sessions");
+    }
+    return response.json();
+  },
+
+  /**
+   * Create new story session
+   */
+  async create(data: StorySessionCreateData): Promise<StorySession> {
+    const response = await fetch("/api/stories", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result.error || "Failed to create story session");
+    }
+    return result.result;
+  },
+};
+
 /**
  * Combined API client export
  */
@@ -575,6 +671,8 @@ export const API = {
   stats: StatsAPI,
   assets: AssetsAPI,
   conversions: ConversionsAPI,
+  words: LearningWordsAPI,
+  stories: StoryAPI,
 };
 
 export default API;

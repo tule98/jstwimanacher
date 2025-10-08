@@ -3,6 +3,7 @@ import "./globals.css";
 import AppProvider from "./_components/AppProvider";
 import AppNav from "./_components/AppNav";
 import AuthGuard from "./_components/AuthGuard";
+import { Toaster } from "@/components/ui/sonner";
 
 export const metadata = {
   title: "💂 Doorkeeper",
@@ -43,6 +44,7 @@ export default function RootLayout({
               </main>
             </div>
           </AuthGuard>
+          <Toaster richColors position="top-right" />
         </AppProvider>
       </body>
     </html>

@@ -30,19 +30,16 @@ import {
 } from "lucide-react";
 import { AppLayout } from "@/components/ui/page-layout";
 import API, { Asset, AssetCreateData, Category } from "@/services/api/client";
+import { useCreateCategory } from "@/services/react-query/mutations";
+import CategoryCreateForm from "@/app/transactions/_components/CategoryCreateForm";
+import { toast } from "sonner";
 
 export default function ConfigPage() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("categories");
 
-  // Category form state
-  const [categoryForm, setCategoryForm] = useState({
-    name: "",
-    color: "#4CAF50",
-    type: "expense" as "income" | "expense",
-  });
-  const [editingCategoryId, setEditingCategoryId] = useState("");
-  const [categoryEditMode, setCategoryEditMode] = useState(false);
+  // Category edit state - single source of truth
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [categoryFilter, setCategoryFilter] = useState("all");
 
   // Asset form state
@@ -101,17 +98,7 @@ export default function ConfigPage() {
   });
 
   // Mutations for category CRUD operations
-  const addCategoryMutation = useMutation({
-    mutationFn: (data: {
-      name: string;
-      color: string;
-      type: "income" | "expense";
-    }) => API.categories.create(data.name, data.color, data.type),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["categories"] });
-      resetCategoryForm();
-    },
-  });
+  const createCategoryMutation = useCreateCategory();
 
   const updateCategoryMutation = useMutation({
     mutationFn: (data: {
@@ -122,9 +109,7 @@ export default function ConfigPage() {
     }) => API.categories.update(data.id, data.name, data.color),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["categories"] });
-      resetCategoryForm();
-      setCategoryEditMode(false);
-      setEditingCategoryId("");
+      setEditingCategory(null);
     },
   });
 
@@ -144,15 +129,6 @@ export default function ConfigPage() {
     });
   };
 
-  // Reset category form
-  const resetCategoryForm = () => {
-    setCategoryForm({
-      name: "",
-      color: "#4CAF50",
-      type: "expense",
-    });
-  };
-
   // Handle asset form submission
   const handleAssetSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -168,18 +144,33 @@ export default function ConfigPage() {
   };
 
   // Handle category form submission
-  const handleCategorySubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (categoryEditMode) {
-      updateCategoryMutation.mutate({
-        id: editingCategoryId,
-        name: categoryForm.name,
-        color: categoryForm.color,
-        type: categoryForm.type,
-      });
-    } else {
-      addCategoryMutation.mutate(categoryForm);
+  const handleCategorySubmit = async (data: {
+    name: string;
+    color: string;
+    type: "income" | "expense";
+  }) => {
+    try {
+      if (editingCategory) {
+        await updateCategoryMutation.mutateAsync({
+          id: editingCategory.id,
+          name: data.name,
+          color: data.color,
+          type: data.type,
+        });
+        toast.success("Category updated successfully!");
+      } else {
+        await createCategoryMutation.mutateAsync(data);
+        toast.success("Category created successfully!");
+      }
+    } catch (error) {
+      toast.error(
+        editingCategory
+          ? "Failed to update category"
+          : "Failed to create category",
+        {
+          description: error instanceof Error ? error.message : "Unknown error",
+        }
+      );
     }
   };
 
@@ -210,13 +201,7 @@ export default function ConfigPage() {
 
   // Handle category edit
   const handleEditCategory = (category: Category) => {
-    setCategoryForm({
-      name: category.name,
-      color: category.color,
-      type: category.type,
-    });
-    setEditingCategoryId(category.id);
-    setCategoryEditMode(true);
+    setEditingCategory(category);
   };
 
   // Handle category delete
@@ -228,9 +213,7 @@ export default function ConfigPage() {
 
   // Handle cancel category edit
   const handleCancelCategoryEdit = () => {
-    resetCategoryForm();
-    setCategoryEditMode(false);
-    setEditingCategoryId("");
+    setEditingCategory(null);
   };
 
   return (
@@ -264,141 +247,40 @@ export default function ConfigPage() {
               description="Tạo, chỉnh sửa và xóa các danh mục chi tiêu/thu nhập"
               icon={Tag}
             >
-              <form className="space-y-4" onSubmit={handleCategorySubmit}>
-                <div className="grid gap-4 sm:grid-cols-3">
-                  <div className="flex flex-col gap-2">
-                    <label
-                      htmlFor="category-name"
-                      className="text-sm font-medium text-gray-700 dark:text-gray-300"
-                    >
-                      Tên danh mục
-                    </label>
-                    <input
-                      id="category-name"
-                      type="text"
-                      value={categoryForm.name}
-                      onChange={(e) =>
-                        setCategoryForm({
-                          ...categoryForm,
-                          name: e.target.value,
-                        })
+              <CategoryCreateForm
+                defaultType="expense"
+                defaultValues={
+                  editingCategory
+                    ? {
+                        name: editingCategory.name,
+                        color: editingCategory.color,
+                        type: editingCategory.type,
                       }
-                      placeholder="Tên danh mục"
-                      className="rounded-lg px-3 py-2 border focus:outline-none focus:ring-2 focus:ring-primary/50 shadow dark:bg-gray-800 dark:border-gray-700 dark:text-white"
-                      required
-                    />
-                  </div>
+                    : undefined
+                }
+                onSubmit={handleCategorySubmit}
+                onCancel={
+                  editingCategory ? handleCancelCategoryEdit : undefined
+                }
+                isSubmitting={
+                  createCategoryMutation.isPending ||
+                  updateCategoryMutation.isPending
+                }
+                submitLabel={
+                  editingCategory ? "Update Category" : "Create Category"
+                }
+                showCancel={!!editingCategory}
+              />
 
-                  <div className="flex flex-col gap-2">
-                    <label
-                      htmlFor="category-type"
-                      className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center"
-                    >
-                      <Tag size={16} className="mr-1" />
-                      Loại
-                    </label>
-                    <select
-                      id="category-type"
-                      value={categoryForm.type}
-                      onChange={(e) =>
-                        setCategoryForm({
-                          ...categoryForm,
-                          type: e.target.value as "income" | "expense",
-                        })
-                      }
-                      className="rounded-lg px-3 py-2 border focus:outline-none focus:ring-2 focus:ring-primary/50 shadow dark:bg-gray-800 dark:border-gray-700 dark:text-white"
-                      required
-                    >
-                      <option value="expense">Chi tiêu</option>
-                      <option value="income">Thu nhập</option>
-                    </select>
-                  </div>
-
-                  <div className="flex flex-col gap-2">
-                    <label
-                      htmlFor="category-color"
-                      className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center"
-                    >
-                      <Palette size={16} className="mr-1" />
-                      Màu sắc
-                    </label>
-                    <div className="flex items-center gap-2">
-                      <input
-                        id="category-color"
-                        type="color"
-                        value={categoryForm.color}
-                        onChange={(e) =>
-                          setCategoryForm({
-                            ...categoryForm,
-                            color: e.target.value,
-                          })
-                        }
-                        className="w-10 h-10 min-w-[40px] rounded cursor-pointer"
-                      />
-                      <input
-                        type="text"
-                        value={categoryForm.color}
-                        onChange={(e) =>
-                          setCategoryForm({
-                            ...categoryForm,
-                            color: e.target.value,
-                          })
-                        }
-                        placeholder="#RRGGBB"
-                        className="flex-1 min-w-0 rounded-lg px-3 py-2 border focus:outline-none focus:ring-2 focus:ring-primary/50 shadow dark:bg-gray-800 dark:border-gray-700 dark:text-white"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex flex-col sm:flex-row gap-2 pt-2">
-                  <Button
-                    type="submit"
-                    disabled={
-                      addCategoryMutation.isPending ||
-                      updateCategoryMutation.isPending
-                    }
-                    className="bg-green-600 hover:bg-green-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {addCategoryMutation.isPending ||
-                    updateCategoryMutation.isPending ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Đang
-                        xử lý
-                      </>
-                    ) : categoryEditMode ? (
-                      <>
-                        <Save className="mr-2 h-4 w-4" /> Cập nhật
-                      </>
-                    ) : (
-                      <>
-                        <Plus className="mr-2 h-4 w-4" /> Thêm danh mục
-                      </>
-                    )}
-                  </Button>
-
-                  {categoryEditMode && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={handleCancelCategoryEdit}
-                      className="border-gray-300 text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800"
-                    >
-                      <X className="mr-2 h-4 w-4" /> Huỷ
-                    </Button>
-                  )}
-                </div>
-              </form>
-
-              {(addCategoryMutation.isError ||
+              {(createCategoryMutation.isError ||
                 updateCategoryMutation.isError ||
                 deleteCategoryMutation.isError) && (
                 <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-lg flex items-start">
                   <AlertCircle className="h-5 w-5 mr-2 flex-shrink-0 mt-0.5" />
                   <div>
-                    {addCategoryMutation.isError && (
+                    {createCategoryMutation.isError && (
                       <p>
-                        {(addCategoryMutation.error as Error)?.message ||
+                        {(createCategoryMutation.error as Error)?.message ||
                           "Không thể thêm danh mục"}
                       </p>
                     )}

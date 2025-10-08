@@ -12,7 +12,8 @@ import {
 import { queryKeys } from "@/services/react-query/query-keys";
 import { AppHighlightBlock } from "@/components/ui/app-highlight-block";
 import { Button } from "@/components/ui/button";
-import { CreditCard, List, Plus, AlertCircle, Loader2 } from "lucide-react";
+import { CreditCard, List, Plus, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import TransactionList from "./_components/TransactionList";
 import TransactionForm from "./_components/TransactionForm";
 import TransactionEditDialog from "./_components/TransactionEditDialog";
@@ -89,6 +90,12 @@ export default function TransactionsPage() {
           queryKey: queryKeys.balance.stats(currentMonth, currentYear),
         });
       },
+      onError: (error) => {
+        toast.error("Failed to add transaction", {
+          description:
+            error instanceof Error ? error.message : "An error occurred",
+        });
+      },
     });
   };
 
@@ -106,6 +113,12 @@ export default function TransactionsPage() {
         setEditDialogOpen(false);
         setEditingTransaction(null);
       },
+      onError: (error) => {
+        toast.error("Failed to update transaction", {
+          description:
+            error instanceof Error ? error.message : "An error occurred",
+        });
+      },
     });
   };
 
@@ -114,6 +127,13 @@ export default function TransactionsPage() {
       onSuccess: () => {
         queryClient.invalidateQueries({
           queryKey: queryKeys.balance.stats(currentMonth, currentYear),
+        });
+        toast.success("Transaction deleted successfully!");
+      },
+      onError: (error) => {
+        toast.error("Failed to delete transaction", {
+          description:
+            error instanceof Error ? error.message : "An error occurred",
         });
       },
     });
@@ -134,6 +154,17 @@ export default function TransactionsPage() {
           onSuccess: () => {
             queryClient.invalidateQueries({
               queryKey: queryKeys.balance.stats(currentMonth, currentYear),
+            });
+            toast.success(
+              newResolvedState
+                ? "Transaction marked as resolved"
+                : "Transaction marked as unresolved"
+            );
+          },
+          onError: (error) => {
+            toast.error("Failed to update transaction status", {
+              description:
+                error instanceof Error ? error.message : "An error occurred",
             });
           },
         }
@@ -156,6 +187,17 @@ export default function TransactionsPage() {
           onSuccess: () => {
             queryClient.invalidateQueries({
               queryKey: queryKeys.balance.stats(currentMonth, currentYear),
+            });
+            toast.success(
+              newVirtualState
+                ? "Transaction marked as virtual"
+                : "Transaction marked as real"
+            );
+          },
+          onError: (error) => {
+            toast.error("Failed to update transaction status", {
+              description:
+                error instanceof Error ? error.message : "An error occurred",
             });
           },
         }
@@ -194,41 +236,6 @@ export default function TransactionsPage() {
         size="lg"
       >
         <TransactionForm onSubmit={handleAddTransaction} showTypeSelector />
-
-        {(addMutation.isError ||
-          deleteMutation.isError ||
-          toggleResolvedMutation.isError ||
-          toggleVirtualMutation.isError) && (
-          <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-lg flex items-start">
-            <AlertCircle className="h-5 w-5 mr-2 flex-shrink-0 mt-0.5" />
-            <div>
-              {addMutation.isError && (
-                <p>
-                  {(addMutation.error as Error)?.message ||
-                    "Không thể thêm giao dịch"}
-                </p>
-              )}
-              {deleteMutation.isError && (
-                <p>
-                  {(deleteMutation.error as Error)?.message ||
-                    "Không thể xóa giao dịch"}
-                </p>
-              )}
-              {toggleResolvedMutation.isError && (
-                <p>
-                  {(toggleResolvedMutation.error as Error)?.message ||
-                    "Không thể cập nhật trạng thái giao dịch"}
-                </p>
-              )}
-              {toggleVirtualMutation.isError && (
-                <p>
-                  {(toggleVirtualMutation.error as Error)?.message ||
-                    "Không thể cập nhật trạng thái giao dịch ảo"}
-                </p>
-              )}
-            </div>
-          </div>
-        )}
       </AppHighlightBlock>
 
       <AppHighlightBlock

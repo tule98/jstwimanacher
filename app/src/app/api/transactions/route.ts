@@ -37,7 +37,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const { amount, category_id, note, is_virtual, created_at } =
+    const { amount, category_id, note, is_virtual, is_resolved, created_at } =
       await request.json();
 
     if (amount === undefined || !category_id) {
@@ -52,6 +52,7 @@ export async function POST(request: Request) {
       category_id,
       note,
       is_virtual: is_virtual || false,
+      is_resolved: is_resolved ?? true,
       created_at: created_at ? toUTC(created_at) : undefined,
     });
 

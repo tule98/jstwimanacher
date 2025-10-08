@@ -61,6 +61,33 @@ export const assetConversions = sqliteTable("asset_conversions", {
     .default(sql`datetime('now')`),
 });
 
+// LearningWord table
+export const learningWords = sqliteTable("learning_words", {
+  id: text("id").primaryKey(),
+  word: text("word").notNull(),
+  phonetic: text("phonetic"),
+  meaning: text("meaning").notNull(),
+  added_at: text("added_at")
+    .notNull()
+    .default(sql`datetime('now')`),
+  study_dates: text("study_dates"), // JSON array of ISO date strings
+  is_mastered: integer("is_mastered", { mode: "boolean" })
+    .notNull()
+    .default(false),
+});
+
+// StorySession table
+export const storySessions = sqliteTable("story_sessions", {
+  id: text("id").primaryKey(),
+  created_at: text("created_at")
+    .notNull()
+    .default(sql`datetime('now')`),
+  words: text("words").notNull(), // JSON array of LearningWord ids
+  story_text: text("story_text").notNull(),
+  submitted_at: text("submitted_at"),
+  status: text("status").notNull().default("draft"), // 'draft' | 'submitted'
+});
+
 // Types cho TypeScript
 export type Category = typeof categories.$inferSelect;
 export type NewCategory = typeof categories.$inferInsert;
@@ -70,3 +97,7 @@ export type Asset = typeof assets.$inferSelect;
 export type NewAsset = typeof assets.$inferInsert;
 export type AssetConversion = typeof assetConversions.$inferSelect;
 export type NewAssetConversion = typeof assetConversions.$inferInsert;
+export type LearningWord = typeof learningWords.$inferSelect;
+export type NewLearningWord = typeof learningWords.$inferInsert;
+export type StorySession = typeof storySessions.$inferSelect;
+export type NewStorySession = typeof storySessions.$inferInsert;

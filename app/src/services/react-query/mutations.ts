@@ -2,6 +2,29 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import API from "@/services/api/client";
 import { queryKeys } from "./query-keys";
 
+// Mutations for creating new words to learn
+export function useCreateWord() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: API.words.create,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.words.all });
+    },
+  });
+}
+
+// Mutations for creating new stories
+export function useCreateStory() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: API.stories.create,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.stories.all });
+    },
+  });
+}
+
+// Mutations for transactions
 export function useCreateTransaction() {
   const queryClient = useQueryClient();
 
@@ -15,12 +38,11 @@ export function useCreateTransaction() {
       queryClient.invalidateQueries({
         queryKey: queryKeys.unresolved.transactions,
       });
-      // Note: balance stats invalidation will be handled by the component
-      // since it needs currentMonth and currentYear parameters
     },
   });
 }
 
+// Mutations for updating existing transactions
 export function useUpdateTransaction() {
   const queryClient = useQueryClient();
 
@@ -34,11 +56,11 @@ export function useUpdateTransaction() {
       queryClient.invalidateQueries({
         queryKey: queryKeys.unresolved.transactions,
       });
-      // Note: balance stats invalidation will be handled by the component
     },
   });
 }
 
+// Mutations for deleting transactions
 export function useDeleteTransaction() {
   const queryClient = useQueryClient();
 
@@ -52,11 +74,11 @@ export function useDeleteTransaction() {
       queryClient.invalidateQueries({
         queryKey: queryKeys.unresolved.transactions,
       });
-      // Note: balance stats invalidation will be handled by the component
     },
   });
 }
 
+// Mutations for toggling resolved/virtual status
 export function useToggleResolvedTransaction() {
   const queryClient = useQueryClient();
 
@@ -71,11 +93,11 @@ export function useToggleResolvedTransaction() {
       queryClient.invalidateQueries({
         queryKey: queryKeys.unresolved.transactions,
       });
-      // Note: balance stats invalidation will be handled by the component
     },
   });
 }
 
+// Mutations for toggling virtual status
 export function useToggleVirtualTransaction() {
   const queryClient = useQueryClient();
 
@@ -90,7 +112,22 @@ export function useToggleVirtualTransaction() {
       queryClient.invalidateQueries({
         queryKey: queryKeys.unresolved.transactions,
       });
-      // Note: balance stats invalidation will be handled by the component
+    },
+  });
+}
+
+// Mutations for creating categories
+export function useCreateCategory() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: {
+      name: string;
+      color: string;
+      type: "income" | "expense";
+    }) => API.categories.create(data.name, data.color, data.type),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.categories.all });
     },
   });
 }

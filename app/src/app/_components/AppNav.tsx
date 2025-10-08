@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CreditCard, PieChart, Settings, Link2 } from "lucide-react";
+import { CreditCard, PieChart, Settings, Link2, BookOpen } from "lucide-react";
 
 export default function AppNav() {
   const pathname = usePathname();
@@ -47,6 +47,16 @@ export default function AppNav() {
       >
         <Settings size={18} />
         <span className="text-xs sm:text-sm">Cấu hình</span>
+      </Link>
+
+      <Link
+        href="/stories"
+        className={`font-semibold hover:text-green-200 dark:hover:text-green-300 transition-colors flex flex-col sm:flex-row items-center gap-1 px-2 py-1 rounded-md ${
+          pathname === "/stories" ? "bg-green-600/30 dark:bg-green-900/30" : ""
+        }`}
+      >
+        <BookOpen size={18} />
+        <span className="text-xs sm:text-sm">Sáng truyện</span>
       </Link>
     </nav>
   );

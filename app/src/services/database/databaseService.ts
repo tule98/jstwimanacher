@@ -144,6 +144,7 @@ export class DatabaseService {
     category_id: string;
     note?: string;
     is_virtual?: boolean;
+    is_resolved?: boolean;
     created_at?: string | UTCString;
   }): Promise<Transaction> {
     const now = nowUTC();
@@ -154,7 +155,7 @@ export class DatabaseService {
       note: data.note,
       created_at: data.created_at ? toUTC(data.created_at) : now,
       updated_at: now,
-      is_resolved: true,
+      is_resolved: data.is_resolved ?? true,
       is_virtual: data.is_virtual || false,
     };
 

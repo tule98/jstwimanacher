@@ -21,4 +21,18 @@ export const queryKeys = {
   unresolved: {
     transactions: ["unresolved-transactions"] as const,
   },
+  words: {
+    all: ["words"] as const,
+    lists: () => ["words", "list"] as const,
+    list: (filters: Record<string, unknown>) =>
+      ["words", "list", filters] as const,
+    details: () => ["words", "detail"] as const,
+    detail: (id: string) => ["words", "detail", id] as const,
+  },
+  stories: {
+    all: ["stories"] as const,
+    lists: () => ["stories", "list"] as const,
+    details: () => ["stories", "detail"] as const,
+    detail: (id: string) => ["stories", "detail", id] as const,
+  },
 } as const;

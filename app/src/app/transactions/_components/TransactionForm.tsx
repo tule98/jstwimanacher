@@ -5,8 +5,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import AppCurrencyInput from "@/components/ui/app-currency-input";
 import AppButton from "@/components/ui/app-button";
+import { Switch } from "@/components/ui/switch";
 import { Plus, X, Save } from "lucide-react";
 import TransactionFormTabs from "./TransactionFormTabs";
+import TransactionFormCategorySection from "./TransactionFormCategorySection";
+import { toast } from "sonner";
 import {
   subDays,
   format,
@@ -21,11 +24,12 @@ import TransactionFormDescriptionSuggestionPopover from "./TransactionFormDescri
 
 // Validation schema
 const transactionFormSchema = z.object({
-  amount: z.string().min(1, "Số tiền là bắt buộc"),
-  category_id: z.string().min(1, "Danh mục là bắt buộc"),
-  note: z.string().min(1, "Ghi chú là bắt buộc"),
-  created_at: z.string().min(1, "Thời gian là bắt buộc"),
+  amount: z.string().min(1, "Amount is required"),
+  category_id: z.string().min(1, "Category is required"),
+  note: z.string().min(1, "Description is required"),
+  created_at: z.string().min(1, "Time is required"),
   is_virtual: z.boolean(),
+  is_resolved: z.boolean(),
 });
 
 type TransactionFormData = z.infer<typeof transactionFormSchema>;
@@ -66,6 +70,7 @@ export default function TransactionForm({
     setValue,
     watch,
     reset,
+    setFocus,
     formState: { isSubmitting },
   } = useForm<TransactionFormData>({
     resolver: zodResolver(transactionFormSchema),
@@ -73,8 +78,9 @@ export default function TransactionForm({
       amount: "",
       category_id: "",
       note: "",
-      created_at: format(new Date(), "yyyy-MM-dd'T'00:00"),
+      created_at: format(new Date(), "yyyy-MM-dd"),
       is_virtual: false,
+      is_resolved: true,
     },
   });
 
@@ -96,9 +102,10 @@ export default function TransactionForm({
       setValue("note", editTransaction.note || "");
       setValue(
         "created_at",
-        format(parseISO(editTransaction.created_at), "yyyy-MM-dd'T'00:00")
+        format(parseISO(editTransaction.created_at), "yyyy-MM-dd")
       );
       setValue("is_virtual", editTransaction.is_virtual || false);
+      setValue("is_resolved", editTransaction.is_resolved ?? true);
     } else if (currentCategories.length > 0 && !watchedCategoryId) {
       // For new transactions, set default category
       const defaultCategory =
@@ -111,7 +118,7 @@ export default function TransactionForm({
       );
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editTransaction, activeType, watchedCategoryId, setValue]);
+  }, [editTransaction, activeType, setValue]);
 
   // Update suggestions when note changes or on focus
   useEffect(() => {
@@ -156,6 +163,7 @@ export default function TransactionForm({
       note: "",
       created_at: currentCreatedAt,
       is_virtual: false,
+      is_resolved: true,
     });
     setRawAmount("");
   };
@@ -167,9 +175,21 @@ export default function TransactionForm({
       note: data.note,
       created_at: data.created_at,
       is_virtual: data.is_virtual,
+      is_resolved: data.is_resolved,
     };
 
     onSubmit(createData);
+
+    // Show success toast
+    if (editTransaction) {
+      toast.success("Transaction updated successfully!");
+    } else {
+      toast.success("Transaction added successfully!", {
+        description: `${data.note} - ${Number(rawAmount).toLocaleString(
+          "vi-VN"
+        )} ₫`,
+      });
+    }
 
     // Reset form if not editing
     if (!editTransaction) {
@@ -185,8 +205,14 @@ export default function TransactionForm({
         note: "",
         created_at: currentCreatedAt,
         is_virtual: false,
+        is_resolved: true,
       });
       setRawAmount("");
+
+      // Auto-focus on note field after form submission
+      setTimeout(() => {
+        setFocus("note");
+      }, 0);
     }
   };
 
@@ -211,7 +237,7 @@ export default function TransactionForm({
               htmlFor="note"
               className="text-sm font-medium text-gray-700 dark:text-gray-300"
             >
-              Mô tả giao dịch
+              Transaction Description
             </label>
             <input
               id="note"
@@ -246,7 +272,7 @@ export default function TransactionForm({
               onBlur={() => {
                 setTimeout(() => setShowSuggestions(false), 150);
               }}
-              placeholder="Nhập ghi chú"
+              placeholder="Enter description"
               className="rounded-lg px-3 py-2 border focus:outline-none focus:ring-2 focus:ring-primary/50 shadow dark:bg-gray-800 dark:border-gray-700 dark:text-white"
               required
             />
@@ -265,7 +291,7 @@ export default function TransactionForm({
               htmlFor="amount"
               className="text-sm font-medium text-gray-700 dark:text-gray-300"
             >
-              Số tiền
+              Amount
             </label>
             <AppCurrencyInput
               id="amount"
@@ -274,79 +300,58 @@ export default function TransactionForm({
                 setRawAmount(rawValue);
                 setValue("amount", formattedValue);
               }}
-              placeholder="Nhập số tiền"
+              placeholder="Enter amount"
               required
             />
           </div>
         </div>
 
-        <div className="flex flex-col gap-2">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Danh mục {activeType === "income" ? "thu nhập" : "chi tiêu"}
-          </label>
-          {currentCategories.length === 0 ? (
-            <div className="text-sm text-gray-500 dark:text-gray-400 py-2">
-              Chưa có danh mục{" "}
-              {activeType === "income" ? "thu nhập" : "chi tiêu"} nào. Hãy thêm
-              danh mục trong{" "}
-              <a href="/categories" className="text-blue-500 hover:underline">
-                trang quản lý danh mục
-              </a>
-              .
-            </div>
-          ) : (
-            <div className="flex flex-wrap gap-1.5">
-              {currentCategories.map((cat) => {
-                const isSelected = watch("category_id") === cat.id;
-                return (
-                  <AppButton
-                    key={cat.id}
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setValue("category_id", cat.id);
-                    }}
-                    className={`px-2.5 py-1 text-xs font-medium transition-all duration-200 whitespace-nowrap border-2 ${
-                      isSelected
-                        ? "border-transparent text-white"
-                        : "bg-white dark:bg-gray-800 hover:shadow-sm"
-                    }`}
-                    style={{
-                      backgroundColor: isSelected ? cat.color : undefined,
-                      borderColor: isSelected ? "transparent" : cat.color,
-                      color: isSelected ? "#ffffff" : cat.color,
-                    }}
-                  >
-                    {cat.name}
-                  </AppButton>
-                );
-              })}
-            </div>
-          )}
+        <TransactionFormCategorySection
+          categories={currentCategories}
+          selectedCategoryId={watch("category_id")}
+          transactionType={activeType}
+          onCategorySelect={(categoryId) => setValue("category_id", categoryId)}
+        />
+
+        {/* Virtual Transaction Switch */}
+        <div className="flex items-center justify-between gap-4 p-3 rounded-lg border border-gray-200 dark:border-gray-700">
+          <div className="flex-1">
+            <label
+              htmlFor="is_virtual"
+              className="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer"
+            >
+              Virtual Transaction
+            </label>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+              Not counted in actual{" "}
+              {activeType === "income" ? "income" : "expenses"}
+            </p>
+          </div>
+          <Switch
+            id="is_virtual"
+            checked={watch("is_virtual")}
+            onCheckedChange={(checked) => setValue("is_virtual", checked)}
+          />
         </div>
 
-        {/* Virtual Transaction Checkbox */}
-        <div className="flex items-center gap-2">
-          <input
-            id="is_virtual"
-            type="checkbox"
-            {...register("is_virtual")}
-            className="w-4 h-4 text-primary bg-gray-100 border-gray-300 rounded focus:ring-primary dark:focus:ring-primary dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+        {/* Resolved Transaction Switch */}
+        <div className="flex items-center justify-between gap-4 p-3 rounded-lg border border-gray-200 dark:border-gray-700">
+          <div className="flex-1">
+            <label
+              htmlFor="is_resolved"
+              className="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer"
+            >
+              Resolved
+            </label>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+              Mark as resolved or settled
+            </p>
+          </div>
+          <Switch
+            id="is_resolved"
+            checked={watch("is_resolved")}
+            onCheckedChange={(checked) => setValue("is_resolved", checked)}
           />
-          <label
-            htmlFor="is_virtual"
-            className="text-sm font-medium text-gray-700 dark:text-gray-300"
-          >
-            Giao dịch ảo
-            <span className="text-xs text-gray-500 dark:text-gray-400 block">
-              (Không tính vào{" "}
-              {activeType === "income"
-                ? "thu nhập thực tế"
-                : "chi tiêu thực tế"}
-              )
-            </span>
-          </label>
         </div>
 
         <div className="flex flex-col gap-2">
@@ -354,11 +359,11 @@ export default function TransactionForm({
             htmlFor="created_at"
             className="text-sm font-medium text-gray-700 dark:text-gray-300"
           >
-            Thời gian
+            Time
           </label>
           <input
             id="created_at"
-            type="datetime-local"
+            type="date"
             {...register("created_at")}
             className="rounded-lg px-3 py-2 border focus:outline-none focus:ring-2 focus:ring-primary/50 shadow dark:bg-gray-800 dark:border-gray-700 dark:text-white"
             required
@@ -372,14 +377,11 @@ export default function TransactionForm({
               size="sm"
               onClick={() => {
                 const twoDaysAgo = subDays(new Date(), 2);
-                setValue(
-                  "created_at",
-                  format(twoDaysAgo, "yyyy-MM-dd'T'00:00")
-                );
+                setValue("created_at", format(twoDaysAgo, "yyyy-MM-dd"));
               }}
               className="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300"
             >
-              2 ngày trước
+              2 days ago
             </AppButton>
             <AppButton
               type="button"
@@ -387,11 +389,11 @@ export default function TransactionForm({
               size="sm"
               onClick={() => {
                 const yesterday = subDays(new Date(), 1);
-                setValue("created_at", format(yesterday, "yyyy-MM-dd'T'00:00"));
+                setValue("created_at", format(yesterday, "yyyy-MM-dd"));
               }}
               className="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300"
             >
-              Hôm qua
+              Yesterday
             </AppButton>
             <AppButton
               type="button"
@@ -399,11 +401,11 @@ export default function TransactionForm({
               size="sm"
               onClick={() => {
                 const today = new Date();
-                setValue("created_at", format(today, "yyyy-MM-dd'T'00:00"));
+                setValue("created_at", format(today, "yyyy-MM-dd"));
               }}
               className="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300"
             >
-              Hôm nay
+              Today
             </AppButton>
           </div>
         </div>
@@ -412,11 +414,11 @@ export default function TransactionForm({
           <AppButton type="submit" loading={isSubmitting} size="md">
             {editTransaction ? (
               <>
-                <Save className="mr-2 h-4 w-4" /> Cập nhật
+                <Save className="mr-2 h-4 w-4" /> Update
               </>
             ) : (
               <>
-                <Plus className="mr-2 h-4 w-4" /> Thêm mới
+                <Plus className="mr-2 h-4 w-4" /> Add New
               </>
             )}
           </AppButton>
@@ -428,7 +430,7 @@ export default function TransactionForm({
               size="md"
               onClick={onCancel}
             >
-              <X className="mr-2 h-4 w-4" /> Huỷ
+              <X className="mr-2 h-4 w-4" /> Cancel
             </AppButton>
           )}
         </div>
