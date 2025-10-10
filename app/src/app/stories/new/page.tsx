@@ -162,8 +162,6 @@ export default function StoryNewPage() {
                 })
                 .filter(Boolean)}
               placeholder="Hãy sáng tạo một câu chuyện ngắn..."
-              className="w-full min-h-[120px] rounded-lg border px-3 py-2 focus:ring-2 focus:ring-green-400 dark:bg-gray-900 dark:border-gray-700 dark:text-white"
-              required
             />
           </div>
           <AppButton
