@@ -12,10 +12,10 @@ import {
 import { queryKeys } from "@/services/react-query/query-keys";
 import { AppHighlightBlock } from "@/components/ui/app-highlight-block";
 import { Button } from "@/components/ui/button";
-import { CreditCard, List, Plus, Loader2 } from "lucide-react";
+import { List, Plus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import TransactionList from "./_components/TransactionList";
-import TransactionForm from "./_components/TransactionForm";
+import TransactionCreateDialog from "./_components/TransactionCreateDialog";
 import TransactionEditDialog from "./_components/TransactionEditDialog";
 import TransactionStatsSections from "./_components/TransactionStatsSections";
 import API, {
@@ -32,6 +32,9 @@ export default function TransactionsPage() {
   const currentDate = new Date();
   const currentMonth = currentDate.getMonth() + 1;
   const currentYear = currentDate.getFullYear();
+
+  // State for create dialog
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
   // State for edit dialog
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -89,6 +92,7 @@ export default function TransactionsPage() {
         queryClient.invalidateQueries({
           queryKey: queryKeys.balance.stats(currentMonth, currentYear),
         });
+        toast.success("Transaction created successfully!");
       },
       onError: (error) => {
         toast.error("Failed to add transaction", {
@@ -229,16 +233,6 @@ export default function TransactionsPage() {
       />
 
       <AppHighlightBlock
-        title="Quản lý giao dịch"
-        description="Thêm giao dịch mới"
-        icon={CreditCard}
-        variant="success"
-        size="lg"
-      >
-        <TransactionForm onSubmit={handleAddTransaction} showTypeSelector />
-      </AppHighlightBlock>
-
-      <AppHighlightBlock
         title="Danh sách giao dịch"
         description={`${transactions.length} giao dịch${
           hasNextPage ? " gần nhất" : ""
@@ -295,6 +289,22 @@ export default function TransactionsPage() {
           </div>
         )}
       </AppHighlightBlock>
+
+      {/* Floating Action Button */}
+      <button
+        onClick={() => setCreateDialogOpen(true)}
+        className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full bg-emerald-600 text-white shadow-lg hover:bg-emerald-700 active:scale-95 transition-all duration-200 flex items-center justify-center group hover:shadow-xl"
+        aria-label="Add new transaction"
+      >
+        <Plus className="h-6 w-6 group-hover:scale-110 transition-transform" />
+      </button>
+
+      {/* Create Dialog */}
+      <TransactionCreateDialog
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+        onSubmit={handleAddTransaction}
+      />
 
       {/* Edit Dialog */}
       {editingTransaction && (

@@ -60,22 +60,22 @@ export function AppHighlightBlock({
 
   const sizeStyles = {
     sm: {
-      padding: "p-4",
-      titleSize: "text-lg",
-      descriptionSize: "text-sm",
-      iconSize: "w-5 h-5",
+      padding: "p-3 md:p-4",
+      titleSize: "text-base md:text-lg",
+      descriptionSize: "text-xs md:text-sm",
+      iconSize: "w-4 h-4 md:w-5 md:h-5",
     },
     md: {
-      padding: "p-6",
-      titleSize: "text-xl",
-      descriptionSize: "text-sm",
-      iconSize: "w-6 h-6",
+      padding: "p-4 md:p-6",
+      titleSize: "text-lg md:text-xl",
+      descriptionSize: "text-xs md:text-sm",
+      iconSize: "w-5 h-5 md:w-6 md:h-6",
     },
     lg: {
-      padding: "p-8",
-      titleSize: "text-2xl",
-      descriptionSize: "text-base",
-      iconSize: "w-8 h-8",
+      padding: "p-5 md:p-8",
+      titleSize: "text-xl md:text-2xl",
+      descriptionSize: "text-sm md:text-base",
+      iconSize: "w-6 h-6 md:w-8 md:h-8",
     },
   };
 
@@ -104,15 +104,15 @@ export function AppHighlightBlock({
 
       {/* Header */}
       {(title || description || Icon) && (
-        <div className="relative z-10 mb-6">
+        <div className="relative z-10 mb-3 md:mb-6">
           <div className="flex items-start justify-between">
             <div className="flex-1">
               {title && (
-                <div className="flex items-center gap-3 mb-2">
+                <div className="flex items-center gap-2 md:gap-3 mb-1 md:mb-2">
                   {Icon && (
                     <div
                       className={cn(
-                        "flex-shrink-0 rounded-xl bg-white/20 dark:bg-white/10 p-2",
+                        "flex-shrink-0 rounded-lg md:rounded-xl bg-white/20 dark:bg-white/10 p-1.5 md:p-2",
                         styles.accent
                       )}
                     >
@@ -151,7 +151,7 @@ export function AppHighlightBlock({
 
       {/* Footer */}
       {footer && (
-        <div className="relative z-10 mt-6 pt-4 border-t border-white/20 dark:border-white/10">
+        <div className="relative z-10 mt-3 md:mt-6 pt-3 md:pt-4 border-t border-white/20 dark:border-white/10">
           {footer}
         </div>
       )}

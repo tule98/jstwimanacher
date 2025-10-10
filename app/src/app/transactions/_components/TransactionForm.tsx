@@ -231,6 +231,63 @@ export default function TransactionForm({
         className="flex flex-col gap-3"
         onSubmit={handleSubmit(onFormSubmit)}
       >
+        {/* Date Input - First Field */}
+        <div className="flex flex-col gap-2">
+          <label
+            htmlFor="created_at"
+            className="text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            Date
+          </label>
+          <input
+            id="created_at"
+            type="date"
+            {...register("created_at")}
+            className="rounded-lg px-3 py-2 border focus:outline-none focus:ring-2 focus:ring-primary/50 shadow dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+            required
+          />
+
+          {/* Quick date selection tags */}
+          <div className="flex gap-2 mt-1">
+            <AppButton
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                const twoDaysAgo = subDays(new Date(), 2);
+                setValue("created_at", format(twoDaysAgo, "yyyy-MM-dd"));
+              }}
+              className="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300"
+            >
+              2 days ago
+            </AppButton>
+            <AppButton
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                const yesterday = subDays(new Date(), 1);
+                setValue("created_at", format(yesterday, "yyyy-MM-dd"));
+              }}
+              className="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300"
+            >
+              Yesterday
+            </AppButton>
+            <AppButton
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                const today = new Date();
+                setValue("created_at", format(today, "yyyy-MM-dd"));
+              }}
+              className="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300"
+            >
+              Today
+            </AppButton>
+          </div>
+        </div>
+
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="flex flex-col gap-2 relative">
             <label
@@ -354,63 +411,8 @@ export default function TransactionForm({
           />
         </div>
 
-        <div className="flex flex-col gap-2">
-          <label
-            htmlFor="created_at"
-            className="text-sm font-medium text-gray-700 dark:text-gray-300"
-          >
-            Time
-          </label>
-          <input
-            id="created_at"
-            type="date"
-            {...register("created_at")}
-            className="rounded-lg px-3 py-2 border focus:outline-none focus:ring-2 focus:ring-primary/50 shadow dark:bg-gray-800 dark:border-gray-700 dark:text-white"
-            required
-          />
-
-          {/* Quick time selection tags */}
-          <div className="flex gap-2 mt-1">
-            <AppButton
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                const twoDaysAgo = subDays(new Date(), 2);
-                setValue("created_at", format(twoDaysAgo, "yyyy-MM-dd"));
-              }}
-              className="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300"
-            >
-              2 days ago
-            </AppButton>
-            <AppButton
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                const yesterday = subDays(new Date(), 1);
-                setValue("created_at", format(yesterday, "yyyy-MM-dd"));
-              }}
-              className="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300"
-            >
-              Yesterday
-            </AppButton>
-            <AppButton
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                const today = new Date();
-                setValue("created_at", format(today, "yyyy-MM-dd"));
-              }}
-              className="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300"
-            >
-              Today
-            </AppButton>
-          </div>
-        </div>
-
-        <div className="flex flex-col sm:flex-row gap-2 mt-4">
+        {/* Submit and Cancel buttons */}
+        <div className="flex gap-3 mt-4">
           <AppButton type="submit" loading={isSubmitting} size="md">
             {editTransaction ? (
               <>
