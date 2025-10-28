@@ -39,11 +39,11 @@ export default function TransactionFormTabs({
         <AppTabs.List className="grid w-full grid-cols-2">
           <AppTabs.Trigger value="expense" className="flex items-center gap-2">
             <TrendingDown size={16} />
-            Chi tiêu ({expenseCategories.length} danh mục)
+            Expenses ({expenseCategories.length})
           </AppTabs.Trigger>
           <AppTabs.Trigger value="income" className="flex items-center gap-2">
             <TrendingUp size={16} />
-            Thu nhập ({incomeCategories.length} danh mục)
+            Income ({incomeCategories.length})
           </AppTabs.Trigger>
         </AppTabs.List>
       </AppTabs>

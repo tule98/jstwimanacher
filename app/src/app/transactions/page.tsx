@@ -1,5 +1,6 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCategories, useTransactions } from "@/services/react-query/queries";
 import {
@@ -27,6 +28,7 @@ import API, {
 
 export default function TransactionsPage() {
   const queryClient = useQueryClient();
+  const searchParams = useSearchParams();
 
   // Get current month/year for balance
   const currentDate = new Date();
@@ -35,6 +37,31 @@ export default function TransactionsPage() {
 
   // State for create dialog
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+
+  // Open create dialog when `?create=1` is present or when receiving a global event
+  useEffect(() => {
+    if (searchParams.get("create")) {
+      setCreateDialogOpen(true);
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    const handler = () => setCreateDialogOpen(true);
+    if (typeof window !== "undefined") {
+      window.addEventListener(
+        "open-create-transaction",
+        handler as EventListener
+      );
+    }
+    return () => {
+      if (typeof window !== "undefined") {
+        window.removeEventListener(
+          "open-create-transaction",
+          handler as EventListener
+        );
+      }
+    };
+  }, []);
 
   // State for edit dialog
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -92,7 +119,6 @@ export default function TransactionsPage() {
         queryClient.invalidateQueries({
           queryKey: queryKeys.balance.stats(currentMonth, currentYear),
         });
-        toast.success("Transaction created successfully!");
       },
       onError: (error) => {
         toast.error("Failed to add transaction", {
@@ -293,7 +319,7 @@ export default function TransactionsPage() {
       {/* Floating Action Button */}
       <button
         onClick={() => setCreateDialogOpen(true)}
-        className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full bg-emerald-600 text-white shadow-lg hover:bg-emerald-700 active:scale-95 transition-all duration-200 flex items-center justify-center group hover:shadow-xl"
+        className="hidden md:flex fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full bg-emerald-600 text-white shadow-lg hover:bg-emerald-700 active:scale-95 transition-all duration-200 items-center justify-center group hover:shadow-xl"
         aria-label="Add new transaction"
       >
         <Plus className="h-6 w-6 group-hover:scale-110 transition-transform" />

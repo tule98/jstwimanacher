@@ -1,7 +1,9 @@
 /* eslint-disable @next/next/no-page-custom-font */
 import "./globals.css";
+import React from "react";
 import AppProvider from "./_components/AppProvider";
 import AppNav from "./_components/AppNav";
+import BottomNav from "./_components/BottomNav";
 import AuthGuard from "./_components/AuthGuard";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -33,7 +35,7 @@ export default function RootLayout({
       <body className="font-poppins bg-gradient-to-b from-green-50 to-green-100 min-h-screen dark:from-gray-900 dark:to-gray-800 transition-colors duration-300">
         <AppProvider>
           <AuthGuard>
-            <header className="sticky top-0 z-50 w-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm shadow-md">
+            <header className="sticky top-0 z-50 w-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm shadow-md hidden md:block">
               <div className="max-w-screen-lg mx-auto">
                 <AppNav />
               </div>
@@ -42,6 +44,10 @@ export default function RootLayout({
               <main className="flex flex-col items-center justify-start p-4 md:p-6 gap-6 pb-20 pt-4">
                 {children}
               </main>
+            </div>
+            {/* Mobile Bottom Navigation */}
+            <div className="md:hidden">
+              <BottomNav />
             </div>
           </AuthGuard>
           <Toaster richColors position="top-right" />

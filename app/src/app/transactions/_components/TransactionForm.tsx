@@ -217,7 +217,7 @@ export default function TransactionForm({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col h-full gap-3">
       {/* Transaction Type Selector */}
       {showTypeSelector && (
         <TransactionFormTabs
@@ -228,213 +228,226 @@ export default function TransactionForm({
       )}
 
       <form
-        className="flex flex-col gap-3"
+        className="flex flex-col flex-1"
         onSubmit={handleSubmit(onFormSubmit)}
       >
-        {/* Date Input - First Field */}
-        <div className="flex flex-col gap-2">
-          <label
-            htmlFor="created_at"
-            className="text-sm font-medium text-gray-700 dark:text-gray-300"
-          >
-            Date
-          </label>
-          <input
-            id="created_at"
-            type="date"
-            {...register("created_at")}
-            className="rounded-lg px-3 py-2 border focus:outline-none focus:ring-2 focus:ring-primary/50 shadow dark:bg-gray-800 dark:border-gray-700 dark:text-white"
-            required
-          />
-
-          {/* Quick date selection tags */}
-          <div className="flex gap-2 mt-1">
-            <AppButton
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                const twoDaysAgo = subDays(new Date(), 2);
-                setValue("created_at", format(twoDaysAgo, "yyyy-MM-dd"));
-              }}
-              className="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300"
-            >
-              2 days ago
-            </AppButton>
-            <AppButton
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                const yesterday = subDays(new Date(), 1);
-                setValue("created_at", format(yesterday, "yyyy-MM-dd"));
-              }}
-              className="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300"
-            >
-              Yesterday
-            </AppButton>
-            <AppButton
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                const today = new Date();
-                setValue("created_at", format(today, "yyyy-MM-dd"));
-              }}
-              className="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300"
-            >
-              Today
-            </AppButton>
-          </div>
-        </div>
-
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div className="flex flex-col gap-2 relative">
+        <div className="flex-1 space-y-3 pb-4">
+          {/* Date Input - First Field */}
+          <div className="flex flex-col gap-2">
             <label
-              htmlFor="note"
+              htmlFor="created_at"
               className="text-sm font-medium text-gray-700 dark:text-gray-300"
             >
-              Transaction Description
+              Date
             </label>
             <input
-              id="note"
-              type="text"
-              {...register("note")}
-              onFocus={() => {
-                if (!editTransaction) {
-                  const yesterday = startOfDay(subDays(new Date(), 1));
-                  const yesterdayTransactions = transactions
-                    .filter((tx) => {
-                      const txDate = startOfDay(parseISO(tx.created_at));
-                      return (
-                        isEqual(txDate, yesterday) &&
-                        tx.note &&
-                        tx.note.trim() &&
-                        tx.category.type === activeType
-                      );
-                    })
-                    .sort((a, b) =>
-                      compareDesc(
-                        parseISO(a.created_at),
-                        parseISO(b.created_at)
-                      )
-                    )
-                    .slice(0, 5);
-
-                  if (yesterdayTransactions.length > 0) {
-                    setShowSuggestions(true);
-                  }
-                }
-              }}
-              onBlur={() => {
-                setTimeout(() => setShowSuggestions(false), 150);
-              }}
-              placeholder="Enter description"
+              id="created_at"
+              type="date"
+              {...register("created_at")}
               className="rounded-lg px-3 py-2 border focus:outline-none focus:ring-2 focus:ring-primary/50 shadow dark:bg-gray-800 dark:border-gray-700 dark:text-white"
               required
             />
 
-            {/* Suggestions dropdown */}
-            {showSuggestions && suggestions.length > 0 && !editTransaction && (
-              <TransactionFormDescriptionSuggestionPopover
-                showSuggestions={showSuggestions}
-                suggestions={suggestions}
-                onSuggestionSelect={handleSuggestionSelect}
-              />
-            )}
+            {/* Quick date selection tags */}
+            <div className="flex gap-2 mt-1">
+              <AppButton
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  const twoDaysAgo = subDays(new Date(), 2);
+                  setValue("created_at", format(twoDaysAgo, "yyyy-MM-dd"));
+                }}
+                className="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300"
+              >
+                2 days ago
+              </AppButton>
+              <AppButton
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  const yesterday = subDays(new Date(), 1);
+                  setValue("created_at", format(yesterday, "yyyy-MM-dd"));
+                }}
+                className="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300"
+              >
+                Yesterday
+              </AppButton>
+              <AppButton
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  const today = new Date();
+                  setValue("created_at", format(today, "yyyy-MM-dd"));
+                }}
+                className="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300"
+              >
+                Today
+              </AppButton>
+            </div>
           </div>
-          <div className="flex flex-col gap-2">
-            <label
-              htmlFor="amount"
-              className="text-sm font-medium text-gray-700 dark:text-gray-300"
-            >
-              Amount
-            </label>
-            <AppCurrencyInput
-              id="amount"
-              value={watch("amount")}
-              onChange={(formattedValue, rawValue) => {
-                setRawAmount(rawValue);
-                setValue("amount", formattedValue);
-              }}
-              placeholder="Enter amount"
-              required
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="flex flex-col gap-2 relative">
+              <label
+                htmlFor="note"
+                className="text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                Transaction Description
+              </label>
+              <input
+                id="note"
+                type="text"
+                {...register("note")}
+                onFocus={() => {
+                  if (!editTransaction) {
+                    const yesterday = startOfDay(subDays(new Date(), 1));
+                    const yesterdayTransactions = transactions
+                      .filter((tx) => {
+                        const txDate = startOfDay(parseISO(tx.created_at));
+                        return (
+                          isEqual(txDate, yesterday) &&
+                          tx.note &&
+                          tx.note.trim() &&
+                          tx.category.type === activeType
+                        );
+                      })
+                      .sort((a, b) =>
+                        compareDesc(
+                          parseISO(a.created_at),
+                          parseISO(b.created_at)
+                        )
+                      )
+                      .slice(0, 5);
+
+                    if (yesterdayTransactions.length > 0) {
+                      setShowSuggestions(true);
+                    }
+                  }
+                }}
+                onBlur={() => {
+                  setTimeout(() => setShowSuggestions(false), 150);
+                }}
+                placeholder="Enter description"
+                className="rounded-lg px-3 py-2 border focus:outline-none focus:ring-2 focus:ring-primary/50 shadow dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+                required
+              />
+
+              {/* Suggestions dropdown */}
+              {showSuggestions &&
+                suggestions.length > 0 &&
+                !editTransaction && (
+                  <TransactionFormDescriptionSuggestionPopover
+                    showSuggestions={showSuggestions}
+                    suggestions={suggestions}
+                    onSuggestionSelect={handleSuggestionSelect}
+                  />
+                )}
+            </div>
+            <div className="flex flex-col gap-2">
+              <label
+                htmlFor="amount"
+                className="text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                Amount
+              </label>
+              <AppCurrencyInput
+                id="amount"
+                value={watch("amount")}
+                onChange={(formattedValue, rawValue) => {
+                  setRawAmount(rawValue);
+                  setValue("amount", formattedValue);
+                }}
+                placeholder="Enter amount"
+                required
+              />
+            </div>
+          </div>
+
+          <TransactionFormCategorySection
+            categories={currentCategories}
+            selectedCategoryId={watch("category_id")}
+            transactionType={activeType}
+            onCategorySelect={(categoryId) =>
+              setValue("category_id", categoryId)
+            }
+          />
+
+          {/* Virtual Transaction Switch */}
+          <div className="flex items-center justify-between gap-4 p-3 rounded-lg border border-gray-200 dark:border-gray-700">
+            <div className="flex-1">
+              <label
+                htmlFor="is_virtual"
+                className="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer"
+              >
+                Virtual Transaction
+              </label>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                Not counted in actual{" "}
+                {activeType === "income" ? "income" : "expenses"}
+              </p>
+            </div>
+            <Switch
+              id="is_virtual"
+              checked={watch("is_virtual")}
+              onCheckedChange={(checked) => setValue("is_virtual", checked)}
+            />
+          </div>
+
+          {/* Resolved Transaction Switch */}
+          <div className="flex items-center justify-between gap-4 p-3 rounded-lg border border-gray-200 dark:border-gray-700">
+            <div className="flex-1">
+              <label
+                htmlFor="is_resolved"
+                className="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer"
+              >
+                Resolved
+              </label>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                Mark as resolved or settled
+              </p>
+            </div>
+            <Switch
+              id="is_resolved"
+              checked={watch("is_resolved")}
+              onCheckedChange={(checked) => setValue("is_resolved", checked)}
             />
           </div>
         </div>
 
-        <TransactionFormCategorySection
-          categories={currentCategories}
-          selectedCategoryId={watch("category_id")}
-          transactionType={activeType}
-          onCategorySelect={(categoryId) => setValue("category_id", categoryId)}
-        />
-
-        {/* Virtual Transaction Switch */}
-        <div className="flex items-center justify-between gap-4 p-3 rounded-lg border border-gray-200 dark:border-gray-700">
-          <div className="flex-1">
-            <label
-              htmlFor="is_virtual"
-              className="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer"
-            >
-              Virtual Transaction
-            </label>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-              Not counted in actual{" "}
-              {activeType === "income" ? "income" : "expenses"}
-            </p>
-          </div>
-          <Switch
-            id="is_virtual"
-            checked={watch("is_virtual")}
-            onCheckedChange={(checked) => setValue("is_virtual", checked)}
-          />
-        </div>
-
-        {/* Resolved Transaction Switch */}
-        <div className="flex items-center justify-between gap-4 p-3 rounded-lg border border-gray-200 dark:border-gray-700">
-          <div className="flex-1">
-            <label
-              htmlFor="is_resolved"
-              className="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer"
-            >
-              Resolved
-            </label>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-              Mark as resolved or settled
-            </p>
-          </div>
-          <Switch
-            id="is_resolved"
-            checked={watch("is_resolved")}
-            onCheckedChange={(checked) => setValue("is_resolved", checked)}
-          />
-        </div>
-
-        {/* Submit and Cancel buttons */}
-        <div className="flex gap-3 mt-4">
-          <AppButton type="submit" loading={isSubmitting} size="md">
-            {editTransaction ? (
-              <>
-                <Save className="mr-2 h-4 w-4" /> Update
-              </>
-            ) : (
-              <>
-                <Plus className="mr-2 h-4 w-4" /> Add New
-              </>
+        {/* Sticky Submit and Cancel buttons */}
+        <div className="sticky bottom-0 bg-white dark:bg-gray-950 border-t pt-4 -mx-6 px-6 -mb-4 pb-4">
+          <div className="flex gap-3">
+            {(editTransaction || onCancel) && (
+              <AppButton
+                type="button"
+                variant="outline"
+                size="md"
+                className="flex-1"
+                onClick={onCancel}
+              >
+                <X className="mr-2 h-4 w-4" /> Cancel
+              </AppButton>
             )}
-          </AppButton>
-
-          {(editTransaction || onCancel) && (
             <AppButton
-              type="button"
-              variant="outline"
+              type="submit"
+              loading={isSubmitting}
               size="md"
-              onClick={onCancel}
+              className="flex-2"
             >
-              <X className="mr-2 h-4 w-4" /> Cancel
+              {editTransaction ? (
+                <>
+                  <Save className="mr-2 h-4 w-4" /> Update
+                </>
+              ) : (
+                <>
+                  <Plus className="mr-2 h-4 w-4" /> Add New
+                </>
+              )}
             </AppButton>
-          )}
+          </div>
         </div>
       </form>
     </div>

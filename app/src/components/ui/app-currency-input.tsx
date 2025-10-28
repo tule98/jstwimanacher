@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { cn } from "@/lib/utils";
+import AppInput from "./app-input";
 
 interface AppCurrencyInputProps {
   value: string;
@@ -37,7 +37,7 @@ export default function AppCurrencyInput({
   };
 
   return (
-    <input
+    <AppInput
       id={id}
       type="text"
       value={value}
@@ -45,14 +45,7 @@ export default function AppCurrencyInput({
       placeholder={placeholder}
       disabled={disabled}
       required={required}
-      className={cn(
-        "rounded-lg px-3 py-2 border focus:outline-none focus:ring-2 focus:ring-emerald-500/50 shadow dark:bg-gray-800 dark:border-gray-700 dark:text-white",
-        "placeholder:text-gray-400 dark:placeholder:text-gray-500",
-        "disabled:opacity-50 disabled:cursor-not-allowed",
-        "border-gray-300 dark:border-gray-600",
-        "focus:border-emerald-500 dark:focus:border-emerald-400",
-        className
-      )}
+      className={className}
     />
   );
 }
