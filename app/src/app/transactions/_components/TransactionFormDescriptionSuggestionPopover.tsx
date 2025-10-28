@@ -24,6 +24,7 @@ export default function TransactionFormDescriptionSuggestionPopover({
       {suggestions.map((suggestion, idx) => {
         return (
           <AppButton
+            tabIndex={-1}
             key={idx}
             type="button"
             variant="ghost"

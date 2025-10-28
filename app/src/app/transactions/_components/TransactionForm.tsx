@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -62,6 +62,7 @@ export default function TransactionForm({
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestions, setSuggestions] = useState<Transaction[]>([]);
   const [activeType, setActiveType] = useState<"income" | "expense">("expense");
+  const userSelectedCategoryRef = useRef(false);
 
   // Initialize React Hook Form
   const {
@@ -144,6 +145,7 @@ export default function TransactionForm({
     setValue("note", transaction.note || "");
     setValue("amount", Number(amountStr).toLocaleString("vi-VN"));
     setValue("category_id", transaction.category_id);
+    userSelectedCategoryRef.current = true; // treat selecting a suggestion as a manual category choice
     setShowSuggestions(false);
   };
 
@@ -166,6 +168,7 @@ export default function TransactionForm({
       is_resolved: true,
     });
     setRawAmount("");
+    userSelectedCategoryRef.current = false;
   };
 
   const onFormSubmit = (data: TransactionFormData) => {
@@ -213,6 +216,47 @@ export default function TransactionForm({
       setTimeout(() => {
         setFocus("note");
       }, 0);
+
+      // Allow auto-selection logic to run again on fresh form
+      userSelectedCategoryRef.current = false;
+    }
+  };
+
+  // Normalize helper: lowercase and strip diacritics for robust matching
+  const normalize = (s: string) =>
+    s
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/\p{Diacritic}+/gu, "")
+      .trim();
+
+  // Run category auto-selection only on blur (not on each keystroke)
+  const autoSelectCategoryFromNote = () => {
+    const note = (watch("note") || "").trim();
+    if (!note) return;
+
+    const normalizedNote = normalize(note);
+    const candidates = currentCategories || [];
+    if (!candidates.length) return;
+
+    let bestMatchId: string | null = null;
+    let bestMatchLength = -1;
+
+    for (const cat of candidates) {
+      const nameNorm = normalize(cat.name);
+      if (nameNorm && normalizedNote.includes(nameNorm)) {
+        if (nameNorm.length > bestMatchLength) {
+          bestMatchLength = nameNorm.length;
+          bestMatchId = cat.id;
+        }
+      }
+    }
+
+    if (bestMatchId) {
+      const current = watch("category_id");
+      if (!current || userSelectedCategoryRef.current === false) {
+        setValue("category_id", bestMatchId);
+      }
     }
   };
 
@@ -328,7 +372,11 @@ export default function TransactionForm({
                   }
                 }}
                 onBlur={() => {
-                  setTimeout(() => setShowSuggestions(false), 150);
+                  // Delay to allow suggestion click to register before hiding and auto-selecting
+                  setTimeout(() => {
+                    setShowSuggestions(false);
+                    autoSelectCategoryFromNote();
+                  }, 160);
                 }}
                 placeholder="Enter description"
                 className="rounded-lg px-3 py-2 border focus:outline-none focus:ring-2 focus:ring-primary/50 shadow dark:bg-gray-800 dark:border-gray-700 dark:text-white"
@@ -370,9 +418,10 @@ export default function TransactionForm({
             categories={currentCategories}
             selectedCategoryId={watch("category_id")}
             transactionType={activeType}
-            onCategorySelect={(categoryId) =>
-              setValue("category_id", categoryId)
-            }
+            onCategorySelect={(categoryId) => {
+              userSelectedCategoryRef.current = true; // mark as manual selection
+              setValue("category_id", categoryId);
+            }}
           />
 
           {/* Virtual Transaction Switch */}
