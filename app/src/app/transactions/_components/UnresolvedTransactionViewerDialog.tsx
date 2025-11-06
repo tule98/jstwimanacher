@@ -13,6 +13,7 @@ import {
   TrendingDown,
   CheckCircle,
   Loader2,
+  Pencil,
 } from "lucide-react";
 import { format, parseISO, isSameDay } from "date-fns";
 import { Category, Transaction } from "@/services/api/client";
@@ -22,6 +23,7 @@ interface UnresolvedTransactionViewerDialogProps {
   onOpenChange: (open: boolean) => void;
   unresolvedTransactions: Transaction[];
   categories: Category[];
+  onEdit?: (transaction: Transaction) => void;
   onToggleResolved?: (id: string) => void;
   isTogglingResolved?: boolean;
   togglingId?: string;
@@ -67,6 +69,7 @@ export default function UnresolvedTransactionViewerDialog({
   onOpenChange,
   unresolvedTransactions,
   categories,
+  onEdit,
   onToggleResolved,
   isTogglingResolved,
   togglingId,
@@ -304,6 +307,18 @@ export default function UnresolvedTransactionViewerDialog({
                               >
                                 {formatCurrency(tx.amount)}
                               </span>
+
+                              {onEdit && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 p-0 text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:text-blue-400 dark:hover:bg-blue-900/20"
+                                  onClick={() => onEdit(tx)}
+                                  title="Chỉnh sửa giao dịch"
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                              )}
 
                               {onToggleResolved && (
                                 <Button

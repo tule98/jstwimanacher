@@ -13,6 +13,8 @@ import {
 import { queryKeys } from "@/services/react-query/query-keys";
 import { AppHighlightBlock } from "@/components/ui/app-highlight-block";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { List, Plus, Loader2, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
 import TransactionList from "./_components/TransactionList";
@@ -40,6 +42,10 @@ export default function TransactionsPage() {
 
   // State for stats section visibility
   const [showStats, setShowStats] = useState(false);
+
+  // State for transaction filters
+  const [onlyUnresolved, setOnlyUnresolved] = useState(false);
+  const [onlyVirtual, setOnlyVirtual] = useState(false);
 
   // Open create dialog when `?create=1` is present or when receiving a global event
   useEffect(() => {
@@ -96,7 +102,10 @@ export default function TransactionsPage() {
     isLoading: isLoadingTransactions,
     isError: isErrorTransactions,
     error: transactionsError,
-  } = useTransactions(PAGE_SIZE);
+  } = useTransactions(PAGE_SIZE, {
+    onlyUnresolved: onlyUnresolved,
+    onlyVirtual: onlyVirtual,
+  });
 
   // Flatten all pages into a single array
   const transactions = transactionPages?.pages.flat() ?? [];
@@ -291,6 +300,46 @@ export default function TransactionsPage() {
             />
           </div>
         )}
+
+        {/* Filter Toggles */}
+        <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg space-y-3">
+          <div className="flex items-center justify-between">
+            <Label
+              htmlFor="only-unresolved"
+              className="text-sm font-medium cursor-pointer flex items-center gap-2"
+            >
+              <span>Chỉ hiển thị giao dịch chưa xác nhận</span>
+              {onlyUnresolved && (
+                <span className="text-xs px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 rounded-full">
+                  Đang lọc
+                </span>
+              )}
+            </Label>
+            <Switch
+              id="only-unresolved"
+              checked={onlyUnresolved}
+              onCheckedChange={setOnlyUnresolved}
+            />
+          </div>
+          <div className="flex items-center justify-between">
+            <Label
+              htmlFor="only-virtual"
+              className="text-sm font-medium cursor-pointer flex items-center gap-2"
+            >
+              <span>Chỉ hiển thị giao dịch ảo</span>
+              {onlyVirtual && (
+                <span className="text-xs px-2 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full">
+                  Đang lọc
+                </span>
+              )}
+            </Label>
+            <Switch
+              id="only-virtual"
+              checked={onlyVirtual}
+              onCheckedChange={setOnlyVirtual}
+            />
+          </div>
+        </div>
 
         <TransactionList
           transactions={transactions}

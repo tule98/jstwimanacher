@@ -24,11 +24,17 @@ export function useCategories() {
   });
 }
 
-export function useTransactions(pageSize: number = 20) {
+export function useTransactions(
+  pageSize: number = 20,
+  options?: {
+    onlyUnresolved?: boolean;
+    onlyVirtual?: boolean;
+  }
+) {
   return useInfiniteQuery({
-    queryKey: queryKeys.transactions.infinite,
+    queryKey: queryKeys.transactions.infinite(options),
     queryFn: ({ pageParam = 0 }) =>
-      API.transactions.getWithPagination(pageSize, pageParam),
+      API.transactions.getWithPagination(pageSize, pageParam, options),
     getNextPageParam: (lastPage, allPages) => {
       // If last page has fewer items than pageSize, no more pages
       if (lastPage.length < pageSize) return undefined;

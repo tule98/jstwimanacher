@@ -209,11 +209,17 @@ export const TransactionsAPI = {
    */
   async getWithPagination(
     limit: number,
-    offset: number
+    offset: number,
+    options?: {
+      onlyUnresolved?: boolean;
+      onlyVirtual?: boolean;
+    }
   ): Promise<Transaction[]> {
     return httpClient.get<Transaction[]>("/api/transactions", {
       limit,
       offset,
+      ...(options?.onlyUnresolved && { onlyUnresolved: "true" }),
+      ...(options?.onlyVirtual && { onlyVirtual: "true" }),
     });
   },
 

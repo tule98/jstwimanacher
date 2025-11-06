@@ -178,6 +178,7 @@ export default function TransactionList({
             onOpenChange={setShowUnresolvedDialog}
             unresolvedTransactions={unresolvedTransactions}
             categories={categories}
+            onEdit={onEdit}
             onToggleResolved={onToggleResolved}
             isTogglingResolved={isTogglingResolved}
             togglingId={togglingId}

@@ -91,23 +91,43 @@ export class DatabaseService {
 
   async getTransactions(
     limit?: number,
-    offset?: number
+    offset?: number,
+    options?: {
+      onlyUnresolved?: boolean;
+      onlyVirtual?: boolean;
+    }
   ): Promise<(Transaction & { category: Category })[]> {
-    const baseQuery = db
+    const conditions = [];
+
+    // Add filter conditions
+    if (options?.onlyUnresolved) {
+      conditions.push(eq(transactions.is_resolved, false));
+    }
+
+    if (options?.onlyVirtual) {
+      conditions.push(eq(transactions.is_virtual, true));
+    }
+
+    let query = db
       .select()
       .from(transactions)
       .leftJoin(categories, eq(transactions.category_id, categories.id))
-      .orderBy(desc(transactions.created_at));
+      .orderBy(desc(transactions.created_at))
+      .$dynamic();
+
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
 
     if (offset !== undefined) {
-      baseQuery.offset(offset);
+      query = query.offset(offset);
     }
 
     if (limit !== undefined) {
-      baseQuery.limit(limit);
+      query = query.limit(limit);
     }
 
-    const result = await baseQuery;
+    const result = await query;
 
     return result.map((row) => ({
       ...row.transactions,

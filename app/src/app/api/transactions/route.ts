@@ -9,6 +9,8 @@ export async function GET(request: Request) {
     const year = searchParams.get("year");
     const limit = searchParams.get("limit");
     const offset = searchParams.get("offset");
+    const onlyUnresolved = searchParams.get("onlyUnresolved") === "true";
+    const onlyVirtual = searchParams.get("onlyVirtual") === "true";
 
     if (month && year) {
       // Nếu có tham số month và year, lấy transactions theo tháng
@@ -23,7 +25,11 @@ export async function GET(request: Request) {
       const offsetNum = offset ? parseInt(offset, 10) : undefined;
       const transactions = await databaseService.getTransactions(
         limitNum,
-        offsetNum
+        offsetNum,
+        {
+          onlyUnresolved,
+          onlyVirtual,
+        }
       );
       return NextResponse.json(transactions);
     }

@@ -4,7 +4,8 @@ export const queryKeys = {
   },
   transactions: {
     all: ["transactions"] as const,
-    infinite: ["transactions", "infinite"] as const,
+    infinite: (filters?: { onlyUnresolved?: boolean; onlyVirtual?: boolean }) =>
+      ["transactions", "infinite", filters] as const,
     lists: () => [...queryKeys.transactions.all, "list"] as const,
     list: (filters: Record<string, unknown>) =>
       [...queryKeys.transactions.lists(), filters] as const,
