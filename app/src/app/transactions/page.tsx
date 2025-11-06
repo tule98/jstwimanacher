@@ -13,7 +13,7 @@ import {
 import { queryKeys } from "@/services/react-query/query-keys";
 import { AppHighlightBlock } from "@/components/ui/app-highlight-block";
 import { Button } from "@/components/ui/button";
-import { List, Plus, Loader2 } from "lucide-react";
+import { List, Plus, Loader2, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
 import TransactionList from "./_components/TransactionList";
 import TransactionCreateDialog from "./_components/TransactionCreateDialog";
@@ -37,6 +37,9 @@ export default function TransactionsPage() {
 
   // State for create dialog
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+
+  // State for stats section visibility
+  const [showStats, setShowStats] = useState(false);
 
   // Open create dialog when `?create=1` is present or when receiving a global event
   useEffect(() => {
@@ -251,13 +254,6 @@ export default function TransactionsPage() {
 
   return (
     <div className="w-full max-w-3xl mx-auto space-y-6 pb-16">
-      {/* Balance Overview Card */}
-      <TransactionStatsSections
-        balanceStats={balanceStats}
-        currentMonth={currentMonth}
-        currentYear={currentYear}
-      />
-
       <AppHighlightBlock
         title="Danh sách giao dịch"
         description={`${transactions.length} giao dịch${
@@ -266,6 +262,36 @@ export default function TransactionsPage() {
         icon={List}
         variant="default"
       >
+        {/* Toggle Stats Button */}
+        <div className="mb-4">
+          <Button
+            onClick={() => setShowStats(!showStats)}
+            variant="outline"
+            size="sm"
+            className="w-full justify-between border-emerald-200 dark:border-emerald-800"
+          >
+            <span className="text-sm font-medium">
+              {showStats ? "Hide Statistics" : "Show Statistics"}
+            </span>
+            {showStats ? (
+              <ChevronUp className="h-4 w-4" />
+            ) : (
+              <ChevronDown className="h-4 w-4" />
+            )}
+          </Button>
+        </div>
+
+        {/* Collapsible Stats Section */}
+        {showStats && (
+          <div className="mb-6 animate-in slide-in-from-top-2 duration-300">
+            <TransactionStatsSections
+              balanceStats={balanceStats}
+              currentMonth={currentMonth}
+              currentYear={currentYear}
+            />
+          </div>
+        )}
+
         <TransactionList
           transactions={transactions}
           categories={allCategories}

@@ -9,14 +9,15 @@ import { Switch } from "@/components/ui/switch";
 import { Plus, X, Save } from "lucide-react";
 import TransactionFormTabs from "./TransactionFormTabs";
 import TransactionFormCategorySection from "./TransactionFormCategorySection";
+import DateNavigator from "./DateNavigator";
 import { toast } from "sonner";
 import {
-  subDays,
   format,
   isEqual,
   parseISO,
   startOfDay,
   compareDesc,
+  subDays,
 } from "date-fns";
 import { Transaction, TransactionCreateData } from "@/services/api/client";
 import { useCategories, useTransactions } from "@/services/react-query/queries";
@@ -292,45 +293,11 @@ export default function TransactionForm({
               required
             />
 
-            {/* Quick date selection tags */}
-            <div className="flex gap-2 mt-1">
-              <AppButton
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  const twoDaysAgo = subDays(new Date(), 2);
-                  setValue("created_at", format(twoDaysAgo, "yyyy-MM-dd"));
-                }}
-                className="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300"
-              >
-                2 days ago
-              </AppButton>
-              <AppButton
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  const yesterday = subDays(new Date(), 1);
-                  setValue("created_at", format(yesterday, "yyyy-MM-dd"));
-                }}
-                className="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300"
-              >
-                Yesterday
-              </AppButton>
-              <AppButton
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  const today = new Date();
-                  setValue("created_at", format(today, "yyyy-MM-dd"));
-                }}
-                className="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300"
-              >
-                Today
-              </AppButton>
-            </div>
+            {/* Date Navigator */}
+            <DateNavigator
+              currentDate={watch("created_at")}
+              onDateChange={(date) => setValue("created_at", date)}
+            />
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">

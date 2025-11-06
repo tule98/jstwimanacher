@@ -1,12 +1,6 @@
 "use client";
 import React from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
+import AppDialog from "@/components/ui/app-dialog";
 import TransactionForm from "./TransactionForm";
 import { TransactionCreateData } from "@/services/api/client";
 
@@ -27,22 +21,18 @@ export default function TransactionCreateDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[100vh] p-0 flex flex-col overflow-hidden gap-0">
-        <DialogHeader className="sticky top-0 z-10 bg-white dark:bg-gray-950 border-b px-6 py-4">
-          <DialogTitle>Add New Transaction</DialogTitle>
-          <DialogDescription>
-            Create a new income or expense transaction
-          </DialogDescription>
-        </DialogHeader>
-        <div className="overflow-y-auto flex-1 px-6 py-0">
-          <TransactionForm
-            onSubmit={handleSubmit}
-            onCancel={() => onOpenChange(false)}
-            showTypeSelector
-          />
-        </div>
-      </DialogContent>
-    </Dialog>
+    <AppDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Add New Transaction"
+      description="Create a new income or expense transaction"
+      maxWidth="2xl"
+    >
+      <TransactionForm
+        onSubmit={handleSubmit}
+        onCancel={() => onOpenChange(false)}
+        showTypeSelector
+      />
+    </AppDialog>
   );
 }

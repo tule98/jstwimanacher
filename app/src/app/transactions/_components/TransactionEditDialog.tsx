@@ -1,12 +1,6 @@
 "use client";
 import React from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import AppDialog from "@/components/ui/app-dialog";
 import TransactionForm from "./TransactionForm";
 import {
   Transaction,
@@ -40,24 +34,19 @@ export default function TransactionEditDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] p-0 flex flex-col overflow-hidden">
-        <DialogHeader className="sticky top-0 z-10 bg-white dark:bg-gray-950 border-b px-6 py-4">
-          <DialogTitle>Chỉnh sửa giao dịch</DialogTitle>
-          <DialogDescription>
-            Cập nhật thông tin giao dịch của bạn
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="overflow-y-auto flex-1 px-6 py-4">
-          <TransactionForm
-            onSubmit={handleSubmit}
-            onCancel={handleCancel}
-            editTransaction={transaction}
-            showTypeSelector={false} // Don't show type selector in edit mode
-          />
-        </div>
-      </DialogContent>
-    </Dialog>
+    <AppDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Edit Transaction"
+      description="Update transaction information"
+      maxWidth="lg"
+    >
+      <TransactionForm
+        onSubmit={handleSubmit}
+        onCancel={handleCancel}
+        editTransaction={transaction}
+        showTypeSelector={false} // Don't show type selector in edit mode
+      />
+    </AppDialog>
   );
 }
