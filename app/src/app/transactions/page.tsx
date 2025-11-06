@@ -15,7 +15,16 @@ import { AppHighlightBlock } from "@/components/ui/app-highlight-block";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { List, Plus, Loader2, ChevronDown, ChevronUp } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import {
+  List,
+  Plus,
+  Loader2,
+  ChevronDown,
+  ChevronUp,
+  Search,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 import TransactionList from "./_components/TransactionList";
 import TransactionCreateDialog from "./_components/TransactionCreateDialog";
@@ -46,6 +55,7 @@ export default function TransactionsPage() {
   // State for transaction filters
   const [onlyUnresolved, setOnlyUnresolved] = useState(false);
   const [onlyVirtual, setOnlyVirtual] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Open create dialog when `?create=1` is present or when receiving a global event
   useEffect(() => {
@@ -105,6 +115,7 @@ export default function TransactionsPage() {
   } = useTransactions(PAGE_SIZE, {
     onlyUnresolved: onlyUnresolved,
     onlyVirtual: onlyVirtual,
+    search: searchQuery || undefined,
   });
 
   // Flatten all pages into a single array
@@ -247,10 +258,6 @@ export default function TransactionsPage() {
     }
   };
 
-  if (isLoadingTransactions || isLoadingBalance) {
-    return <div className="max-w-md mx-auto p-4">Đang tải dữ liệu...</div>;
-  }
-
   if (isErrorTransactions || isErrorBalance) {
     return (
       <div className="max-w-md mx-auto p-4 text-red-500">
@@ -300,6 +307,28 @@ export default function TransactionsPage() {
             />
           </div>
         )}
+
+        {/* Search Input */}
+        <div className="mb-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              type="text"
+              placeholder="Tìm kiếm giao dịch theo ghi chú..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 pr-10"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+        </div>
 
         {/* Filter Toggles */}
         <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg space-y-3">

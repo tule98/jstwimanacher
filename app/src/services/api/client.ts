@@ -213,6 +213,7 @@ export const TransactionsAPI = {
     options?: {
       onlyUnresolved?: boolean;
       onlyVirtual?: boolean;
+      search?: string;
     }
   ): Promise<Transaction[]> {
     return httpClient.get<Transaction[]>("/api/transactions", {
@@ -220,6 +221,7 @@ export const TransactionsAPI = {
       offset,
       ...(options?.onlyUnresolved && { onlyUnresolved: "true" }),
       ...(options?.onlyVirtual && { onlyVirtual: "true" }),
+      ...(options?.search && { search: options.search }),
     });
   },
 

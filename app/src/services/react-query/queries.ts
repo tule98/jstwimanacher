@@ -29,6 +29,7 @@ export function useTransactions(
   options?: {
     onlyUnresolved?: boolean;
     onlyVirtual?: boolean;
+    search?: string;
   }
 ) {
   return useInfiniteQuery({

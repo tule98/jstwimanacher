@@ -13,7 +13,7 @@ import {
   type NewAsset,
   type NewAssetConversion,
 } from "@/db/schema";
-import { eq, desc, and, gte, lt, sql } from "drizzle-orm";
+import { eq, desc, and, gte, lt, sql, like } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 import { nowUTC, getMonthBoundsUTC, toUTC, UTCString } from "@/lib/timezone";
 
@@ -95,6 +95,7 @@ export class DatabaseService {
     options?: {
       onlyUnresolved?: boolean;
       onlyVirtual?: boolean;
+      search?: string;
     }
   ): Promise<(Transaction & { category: Category })[]> {
     const conditions = [];
@@ -106,6 +107,11 @@ export class DatabaseService {
 
     if (options?.onlyVirtual) {
       conditions.push(eq(transactions.is_virtual, true));
+    }
+
+    // Add search condition
+    if (options?.search && options.search.trim() !== "") {
+      conditions.push(like(transactions.note, `%${options.search}%`));
     }
 
     let query = db
