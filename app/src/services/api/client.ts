@@ -4,6 +4,7 @@
  */
 
 import { UTCString, parseUserDateToUTC } from "@/lib/timezone";
+import { httpClient } from "@/lib/http-client";
 
 export interface Category {
   id: string;
@@ -141,22 +142,14 @@ export const CategoriesAPI = {
    * Get all categories
    */
   async getAll(): Promise<Category[]> {
-    const response = await fetch("/api/categories");
-    if (!response.ok) {
-      throw new Error("Failed to fetch categories");
-    }
-    return response.json();
+    return httpClient.get<Category[]>("/api/categories");
   },
 
   /**
    * Get categories by type (income/expense)
    */
   async getByType(type: "income" | "expense"): Promise<Category[]> {
-    const response = await fetch(`/api/categories?type=${type}`);
-    if (!response.ok) {
-      throw new Error("Failed to fetch categories by type");
-    }
-    return response.json();
+    return httpClient.get<Category[]>("/api/categories", { type });
   },
 
   /**
@@ -167,18 +160,10 @@ export const CategoriesAPI = {
     color: string,
     type: "income" | "expense" = "expense"
   ): Promise<Category> {
-    const response = await fetch("/api/categories", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ name, color, type }),
-    });
-
-    const result = await response.json();
-    if (!response.ok) {
-      throw new Error(result.error || "Failed to create category");
-    }
+    const result = await httpClient.post<{ result: Category }>(
+      "/api/categories",
+      { name, color, type }
+    );
     return result.result;
   },
 
@@ -186,18 +171,10 @@ export const CategoriesAPI = {
    * Update category
    */
   async update(id: string, name: string, color: string): Promise<Category> {
-    const response = await fetch("/api/categories", {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ id, name, color }),
-    });
-
-    const result = await response.json();
-    if (!response.ok) {
-      throw new Error(result.error || "Failed to update category");
-    }
+    const result = await httpClient.put<{ result: Category }>(
+      "/api/categories",
+      { id, name, color }
+    );
     return result.result;
   },
 
@@ -205,17 +182,7 @@ export const CategoriesAPI = {
    * Delete category
    */
   async delete(id: string): Promise<void> {
-    const response = await fetch(
-      `/api/categories?id=${encodeURIComponent(id)}`,
-      {
-        method: "DELETE",
-      }
-    );
-
-    const result = await response.json();
-    if (!response.ok) {
-      throw new Error(result.error || "Failed to delete category");
-    }
+    await httpClient.delete("/api/categories", { id });
   },
 };
 
@@ -227,22 +194,14 @@ export const TransactionsAPI = {
    * Get all transactions
    */
   async getAll(): Promise<Transaction[]> {
-    const response = await fetch("/api/transactions");
-    if (!response.ok) {
-      throw new Error("Failed to fetch transactions");
-    }
-    return response.json();
+    return httpClient.get<Transaction[]>("/api/transactions");
   },
 
   /**
    * Get transactions with limit
    */
   async getWithLimit(limit: number): Promise<Transaction[]> {
-    const response = await fetch(`/api/transactions?limit=${limit}`);
-    if (!response.ok) {
-      throw new Error("Failed to fetch transactions with limit");
-    }
-    return response.json();
+    return httpClient.get<Transaction[]>("/api/transactions", { limit });
   },
 
   /**
@@ -252,48 +211,34 @@ export const TransactionsAPI = {
     limit: number,
     offset: number
   ): Promise<Transaction[]> {
-    const response = await fetch(
-      `/api/transactions?limit=${limit}&offset=${offset}`
-    );
-    if (!response.ok) {
-      throw new Error("Failed to fetch transactions with pagination");
-    }
-    return response.json();
+    return httpClient.get<Transaction[]>("/api/transactions", {
+      limit,
+      offset,
+    });
   },
 
   /**
    * Get transactions by month
    */
   async getByMonth(month: number, year: number): Promise<Transaction[]> {
-    const response = await fetch(
-      `/api/transactions?month=${month}&year=${year}`
-    );
-    if (!response.ok) {
-      throw new Error("Failed to fetch transactions by month");
-    }
-    return response.json();
+    return httpClient.get<Transaction[]>("/api/transactions", {
+      month,
+      year,
+    });
   },
 
   /**
    * Get all virtual transactions (not limited by time)
    */
   async getVirtualTransactions(): Promise<Transaction[]> {
-    const response = await fetch("/api/transactions/virtual");
-    if (!response.ok) {
-      throw new Error("Failed to fetch virtual transactions");
-    }
-    return response.json();
+    return httpClient.get<Transaction[]>("/api/transactions/virtual");
   },
 
   /**
    * Get all unresolved transactions (not limited by time)
    */
   async getUnresolvedTransactions(): Promise<Transaction[]> {
-    const response = await fetch("/api/transactions/unresolved");
-    if (!response.ok) {
-      throw new Error("Failed to fetch unresolved transactions");
-    }
-    return response.json();
+    return httpClient.get<Transaction[]>("/api/transactions/unresolved");
   },
 
   /**
@@ -308,18 +253,10 @@ export const TransactionsAPI = {
         : undefined,
     };
 
-    const response = await fetch("/api/transactions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(requestData),
-    });
-
-    const result = await response.json();
-    if (!response.ok) {
-      throw new Error(result.error || "Failed to add transaction");
-    }
+    const result = await httpClient.post<{ result: Transaction }>(
+      "/api/transactions",
+      requestData
+    );
     return result.result;
   },
 
@@ -335,18 +272,10 @@ export const TransactionsAPI = {
         : data.created_at,
     };
 
-    const response = await fetch("/api/transactions", {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(requestData),
-    });
-
-    const result = await response.json();
-    if (!response.ok) {
-      throw new Error(result.error || "Failed to update transaction");
-    }
+    const result = await httpClient.put<{ result: Transaction }>(
+      "/api/transactions",
+      requestData
+    );
     return result.result;
   },
 
@@ -354,14 +283,7 @@ export const TransactionsAPI = {
    * Delete transaction
    */
   async delete(id: string): Promise<void> {
-    const response = await fetch(`/api/transactions?id=${id}`, {
-      method: "DELETE",
-    });
-
-    const result = await response.json();
-    if (!response.ok) {
-      throw new Error(result.error || "Failed to delete transaction");
-    }
+    await httpClient.delete("/api/transactions", { id });
   },
 };
 

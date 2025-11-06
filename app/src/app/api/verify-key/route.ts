@@ -4,8 +4,9 @@ export async function POST(request: NextRequest) {
   try {
     const { key } = await request.json();
 
-    // Lấy key từ environment variable
+    // Get key from environment variable
     const protectionKey = process.env.PROTECTION_KEY;
+    const apiKey = process.env.API_KEY;
 
     if (!protectionKey) {
       return NextResponse.json(
@@ -15,7 +16,21 @@ export async function POST(request: NextRequest) {
     }
 
     if (key === protectionKey) {
-      return NextResponse.json({ success: true });
+      // Create response with success
+      const response = NextResponse.json({ success: true });
+
+      // Set httpOnly cookie for API protection
+      response.cookies.set({
+        name: "api_key",
+        value: apiKey,
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 60 * 60 * 24 * 7, // 7 days
+        path: "/",
+      });
+
+      return response;
     } else {
       return NextResponse.json({ error: "Invalid key" }, { status: 401 });
     }
