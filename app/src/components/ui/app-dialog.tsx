@@ -47,6 +47,7 @@ export function AppDialog({
           "max-h-[100dvh] p-0 flex flex-col overflow-hidden gap-0",
           className
         )}
+        onOpenAutoFocus={(e) => e.preventDefault()}
       >
         <DialogHeader className="sticky top-0 z-10 bg-white dark:bg-gray-950 border-b px-6 py-4">
           <DialogTitle>{title}</DialogTitle>
