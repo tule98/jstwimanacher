@@ -44,7 +44,7 @@ export function AppDialog({
       <DialogContent
         className={cn(
           maxWidthClasses[maxWidth],
-          "max-h-[100vh] p-0 flex flex-col overflow-hidden gap-0",
+          "max-h-[100dvh] p-0 flex flex-col overflow-hidden gap-0",
           className
         )}
       >

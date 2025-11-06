@@ -124,4 +124,15 @@ body {
   body {
     @apply bg-background text-foreground;
   }
+  
+  /* Fix for iOS Safari address bar and bottom bar overlap */
+  html {
+    height: -webkit-fill-available;
+  }
+  
+  body {
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+    min-height: 100dvh;
+  }
 }
