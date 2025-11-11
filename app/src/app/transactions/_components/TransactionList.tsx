@@ -12,11 +12,11 @@ import {
   EyeOff,
 } from "lucide-react";
 import { format, parseISO, isSameDay } from "date-fns";
-import { Category, Transaction } from "@/services/api/client";
+import { Transaction } from "@/services/api/client";
+import { useCategories } from "@/services/react-query/queries";
 
 interface TransactionListProps {
   transactions: Transaction[];
-  categories: Category[];
   onEdit: (transaction: Transaction) => void;
   onDelete: (id: string) => void;
   onToggleResolved: (id: string) => void;
@@ -66,7 +66,6 @@ const groupTransactionsByDay = (transactions: Transaction[]) => {
 
 export default function TransactionList({
   transactions,
-  categories,
   onEdit,
   onDelete,
   onToggleResolved,
@@ -78,6 +77,8 @@ export default function TransactionList({
   isTogglingVirtual,
   togglingVirtualId,
 }: TransactionListProps) {
+  const { data: categories = [] } = useCategories();
+
   const getCategoryColor = (categoryId: string): string => {
     const category = categories.find((cat) => cat.id === categoryId);
     return category?.color || "#000000";
@@ -94,10 +95,6 @@ export default function TransactionList({
   };
 
   const groupedTransactions = groupTransactionsByDay(transactions);
-
-  // Use the global unresolved transactions data instead of filtering current transactions
-
-  // Virtual transactions statistics - use separate API data
 
   if (transactions.length === 0) {
     return (

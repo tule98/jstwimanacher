@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCategories, useTransactions } from "@/services/react-query/queries";
+import { useTransactions } from "@/services/react-query/queries";
 import {
   useCreateTransaction,
   useUpdateTransaction,
@@ -19,6 +19,7 @@ import TransactionList from "./_components/TransactionList";
 import TransactionFormDialog from "./_components/TransactionFormDialog";
 import TransactionStatsSections from "./_components/TransactionStatsSections";
 import TransactionFilterSection from "./_components/TransactionFilterSection";
+import { useTransactionQueries } from "./_hooks/useTransactionQueries";
 import API, {
   Transaction,
   TransactionCreateData,
@@ -41,11 +42,14 @@ export default function TransactionsPage() {
   // State for stats section visibility
   const [showStats, setShowStats] = useState(false);
 
-  // State for transaction filters
-  const [onlyUnresolved, setOnlyUnresolved] = useState(false);
-  const [onlyVirtual, setOnlyVirtual] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategoryId, setSelectedCategoryId] = useState("all");
+  // Use transaction queries hook for filter state management
+  const {
+    filters,
+    setSearch,
+    setCategoryId,
+    setOnlyUnresolved,
+    setOnlyVirtual,
+  } = useTransactionQueries();
 
   // Open create dialog when `?create=1` is present or when receiving a global event
   useEffect(() => {
@@ -77,9 +81,6 @@ export default function TransactionsPage() {
   const [editingTransaction, setEditingTransaction] =
     useState<Transaction | null>(null);
 
-  // Query categories and transactions
-  const { data: allCategories = [] } = useCategories();
-
   // Query current month balance
   const {
     data: balanceStats,
@@ -103,10 +104,10 @@ export default function TransactionsPage() {
     isError: isErrorTransactions,
     error: transactionsError,
   } = useTransactions(PAGE_SIZE, {
-    onlyUnresolved: onlyUnresolved,
-    onlyVirtual: onlyVirtual,
-    search: searchQuery || undefined,
-    categoryId: selectedCategoryId !== "all" ? selectedCategoryId : undefined,
+    onlyUnresolved: filters.onlyUnresolved,
+    onlyVirtual: filters.onlyVirtual,
+    search: filters.search || undefined,
+    categoryId: filters.categoryId !== "all" ? filters.categoryId : undefined,
   });
 
   // Flatten all pages into a single array
@@ -306,20 +307,19 @@ export default function TransactionsPage() {
         {/* Filter Section */}
         <div className="mb-6">
           <TransactionFilterSection
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            onlyUnresolved={onlyUnresolved}
+            searchQuery={filters.search}
+            onSearchChange={setSearch}
+            onlyUnresolved={filters.onlyUnresolved}
             onOnlyUnresolvedChange={setOnlyUnresolved}
-            onlyVirtual={onlyVirtual}
+            onlyVirtual={filters.onlyVirtual}
             onOnlyVirtualChange={setOnlyVirtual}
-            selectedCategoryId={selectedCategoryId}
-            onCategoryChange={setSelectedCategoryId}
+            selectedCategoryId={filters.categoryId}
+            onCategoryChange={setCategoryId}
           />
         </div>
 
         <TransactionList
           transactions={transactions}
-          categories={allCategories}
           onEdit={handleEdit}
           onDelete={handleDelete}
           onToggleResolved={handleToggleResolved}
