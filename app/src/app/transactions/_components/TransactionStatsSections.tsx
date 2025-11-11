@@ -24,7 +24,7 @@ export default function TransactionStatsSections({
   currentMonth,
   currentYear,
 }: TransactionStatsCardsViewProps) {
-  const [hideBalance, setHideBalance] = useState(true);
+  const [hideBalance, setHideBalance] = useState(false);
   return (
     <AppHighlightBlock
       title={`Số dư ${currentMonth}/${currentYear}`}

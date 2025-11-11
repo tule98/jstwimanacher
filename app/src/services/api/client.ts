@@ -214,6 +214,7 @@ export const TransactionsAPI = {
       onlyUnresolved?: boolean;
       onlyVirtual?: boolean;
       search?: string;
+      categoryId?: string;
     }
   ): Promise<Transaction[]> {
     return httpClient.get<Transaction[]>("/api/transactions", {
@@ -222,6 +223,7 @@ export const TransactionsAPI = {
       ...(options?.onlyUnresolved && { onlyUnresolved: "true" }),
       ...(options?.onlyVirtual && { onlyVirtual: "true" }),
       ...(options?.search && { search: options.search }),
+      ...(options?.categoryId && { categoryId: options.categoryId }),
     });
   },
 

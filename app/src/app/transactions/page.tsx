@@ -13,23 +13,12 @@ import {
 import { queryKeys } from "@/services/react-query/query-keys";
 import { AppHighlightBlock } from "@/components/ui/app-highlight-block";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import {
-  List,
-  Plus,
-  Loader2,
-  ChevronDown,
-  ChevronUp,
-  Search,
-  X,
-} from "lucide-react";
+import { List, Plus, Loader2, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
 import TransactionList from "./_components/TransactionList";
-import TransactionCreateDialog from "./_components/TransactionCreateDialog";
-import TransactionEditDialog from "./_components/TransactionEditDialog";
+import TransactionFormDialog from "./_components/TransactionFormDialog";
 import TransactionStatsSections from "./_components/TransactionStatsSections";
+import TransactionFilterSection from "./_components/TransactionFilterSection";
 import API, {
   Transaction,
   TransactionCreateData,
@@ -56,6 +45,7 @@ export default function TransactionsPage() {
   const [onlyUnresolved, setOnlyUnresolved] = useState(false);
   const [onlyVirtual, setOnlyVirtual] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategoryId, setSelectedCategoryId] = useState("all");
 
   // Open create dialog when `?create=1` is present or when receiving a global event
   useEffect(() => {
@@ -116,6 +106,7 @@ export default function TransactionsPage() {
     onlyUnresolved: onlyUnresolved,
     onlyVirtual: onlyVirtual,
     search: searchQuery || undefined,
+    categoryId: selectedCategoryId !== "all" ? selectedCategoryId : undefined,
   });
 
   // Flatten all pages into a single array
@@ -258,12 +249,16 @@ export default function TransactionsPage() {
     }
   };
 
+  if (isLoadingTransactions || isLoadingBalance) {
+    return <div className="max-w-md mx-auto p-4">Loading data...</div>;
+  }
+
   if (isErrorTransactions || isErrorBalance) {
     return (
       <div className="max-w-md mx-auto p-4 text-red-500">
-        Lỗi:{" "}
+        Error:{" "}
         {((isErrorTransactions ? transactionsError : balanceError) as Error)
-          ?.message || "Không thể tải dữ liệu"}
+          ?.message || "Unable to load data"}
       </div>
     );
   }
@@ -271,10 +266,10 @@ export default function TransactionsPage() {
   return (
     <div className="w-full max-w-3xl mx-auto space-y-6 pb-16">
       <AppHighlightBlock
-        title="Danh sách giao dịch"
-        description={`${transactions.length} giao dịch${
-          hasNextPage ? " gần nhất" : ""
-        } của bạn`}
+        title="Transaction List"
+        description={`${transactions.length} transaction${
+          transactions.length !== 1 ? "s" : ""
+        }${hasNextPage ? " (recent)" : ""}`}
         icon={List}
         variant="default"
       >
@@ -308,66 +303,18 @@ export default function TransactionsPage() {
           </div>
         )}
 
-        {/* Search Input */}
-        <div className="mb-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input
-              type="text"
-              placeholder="Tìm kiếm giao dịch theo ghi chú..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-10"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery("")}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Filter Toggles */}
-        <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg space-y-3">
-          <div className="flex items-center justify-between">
-            <Label
-              htmlFor="only-unresolved"
-              className="text-sm font-medium cursor-pointer flex items-center gap-2"
-            >
-              <span>Chỉ hiển thị giao dịch chưa xác nhận</span>
-              {onlyUnresolved && (
-                <span className="text-xs px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 rounded-full">
-                  Đang lọc
-                </span>
-              )}
-            </Label>
-            <Switch
-              id="only-unresolved"
-              checked={onlyUnresolved}
-              onCheckedChange={setOnlyUnresolved}
-            />
-          </div>
-          <div className="flex items-center justify-between">
-            <Label
-              htmlFor="only-virtual"
-              className="text-sm font-medium cursor-pointer flex items-center gap-2"
-            >
-              <span>Chỉ hiển thị giao dịch ảo</span>
-              {onlyVirtual && (
-                <span className="text-xs px-2 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full">
-                  Đang lọc
-                </span>
-              )}
-            </Label>
-            <Switch
-              id="only-virtual"
-              checked={onlyVirtual}
-              onCheckedChange={setOnlyVirtual}
-            />
-          </div>
+        {/* Filter Section */}
+        <div className="mb-6">
+          <TransactionFilterSection
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            onlyUnresolved={onlyUnresolved}
+            onOnlyUnresolvedChange={setOnlyUnresolved}
+            onlyVirtual={onlyVirtual}
+            onOnlyVirtualChange={setOnlyVirtual}
+            selectedCategoryId={selectedCategoryId}
+            onCategoryChange={setSelectedCategoryId}
+          />
         </div>
 
         <TransactionList
@@ -401,12 +348,12 @@ export default function TransactionsPage() {
               {isFetchingNextPage ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Đang tải...
+                  Loading...
                 </>
               ) : (
                 <>
                   <Plus className="mr-2 h-4 w-4" />
-                  Tải thêm giao dịch
+                  Load more transactions
                 </>
               )}
             </Button>
@@ -415,7 +362,7 @@ export default function TransactionsPage() {
 
         {!hasNextPage && transactions.length > 0 && (
           <div className="text-center mt-6 text-sm text-gray-500 dark:text-gray-400">
-            Đã hiển thị tất cả giao dịch
+            All transactions displayed
           </div>
         )}
       </AppHighlightBlock>
@@ -430,7 +377,8 @@ export default function TransactionsPage() {
       </button>
 
       {/* Create Dialog */}
-      <TransactionCreateDialog
+      <TransactionFormDialog
+        mode="create"
         open={createDialogOpen}
         onOpenChange={setCreateDialogOpen}
         onSubmit={handleAddTransaction}
@@ -438,7 +386,8 @@ export default function TransactionsPage() {
 
       {/* Edit Dialog */}
       {editingTransaction && (
-        <TransactionEditDialog
+        <TransactionFormDialog
+          mode="edit"
           open={editDialogOpen}
           onOpenChange={setEditDialogOpen}
           transaction={editingTransaction}

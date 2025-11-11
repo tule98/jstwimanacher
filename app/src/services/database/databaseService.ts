@@ -96,6 +96,7 @@ export class DatabaseService {
       onlyUnresolved?: boolean;
       onlyVirtual?: boolean;
       search?: string;
+      categoryId?: string;
     }
   ): Promise<(Transaction & { category: Category })[]> {
     const conditions = [];
@@ -112,6 +113,11 @@ export class DatabaseService {
     // Add search condition
     if (options?.search && options.search.trim() !== "") {
       conditions.push(like(transactions.note, `%${options.search}%`));
+    }
+
+    // Add category filter
+    if (options?.categoryId && options.categoryId !== "all") {
+      conditions.push(eq(transactions.category_id, options.categoryId));
     }
 
     let query = db

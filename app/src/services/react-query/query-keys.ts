@@ -8,6 +8,7 @@ export const queryKeys = {
       onlyUnresolved?: boolean;
       onlyVirtual?: boolean;
       search?: string;
+      categoryId?: string;
     }) => ["transactions", "infinite", filters] as const,
     lists: () => [...queryKeys.transactions.all, "list"] as const,
     list: (filters: Record<string, unknown>) =>

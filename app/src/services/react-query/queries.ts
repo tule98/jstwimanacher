@@ -30,6 +30,7 @@ export function useTransactions(
     onlyUnresolved?: boolean;
     onlyVirtual?: boolean;
     search?: string;
+    categoryId?: string;
   }
 ) {
   return useInfiniteQuery({

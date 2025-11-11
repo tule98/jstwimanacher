@@ -12,6 +12,7 @@ export async function GET(request: Request) {
     const onlyUnresolved = searchParams.get("onlyUnresolved") === "true";
     const onlyVirtual = searchParams.get("onlyVirtual") === "true";
     const search = searchParams.get("search") || undefined;
+    const categoryId = searchParams.get("categoryId") || undefined;
 
     if (month && year) {
       // Nếu có tham số month và year, lấy transactions theo tháng
@@ -31,6 +32,7 @@ export async function GET(request: Request) {
           onlyUnresolved,
           onlyVirtual,
           search,
+          categoryId,
         }
       );
       return NextResponse.json(transactions);
