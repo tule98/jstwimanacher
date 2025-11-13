@@ -447,7 +447,7 @@ export default function TransactionForm({
                   </SelectItem>
                 ))}
                 {!buckets || buckets.length === 0 ? (
-                  <SelectItem value="">No buckets</SelectItem>
+                  <SelectItem value="No buckets">No buckets</SelectItem>
                 ) : null}
               </SelectContent>
             </Select>

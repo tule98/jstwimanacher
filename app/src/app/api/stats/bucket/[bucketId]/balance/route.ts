@@ -3,10 +3,10 @@ import { databaseService } from "@/services/database/databaseService";
 
 export async function GET(
   request: Request,
-  { params }: { params: { bucketId: string } }
+  { params }: { params: Promise<{ bucketId: string }> }
 ) {
   try {
-    const { bucketId } = params;
+    const { bucketId } = await params;
 
     if (!bucketId) {
       return NextResponse.json(
