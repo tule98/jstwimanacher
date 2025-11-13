@@ -2,14 +2,17 @@ import { db } from "@/db";
 import {
   categories,
   transactions,
+  buckets,
   assets,
   assetConversions,
   type Category,
   type Transaction,
+  type Bucket,
   type Asset,
   type AssetConversion,
   type NewCategory,
   type NewTransaction,
+  type NewBucket,
   type NewAsset,
   type NewAssetConversion,
 } from "@/db/schema";
@@ -97,6 +100,7 @@ export class DatabaseService {
       onlyVirtual?: boolean;
       search?: string;
       categoryId?: string;
+      bucketId?: string;
     }
   ): Promise<(Transaction & { category: Category })[]> {
     const conditions = [];
@@ -118,6 +122,11 @@ export class DatabaseService {
     // Add category filter
     if (options?.categoryId && options.categoryId !== "all") {
       conditions.push(eq(transactions.category_id, options.categoryId));
+    }
+
+    // Add bucket filter
+    if (options?.bucketId && options.bucketId !== "all") {
+      conditions.push(eq(transactions.bucket_id, options.bucketId));
     }
 
     let query = db
@@ -174,16 +183,31 @@ export class DatabaseService {
   async createTransaction(data: {
     amount: number;
     category_id: string;
+    bucket_id?: string | null;
     note?: string;
     is_virtual?: boolean;
     is_resolved?: boolean;
     created_at?: string | UTCString;
   }): Promise<Transaction> {
     const now = nowUTC();
+    // If bucket_id not provided, try to assign default bucket
+    let assignedBucketId: string | undefined | null = data.bucket_id ?? null;
+    if (!assignedBucketId) {
+      const defaultBucket = await db
+        .select()
+        .from(buckets)
+        .where(eq(buckets.is_default, true))
+        .limit(1);
+      if (defaultBucket && defaultBucket.length > 0) {
+        assignedBucketId = defaultBucket[0].id;
+      }
+    }
+
     const newTransaction: NewTransaction = {
       id: uuidv4(),
       amount: Math.round(data.amount),
       category_id: data.category_id,
+      bucket_id: assignedBucketId || undefined,
       note: data.note,
       created_at: data.created_at ? toUTC(data.created_at) : now,
       updated_at: now,
@@ -203,6 +227,7 @@ export class DatabaseService {
     data: Partial<{
       amount: number;
       category_id: string;
+      bucket_id: string | null;
       note: string;
       is_resolved: boolean;
       is_virtual: boolean;
@@ -231,6 +256,9 @@ export class DatabaseService {
     if (data.created_at !== undefined) {
       updateData.created_at = toUTC(data.created_at);
     }
+    if (data.bucket_id !== undefined) {
+      updateData.bucket_id = data.bucket_id;
+    }
 
     const result = await db
       .update(transactions)
@@ -244,6 +272,73 @@ export class DatabaseService {
   async deleteTransaction(id: string): Promise<boolean> {
     const result = await db.delete(transactions).where(eq(transactions.id, id));
     return result.rowsAffected > 0;
+  }
+
+  // Buckets methods
+  async getBuckets(): Promise<Bucket[]> {
+    const result = await db
+      .select()
+      .from(buckets)
+      .orderBy(desc(buckets.created_at));
+    return result;
+  }
+
+  async createBucket(
+    name: string,
+    is_default: boolean = false
+  ): Promise<Bucket> {
+    // If creating as default, unset other defaults
+    if (is_default) {
+      await db.update(buckets).set({ is_default: false });
+    }
+
+    const newBucket: NewBucket = {
+      id: uuidv4(),
+      name,
+      is_default,
+      created_at: nowUTC(),
+      updated_at: nowUTC(),
+    };
+
+    const result = await db.insert(buckets).values(newBucket).returning();
+    return result[0];
+  }
+
+  async getDefaultBucket(): Promise<Bucket | null> {
+    const result = await db
+      .select()
+      .from(buckets)
+      .where(eq(buckets.is_default, true))
+      .limit(1);
+    return result[0] || null;
+  }
+
+  async getBucketSummary(
+    bucketId: string
+  ): Promise<{ income: number; expense: number }> {
+    const result = await db
+      .select({
+        type: categories.type,
+        total: sql<number>`sum(${transactions.amount})`,
+      })
+      .from(transactions)
+      .leftJoin(categories, eq(transactions.category_id, categories.id))
+      .where(eq(transactions.bucket_id, bucketId))
+      .groupBy(categories.type);
+
+    let income = 0;
+    let expense = 0;
+
+    result.forEach((row) => {
+      const amount = row.total || 0;
+      if (row.type === "income") {
+        income += amount;
+      } else if (row.type === "expense") {
+        expense += amount;
+      }
+    });
+
+    return { income, expense };
   }
 
   // Get all virtual transactions (not limited by time)

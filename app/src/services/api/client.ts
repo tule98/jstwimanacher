@@ -13,6 +13,14 @@ export interface Category {
   type: "income" | "expense";
 }
 
+export interface Bucket {
+  id: string;
+  name: string;
+  is_default: boolean;
+  created_at: UTCString;
+  updated_at: UTCString;
+}
+
 export interface Asset {
   id: string;
   name: string;
@@ -73,6 +81,7 @@ export interface Transaction {
   id: string;
   amount: number;
   category_id: string;
+  bucket_id?: string | null;
   note?: string;
   /** UTC ISO string - always stored and transmitted in UTC */
   created_at: UTCString;
@@ -86,6 +95,7 @@ export interface Transaction {
 export interface TransactionCreateData {
   amount: number;
   category_id: string;
+  bucket_id?: string | null;
   note?: string;
   is_virtual?: boolean; // Mark virtual transaction
   is_resolved?: boolean; // Mark transaction as resolved
@@ -97,6 +107,7 @@ export interface TransactionUpdateData {
   id: string;
   amount?: number;
   category_id?: string;
+  bucket_id?: string | null;
   note?: string;
   is_resolved?: boolean;
   is_virtual?: boolean; // Mark virtual transaction
@@ -186,6 +197,28 @@ export const CategoriesAPI = {
   },
 };
 
+export const BucketsAPI = {
+  async getAll(): Promise<Bucket[]> {
+    return httpClient.get<Bucket[]>("/api/buckets");
+  },
+
+  async getSummary(
+    bucketId: string
+  ): Promise<{ income: number; expense: number }> {
+    return httpClient.get<{ income: number; expense: number }>("/api/buckets", {
+      summaryFor: bucketId,
+    });
+  },
+
+  async create(name: string, is_default: boolean = false): Promise<Bucket> {
+    const result = await httpClient.post<{ bucket: Bucket }>("/api/buckets", {
+      name,
+      is_default,
+    });
+    return result.bucket;
+  },
+};
+
 /**
  * Transactions API Client
  */
@@ -215,6 +248,7 @@ export const TransactionsAPI = {
       onlyVirtual?: boolean;
       search?: string;
       categoryId?: string;
+      bucketId?: string;
     }
   ): Promise<Transaction[]> {
     return httpClient.get<Transaction[]>("/api/transactions", {
@@ -224,6 +258,7 @@ export const TransactionsAPI = {
       ...(options?.onlyVirtual && { onlyVirtual: "true" }),
       ...(options?.search && { search: options.search }),
       ...(options?.categoryId && { categoryId: options.categoryId }),
+      ...(options?.bucketId && { bucketId: options.bucketId }),
     });
   },
 
@@ -603,6 +638,7 @@ export const API = {
   stats: StatsAPI,
   assets: AssetsAPI,
   conversions: ConversionsAPI,
+  buckets: BucketsAPI,
   words: LearningWordsAPI,
   stories: StoryAPI,
 };

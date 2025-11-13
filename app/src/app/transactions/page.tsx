@@ -49,6 +49,7 @@ export default function TransactionsPage() {
     setCategoryId,
     setOnlyUnresolved,
     setOnlyVirtual,
+    setBucketId,
   } = useTransactionQueries();
 
   // Open create dialog when `?create=1` is present or when receiving a global event
@@ -108,6 +109,7 @@ export default function TransactionsPage() {
     onlyVirtual: filters.onlyVirtual,
     search: filters.search || undefined,
     categoryId: filters.categoryId !== "all" ? filters.categoryId : undefined,
+    bucketId: filters.bucketId,
   });
 
   // Flatten all pages into a single array
@@ -315,6 +317,8 @@ export default function TransactionsPage() {
             onOnlyVirtualChange={setOnlyVirtual}
             selectedCategoryId={filters.categoryId}
             onCategoryChange={setCategoryId}
+            selectedBucketId={filters.bucketId}
+            onBucketChange={setBucketId}
           />
         </div>
 

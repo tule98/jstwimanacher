@@ -16,6 +16,8 @@ export const transactions = sqliteTable("transactions", {
   category_id: text("category_id")
     .notNull()
     .references(() => categories.id),
+  // Optional bucket association
+  bucket_id: text("bucket_id").references(() => buckets.id),
   note: text("note"),
   created_at: text("created_at")
     .notNull()
@@ -29,6 +31,21 @@ export const transactions = sqliteTable("transactions", {
   is_virtual: integer("is_virtual", { mode: "boolean" })
     .notNull()
     .default(false), // Đánh dấu giao dịch ảo
+});
+
+// Buckets table
+export const buckets = sqliteTable("buckets", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  is_default: integer("is_default", { mode: "boolean" })
+    .notNull()
+    .default(false),
+  created_at: text("created_at")
+    .notNull()
+    .default(sql`datetime('now')`),
+  updated_at: text("updated_at")
+    .notNull()
+    .default(sql`datetime('now')`),
 });
 
 // Assets table
@@ -101,3 +118,5 @@ export type LearningWord = typeof learningWords.$inferSelect;
 export type NewLearningWord = typeof learningWords.$inferInsert;
 export type StorySession = typeof storySessions.$inferSelect;
 export type NewStorySession = typeof storySessions.$inferInsert;
+export type Bucket = typeof buckets.$inferSelect;
+export type NewBucket = typeof buckets.$inferInsert;

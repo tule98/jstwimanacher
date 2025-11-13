@@ -1,6 +1,11 @@
 import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
 import API from "@/services/api/client";
-import { Category, LearningWord, StorySession } from "@/services/api/client";
+import {
+  Category,
+  LearningWord,
+  StorySession,
+  Bucket,
+} from "@/services/api/client";
 import { queryKeys } from "./query-keys";
 
 export function useWords() {
@@ -24,6 +29,13 @@ export function useCategories() {
   });
 }
 
+export function useBuckets() {
+  return useQuery<Bucket[]>({
+    queryKey: ["buckets"],
+    queryFn: API.buckets.getAll,
+  });
+}
+
 export function useTransactions(
   pageSize: number = 20,
   options?: {
@@ -31,6 +43,7 @@ export function useTransactions(
     onlyVirtual?: boolean;
     search?: string;
     categoryId?: string;
+    bucketId?: string;
   }
 ) {
   return useInfiniteQuery({

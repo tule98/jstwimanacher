@@ -9,6 +9,14 @@ import { Switch } from "@/components/ui/switch";
 import { Plus, X, Save } from "lucide-react";
 import TransactionFormTabs from "./TransactionFormTabs";
 import TransactionFormCategorySection from "./TransactionFormCategorySection";
+import { useBuckets } from "@/services/react-query/queries";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 import DateNavigator from "./DateNavigator";
 import { toast } from "sonner";
 import {
@@ -31,6 +39,7 @@ const transactionFormSchema = z.object({
   created_at: z.string().min(1, "Time is required"),
   is_virtual: z.boolean(),
   is_resolved: z.boolean(),
+  bucket_id: z.string().optional(),
 });
 
 type TransactionFormData = z.infer<typeof transactionFormSchema>;
@@ -51,6 +60,8 @@ export default function TransactionForm({
   // Separate income and expense categories
   const { data: categories } = useCategories();
   const { data: _transactions } = useTransactions();
+  const { data: buckets } = useBuckets();
+  const defaultBucket = buckets?.find((b) => b.is_default);
   const transactions = _transactions?.pages.flat() || [];
   const incomeCategories = (categories || []).filter(
     (cat) => cat.type === "income"
@@ -83,6 +94,7 @@ export default function TransactionForm({
       created_at: format(new Date(), "yyyy-MM-dd"),
       is_virtual: false,
       is_resolved: true,
+      bucket_id: undefined,
     },
   });
 
@@ -108,6 +120,12 @@ export default function TransactionForm({
       );
       setValue("is_virtual", editTransaction.is_virtual || false);
       setValue("is_resolved", editTransaction.is_resolved ?? true);
+      // Transaction type may include bucket_id; safely access it
+      setValue(
+        "bucket_id",
+        (editTransaction as unknown as { bucket_id?: string | null })
+          .bucket_id || undefined
+      );
     } else if (currentCategories.length > 0 && !watchedCategoryId) {
       // For new transactions, set default category
       const defaultCategory =
@@ -121,6 +139,19 @@ export default function TransactionForm({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editTransaction, activeType, setValue]);
+
+  // When creating a new transaction (not editing), auto-select the default bucket if available
+  useEffect(() => {
+    if (!editTransaction && buckets && buckets.length > 0) {
+      const def = buckets.find((b) => b.is_default);
+      if (def) {
+        // Only set if user hasn't selected a bucket yet
+        const current = (watch("bucket_id") as string | undefined) || undefined;
+        if (!current) setValue("bucket_id", def.id);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [buckets, editTransaction, setValue]);
 
   // Update suggestions when note changes or on focus
   useEffect(() => {
@@ -176,6 +207,7 @@ export default function TransactionForm({
     const createData: TransactionCreateData = {
       amount: Number(rawAmount),
       category_id: data.category_id,
+      bucket_id: data.bucket_id,
       note: data.note,
       created_at: data.created_at,
       is_virtual: data.is_virtual,
@@ -390,6 +422,36 @@ export default function TransactionForm({
               setValue("category_id", categoryId);
             }}
           />
+
+          {/* Bucket selector */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Bucket
+            </label>
+            <Select
+              value={
+                watch("bucket_id") || (defaultBucket ? defaultBucket.id : "")
+              }
+              onValueChange={(v) => setValue("bucket_id", v || undefined)}
+            >
+              <SelectTrigger>
+                <SelectValue
+                  placeholder={defaultBucket ? defaultBucket.name : "No bucket"}
+                />
+              </SelectTrigger>
+              <SelectContent>
+                {/* Render buckets; default bucket will be selected automatically for new transactions */}
+                {buckets?.map((b) => (
+                  <SelectItem key={b.id} value={b.id}>
+                    {b.name}
+                  </SelectItem>
+                ))}
+                {!buckets || buckets.length === 0 ? (
+                  <SelectItem value="">No buckets</SelectItem>
+                ) : null}
+              </SelectContent>
+            </Select>
+          </div>
 
           {/* Virtual Transaction Switch */}
           <div className="flex items-center justify-between gap-4 p-3 rounded-lg border border-gray-200 dark:border-gray-700">

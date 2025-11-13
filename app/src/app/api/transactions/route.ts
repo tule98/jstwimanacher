@@ -13,6 +13,7 @@ export async function GET(request: Request) {
     const onlyVirtual = searchParams.get("onlyVirtual") === "true";
     const search = searchParams.get("search") || undefined;
     const categoryId = searchParams.get("categoryId") || undefined;
+    const bucketId = searchParams.get("bucketId") || undefined;
 
     if (month && year) {
       // Nếu có tham số month và year, lấy transactions theo tháng
@@ -33,6 +34,7 @@ export async function GET(request: Request) {
           onlyVirtual,
           search,
           categoryId,
+          bucketId,
         }
       );
       return NextResponse.json(transactions);
@@ -47,8 +49,15 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const { amount, category_id, note, is_virtual, is_resolved, created_at } =
-      await request.json();
+    const {
+      amount,
+      category_id,
+      note,
+      is_virtual,
+      is_resolved,
+      created_at,
+      bucket_id,
+    } = await request.json();
 
     if (amount === undefined || !category_id) {
       return NextResponse.json(
@@ -60,6 +69,7 @@ export async function POST(request: Request) {
     const result = await databaseService.createTransaction({
       amount: parseFloat(amount),
       category_id,
+      bucket_id,
       note,
       is_virtual: is_virtual || false,
       is_resolved: is_resolved ?? true,
@@ -85,6 +95,7 @@ export async function PUT(request: Request) {
       is_resolved,
       is_virtual,
       created_at,
+      bucket_id,
     } = await request.json();
 
     if (!id) {
@@ -98,6 +109,7 @@ export async function PUT(request: Request) {
     const updateData: {
       amount?: number;
       category_id?: string;
+      bucket_id?: string | null;
       note?: string;
       is_resolved?: boolean;
       is_virtual?: boolean;
@@ -106,6 +118,7 @@ export async function PUT(request: Request) {
 
     if (amount !== undefined) updateData.amount = parseFloat(amount);
     if (category_id !== undefined) updateData.category_id = category_id;
+    if (bucket_id !== undefined) updateData.bucket_id = bucket_id;
     if (note !== undefined) updateData.note = note;
     if (is_resolved !== undefined) updateData.is_resolved = is_resolved;
     if (is_virtual !== undefined) updateData.is_virtual = is_virtual;

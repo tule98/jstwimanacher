@@ -7,6 +7,7 @@ export interface TransactionFilters {
   categoryId: string;
   onlyUnresolved: boolean;
   onlyVirtual: boolean;
+  bucketId?: string | undefined;
 }
 
 export function useTransactionQueries() {
@@ -21,6 +22,7 @@ export function useTransactionQueries() {
       categoryId: searchParams.get("categoryId") || "all",
       onlyUnresolved: searchParams.get("onlyUnresolved") === "true",
       onlyVirtual: searchParams.get("onlyVirtual") === "true",
+      bucketId: searchParams.get("bucketId") || undefined,
     }),
     [searchParams]
   );
@@ -93,6 +95,12 @@ export function useTransactionQueries() {
     [updateFilter]
   );
 
+  const setBucketId = useCallback(
+    (value?: string) =>
+      updateFilter("bucketId" as keyof TransactionFilters, value ?? ""),
+    [updateFilter]
+  );
+
   const setOnlyUnresolved = useCallback(
     (value: boolean) => updateFilter("onlyUnresolved", value),
     [updateFilter]
@@ -108,6 +116,7 @@ export function useTransactionQueries() {
     () =>
       filters.search !== "" ||
       filters.categoryId !== "all" ||
+      (filters.bucketId !== undefined && filters.bucketId !== "all") ||
       filters.onlyUnresolved ||
       filters.onlyVirtual,
     [filters]
@@ -120,6 +129,7 @@ export function useTransactionQueries() {
     clearFilters,
     setSearch,
     setCategoryId,
+    setBucketId,
     setOnlyUnresolved,
     setOnlyVirtual,
     hasActiveFilters,

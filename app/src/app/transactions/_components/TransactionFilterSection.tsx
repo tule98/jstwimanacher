@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Search, X, Filter } from "lucide-react";
-import { useCategories } from "@/services/react-query/queries";
+import { useCategories, useBuckets } from "@/services/react-query/queries";
 
 interface TransactionFilterSectionProps {
   searchQuery: string;
@@ -22,6 +22,8 @@ interface TransactionFilterSectionProps {
   onOnlyVirtualChange: (value: boolean) => void;
   selectedCategoryId: string;
   onCategoryChange: (value: string) => void;
+  selectedBucketId?: string;
+  onBucketChange?: (value?: string) => void;
 }
 
 export default function TransactionFilterSection({
@@ -33,8 +35,11 @@ export default function TransactionFilterSection({
   onOnlyVirtualChange,
   selectedCategoryId,
   onCategoryChange,
+  selectedBucketId,
+  onBucketChange,
 }: TransactionFilterSectionProps) {
   const { data: categories = [] } = useCategories();
+  const { data: buckets = [] } = useBuckets();
 
   const hasActiveFilters =
     onlyUnresolved || onlyVirtual || selectedCategoryId !== "all";
@@ -74,6 +79,30 @@ export default function TransactionFilterSection({
         </div>
 
         {/* Category Filter */}
+        {/* Bucket Filter */}
+        <div className="space-y-2">
+          <Label htmlFor="bucket-filter" className="text-sm font-medium">
+            Bucket
+          </Label>
+          <Select
+            value={selectedBucketId || "all"}
+            onValueChange={(v) =>
+              onBucketChange && onBucketChange(v === "all" ? undefined : v)
+            }
+          >
+            <SelectTrigger id="bucket-filter">
+              <SelectValue placeholder="All buckets" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All buckets</SelectItem>
+              {buckets.map((b) => (
+                <SelectItem key={b.id} value={b.id}>
+                  {b.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
         <div className="space-y-2">
           <Label htmlFor="category-filter" className="text-sm font-medium">
             Category
