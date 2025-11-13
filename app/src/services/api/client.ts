@@ -210,6 +210,16 @@ export const BucketsAPI = {
     });
   },
 
+  async getBalance(
+    bucketId: string
+  ): Promise<{ income: number; expense: number }> {
+    const response = await fetch(`/api/stats/bucket/${bucketId}/balance`);
+    if (!response.ok) {
+      throw new Error("Failed to fetch bucket balance");
+    }
+    return response.json();
+  },
+
   async create(name: string, is_default: boolean = false): Promise<Bucket> {
     const result = await httpClient.post<{ bucket: Bucket }>("/api/buckets", {
       name,

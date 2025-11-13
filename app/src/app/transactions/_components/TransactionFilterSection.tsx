@@ -10,8 +10,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, X, Filter } from "lucide-react";
-import { useCategories, useBuckets } from "@/services/react-query/queries";
+import { Search, X, Filter, Wallet } from "lucide-react";
+import {
+  useCategories,
+  useBuckets,
+  useBucketBalance,
+} from "@/services/react-query/queries";
 
 interface TransactionFilterSectionProps {
   searchQuery: string;
@@ -40,6 +44,7 @@ export default function TransactionFilterSection({
 }: TransactionFilterSectionProps) {
   const { data: categories = [] } = useCategories();
   const { data: buckets = [] } = useBuckets();
+  const { data: bucketBalance } = useBucketBalance(selectedBucketId);
 
   const hasActiveFilters =
     onlyUnresolved || onlyVirtual || selectedCategoryId !== "all";
@@ -102,6 +107,55 @@ export default function TransactionFilterSection({
               ))}
             </SelectContent>
           </Select>
+
+          {/* Bucket Balance Display */}
+          {selectedBucketId && bucketBalance && (
+            <div className="mt-3 p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <Wallet className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                <span className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">
+                  Bucket Balance
+                </span>
+              </div>
+              <div className="space-y-1.5">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-green-600 dark:text-green-400">
+                    Income
+                  </span>
+                  <span className="text-sm font-semibold text-green-600 dark:text-green-400">
+                    {bucketBalance.income.toLocaleString("vi-VN")} ₫
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-red-600 dark:text-red-400">
+                    Expense
+                  </span>
+                  <span className="text-sm font-semibold text-red-600 dark:text-red-400">
+                    {bucketBalance.expense.toLocaleString("vi-VN")} ₫
+                  </span>
+                </div>
+                <div className="pt-1.5 mt-1.5 border-t border-gray-200 dark:border-gray-700">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Net
+                    </span>
+                    <span
+                      className={`text-sm font-bold ${
+                        bucketBalance.income - bucketBalance.expense >= 0
+                          ? "text-green-600 dark:text-green-400"
+                          : "text-red-600 dark:text-red-400"
+                      }`}
+                    >
+                      {(
+                        bucketBalance.income - bucketBalance.expense
+                      ).toLocaleString("vi-VN")}{" "}
+                      ₫
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
         <div className="space-y-2">
           <Label htmlFor="category-filter" className="text-sm font-medium">

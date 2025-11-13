@@ -36,6 +36,14 @@ export function useBuckets() {
   });
 }
 
+export function useBucketBalance(bucketId?: string) {
+  return useQuery<{ income: number; expense: number }>({
+    queryKey: ["bucket-balance", bucketId],
+    queryFn: () => API.buckets.getBalance(bucketId!),
+    enabled: !!bucketId,
+  });
+}
+
 export function useTransactions(
   pageSize: number = 20,
   options?: {
