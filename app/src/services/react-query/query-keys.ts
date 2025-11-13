@@ -41,4 +41,12 @@ export const queryKeys = {
     details: () => ["stories", "detail"] as const,
     detail: (id: string) => ["stories", "detail", id] as const,
   },
+  buckets: {
+    all: ["buckets"] as const,
+    lists: () => [...queryKeys.buckets.all, "list"] as const,
+    balance: (bucketId?: string) =>
+      bucketId
+        ? (["buckets", "balance", bucketId] as const)
+        : (["buckets", "balance"] as const),
+  },
 } as const;

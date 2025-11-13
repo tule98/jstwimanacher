@@ -31,14 +31,14 @@ export function useCategories() {
 
 export function useBuckets() {
   return useQuery<Bucket[]>({
-    queryKey: ["buckets"],
+    queryKey: queryKeys.buckets.all,
     queryFn: API.buckets.getAll,
   });
 }
 
 export function useBucketBalance(bucketId?: string) {
   return useQuery<{ income: number; expense: number }>({
-    queryKey: ["bucket-balance", bucketId],
+    queryKey: queryKeys.buckets.balance(bucketId),
     queryFn: () => API.buckets.getBalance(bucketId!),
     enabled: !!bucketId,
   });
