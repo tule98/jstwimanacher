@@ -13,11 +13,13 @@ Each bucket item displays the following information:
 
 # UI Implementation Details
 
+Use lucide icons. Don't use Material UI icons.
 Use material UI components to create the bucket list page.
 Don't use shadcn UI components, tailwindcss for this page.
 
 # API Implementation Details
 
+Use HttpClient for making API requests.
 Use react-query to fetch the bucket list from the backend API endpoint `/api/buckets`.
 Create a separate file for holding API definition for bucket related operations in src/services/api/buckets.ts
 Create a separate file for holding react-query hooks for bucket related operations in src/services/react-query/hooks/buckets.ts. Query keys put right inside this file as well. If there are mutation operations, create separate files for mutation hooks as well.

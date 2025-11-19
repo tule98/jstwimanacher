@@ -46,7 +46,7 @@ export default function RootLayout({
                 </div>
               </header>
               <div className="max-w-screen-lg mx-auto">
-                <main className="flex flex-col items-center justify-start p-4 md:p-6 gap-6 pb-20 pt-4">
+                <main className="flex flex-col items-center justify-start p-0 md:p-6 gap-6 md:pb-20 md:pt-4">
                   {children}
                 </main>
               </div>
