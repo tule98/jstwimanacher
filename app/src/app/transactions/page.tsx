@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { useTransactions } from "@/services/react-query/queries";
 import {
   useCreateTransaction,
@@ -11,21 +11,21 @@ import {
   useToggleVirtualTransaction,
 } from "@/services/react-query/mutations";
 import { queryKeys } from "@/services/react-query/query-keys";
-import { AppHighlightBlock } from "@/components/ui/app-highlight-block";
 import { Button } from "@/components/ui/button";
-import { List, Plus, Loader2, ChevronDown, ChevronUp } from "lucide-react";
+import { List, Plus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import TransactionList from "./_components/TransactionList";
 import TransactionFormDialog from "./_components/TransactionFormDialog";
-import TransactionStatsSections from "./_components/TransactionStatsSections";
-import TransactionFilterSection from "./_components/TransactionFilterSection";
+import TransactionFilterBox from "./_components/TransactionFilterBox";
+import BucketBalanceStatsBox from "./_components/BucketBalanceStatsBox";
 import { useTransactionQueries } from "./_hooks/useTransactionQueries";
-import API, {
+import {
   Transaction,
   TransactionCreateData,
   TransactionUpdateData,
-  BalanceStats,
 } from "@/services/api/client";
+import AppPageLayout from "../_components/AppPageLayout";
+import AppPageNav from "../_components/AppPageNav";
 
 export default function TransactionsPage() {
   const queryClient = useQueryClient();
@@ -39,18 +39,9 @@ export default function TransactionsPage() {
   // State for create dialog
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
-  // State for stats section visibility
-  const [showStats, setShowStats] = useState(false);
-
   // Use transaction queries hook for filter state management
-  const {
-    filters,
-    setSearch,
-    setCategoryId,
-    setOnlyUnresolved,
-    setOnlyVirtual,
-    setBucketId,
-  } = useTransactionQueries();
+  const { filters, setSearch, setCategoryId, setOnlyUnresolved, setBucketId } =
+    useTransactionQueries();
 
   // Open create dialog when `?create=1` is present or when receiving a global event
   useEffect(() => {
@@ -81,17 +72,6 @@ export default function TransactionsPage() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] =
     useState<Transaction | null>(null);
-
-  // Query current month balance
-  const {
-    data: balanceStats,
-    isLoading: isLoadingBalance,
-    isError: isErrorBalance,
-    error: balanceError,
-  } = useQuery<BalanceStats>({
-    queryKey: queryKeys.balance.stats(currentMonth, currentYear),
-    queryFn: () => API.stats.getBalanceStats(currentMonth, currentYear),
-  });
 
   // Infinite query for transactions - proper React Query pattern
   const PAGE_SIZE = 20;
@@ -252,76 +232,45 @@ export default function TransactionsPage() {
     }
   };
 
-  if (isLoadingTransactions || isLoadingBalance) {
-    return <div className="max-w-md mx-auto p-4">Loading data...</div>;
+  if (isLoadingTransactions) {
+    return (
+      <AppPageLayout>
+        <div className="max-w-md mx-auto p-4">Loading data...</div>
+      </AppPageLayout>
+    );
   }
 
-  if (isErrorTransactions || isErrorBalance) {
+  if (isErrorTransactions) {
     return (
-      <div className="max-w-md mx-auto p-4 text-red-500">
-        Error:{" "}
-        {((isErrorTransactions ? transactionsError : balanceError) as Error)
-          ?.message || "Unable to load data"}
-      </div>
+      <AppPageLayout>
+        <div className="max-w-md mx-auto p-4 text-red-500">
+          Error: {transactionsError?.message || "Unable to load data"}
+        </div>
+      </AppPageLayout>
     );
   }
 
   return (
-    <div className="w-full max-w-3xl mx-auto space-y-6 pb-16">
-      <AppHighlightBlock
-        title="Transaction List"
-        description={`${transactions.length} transaction${
-          transactions.length !== 1 ? "s" : ""
-        }${hasNextPage ? " (recent)" : ""}`}
-        icon={List}
-        variant="default"
-      >
-        {/* Toggle Stats Button */}
-        <div className="mb-4">
-          <Button
-            onClick={() => setShowStats(!showStats)}
-            variant="outline"
-            size="sm"
-            className="w-full justify-between border-emerald-200 dark:border-emerald-800"
-          >
-            <span className="text-sm font-medium">
-              {showStats ? "Hide Statistics" : "Show Statistics"}
-            </span>
-            {showStats ? (
-              <ChevronUp className="h-4 w-4" />
-            ) : (
-              <ChevronDown className="h-4 w-4" />
-            )}
-          </Button>
+    <AppPageLayout header={<AppPageNav title="Transactions" icon={<List />} />}>
+      <TransactionFilterBox
+        searchQuery={filters.search}
+        onSearchChange={setSearch}
+        selectedCategoryId={filters.categoryId}
+        onCategoryChange={setCategoryId}
+        selectedBucketId={filters.bucketId}
+        onBucketChange={setBucketId}
+        onlyUnresolved={filters.onlyUnresolved}
+        onOnlyUnresolvedChange={setOnlyUnresolved}
+      />
+
+      {/* Bucket Balance Stats */}
+      {filters.bucketId && (
+        <div className="mt-4">
+          <BucketBalanceStatsBox bucketId={filters.bucketId} />
         </div>
+      )}
 
-        {/* Collapsible Stats Section */}
-        {showStats && (
-          <div className="mb-6 animate-in slide-in-from-top-2 duration-300">
-            <TransactionStatsSections
-              balanceStats={balanceStats}
-              currentMonth={currentMonth}
-              currentYear={currentYear}
-            />
-          </div>
-        )}
-
-        {/* Filter Section */}
-        <div className="mb-6">
-          <TransactionFilterSection
-            searchQuery={filters.search}
-            onSearchChange={setSearch}
-            onlyUnresolved={filters.onlyUnresolved}
-            onOnlyUnresolvedChange={setOnlyUnresolved}
-            onlyVirtual={filters.onlyVirtual}
-            onOnlyVirtualChange={setOnlyVirtual}
-            selectedCategoryId={filters.categoryId}
-            onCategoryChange={setCategoryId}
-            selectedBucketId={filters.bucketId}
-            onBucketChange={setBucketId}
-          />
-        </div>
-
+      <div className="mt-4">
         <TransactionList
           transactions={transactions}
           onEdit={handleEdit}
@@ -339,37 +288,37 @@ export default function TransactionsPage() {
             toggleVirtualMutation.variables?.id as string | undefined
           }
         />
+      </div>
 
-        {/* Load More Button */}
-        {hasNextPage && (
-          <div className="flex justify-center mt-6">
-            <Button
-              onClick={loadMoreTransactions}
-              disabled={isFetchingNextPage}
-              variant="outline"
-              className="border-primary text-primary hover:bg-primary hover:text-white dark:border-green-400 dark:text-green-400 dark:hover:bg-green-400 dark:hover:text-gray-900"
-            >
-              {isFetchingNextPage ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Loading...
-                </>
-              ) : (
-                <>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Load more transactions
-                </>
-              )}
-            </Button>
-          </div>
-        )}
+      {/* Load More Button */}
+      {hasNextPage && (
+        <div className="flex justify-center mt-6">
+          <Button
+            onClick={loadMoreTransactions}
+            disabled={isFetchingNextPage}
+            variant="outline"
+            className="border-primary text-primary hover:bg-primary hover:text-white dark:border-green-400 dark:text-green-400 dark:hover:bg-green-400 dark:hover:text-gray-900"
+          >
+            {isFetchingNextPage ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Loading...
+              </>
+            ) : (
+              <>
+                <Plus className="mr-2 h-4 w-4" />
+                Load more transactions
+              </>
+            )}
+          </Button>
+        </div>
+      )}
 
-        {!hasNextPage && transactions.length > 0 && (
-          <div className="text-center mt-6 text-sm text-gray-500 dark:text-gray-400">
-            All transactions displayed
-          </div>
-        )}
-      </AppHighlightBlock>
+      {!hasNextPage && transactions.length > 0 && (
+        <div className="text-center mt-6 text-sm text-gray-500 dark:text-gray-400">
+          All transactions displayed
+        </div>
+      )}
 
       {/* Floating Action Button */}
       <button
@@ -398,6 +347,6 @@ export default function TransactionsPage() {
           onUpdate={handleUpdateTransaction}
         />
       )}
-    </div>
+    </AppPageLayout>
   );
 }
