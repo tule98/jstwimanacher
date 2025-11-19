@@ -232,24 +232,6 @@ export default function TransactionsPage() {
     }
   };
 
-  if (isLoadingTransactions) {
-    return (
-      <AppPageLayout>
-        <div className="max-w-md mx-auto p-4">Loading data...</div>
-      </AppPageLayout>
-    );
-  }
-
-  if (isErrorTransactions) {
-    return (
-      <AppPageLayout>
-        <div className="max-w-md mx-auto p-4 text-red-500">
-          Error: {transactionsError?.message || "Unable to load data"}
-        </div>
-      </AppPageLayout>
-    );
-  }
-
   return (
     <AppPageLayout header={<AppPageNav title="Transactions" icon={<List />} />}>
       <TransactionFilterBox
@@ -270,54 +252,64 @@ export default function TransactionsPage() {
         </div>
       )}
 
-      <div className="mt-4">
-        <TransactionList
-          transactions={transactions}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-          onToggleResolved={handleToggleResolved}
-          onToggleVirtual={handleToggleVirtual}
-          isDeleting={deleteMutation.isPending}
-          deletingId={deleteMutation.variables as string}
-          isTogglingResolved={toggleResolvedMutation.isPending}
-          togglingId={
-            toggleResolvedMutation.variables?.id as string | undefined
-          }
-          isTogglingVirtual={toggleVirtualMutation.isPending}
-          togglingVirtualId={
-            toggleVirtualMutation.variables?.id as string | undefined
-          }
-        />
-      </div>
-
-      {/* Load More Button */}
-      {hasNextPage && (
-        <div className="flex justify-center mt-6">
-          <Button
-            onClick={loadMoreTransactions}
-            disabled={isFetchingNextPage}
-            variant="outline"
-            className="border-primary text-primary hover:bg-primary hover:text-white dark:border-green-400 dark:text-green-400 dark:hover:bg-green-400 dark:hover:text-gray-900"
-          >
-            {isFetchingNextPage ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Loading...
-              </>
-            ) : (
-              <>
-                <Plus className="mr-2 h-4 w-4" />
-                Load more transactions
-              </>
-            )}
-          </Button>
+      {isLoadingTransactions ? (
+        <div className="mt-6 text-center p-8">Loading transactions...</div>
+      ) : isErrorTransactions ? (
+        <div className="mt-6 text-center p-8 text-red-500">
+          Error: {transactionsError?.message || "Unable to load data"}
         </div>
-      )}
+      ) : (
+        <>
+          <div className="mt-4">
+            <TransactionList
+              transactions={transactions}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              onToggleResolved={handleToggleResolved}
+              onToggleVirtual={handleToggleVirtual}
+              isDeleting={deleteMutation.isPending}
+              deletingId={deleteMutation.variables as string}
+              isTogglingResolved={toggleResolvedMutation.isPending}
+              togglingId={
+                toggleResolvedMutation.variables?.id as string | undefined
+              }
+              isTogglingVirtual={toggleVirtualMutation.isPending}
+              togglingVirtualId={
+                toggleVirtualMutation.variables?.id as string | undefined
+              }
+            />
+          </div>
 
-      {!hasNextPage && transactions.length > 0 && (
-        <div className="text-center mt-6 text-sm text-gray-500 dark:text-gray-400">
-          All transactions displayed
-        </div>
+          {/* Load More Button */}
+          {hasNextPage && (
+            <div className="flex justify-center mt-6">
+              <Button
+                onClick={loadMoreTransactions}
+                disabled={isFetchingNextPage}
+                variant="outline"
+                className="border-primary text-primary hover:bg-primary hover:text-white dark:border-green-400 dark:text-green-400 dark:hover:bg-green-400 dark:hover:text-gray-900"
+              >
+                {isFetchingNextPage ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Loading...
+                  </>
+                ) : (
+                  <>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Load more transactions
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
+
+          {!hasNextPage && transactions.length > 0 && (
+            <div className="text-center mt-6 text-sm text-gray-500 dark:text-gray-400">
+              All transactions displayed
+            </div>
+          )}
+        </>
       )}
 
       {/* Floating Action Button */}

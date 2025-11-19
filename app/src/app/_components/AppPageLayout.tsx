@@ -19,7 +19,18 @@ export default function AppPageLayout({
 }: AppPageLayoutProps) {
   return (
     <Box sx={{ width: 1, ...sx }}>
-      {header ? <Box sx={{ mb: 2 }}>{header}</Box> : null}
+      {header ? (
+        <Box
+          sx={{
+            position: "sticky",
+            top: 0,
+            zIndex: 10,
+            bgcolor: "background.default",
+          }}
+        >
+          {header}
+        </Box>
+      ) : null}
       <Box sx={{ px: { xs: 2, md: 3 }, ...contentSx }}>{children}</Box>
       {footer ? <Box sx={{ mt: 3 }}>{footer}</Box> : null}
     </Box>
