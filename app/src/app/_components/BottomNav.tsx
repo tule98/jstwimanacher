@@ -53,7 +53,7 @@ export default function BottomNav() {
   return (
     <>
       <nav className="md:hidden fixed bottom-0 inset-x-0 z-50">
-        <div className="mx-auto w-full max-w-screen-lg pb-[env(safe-area-inset-bottom)]">
+        <div className="mx-auto w-full max-w-screen-lg">
           <div className="relative rounded-tl-xl rounded-tr-3xl rounded-bl-xl rounded-br-xl border-t border-emerald-100 bg-white/90 backdrop-blur dark:bg-gray-900/90 shadow-2xl">
             <div className="flex items-center justify-between px-6 py-3">
               {/* Transactions */}
