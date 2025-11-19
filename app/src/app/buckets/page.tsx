@@ -22,11 +22,9 @@ import {
   Stack,
   CircularProgress,
 } from "@mui/material";
-import AddIcon from "@mui/icons-material/Add";
-import StarIcon from "@mui/icons-material/Star";
 import AppPageNav from "../_components/AppPageNav";
 import AppPageLayout from "../_components/AppPageLayout";
-import { Package } from "lucide-react";
+import { Package, Plus, Star } from "lucide-react";
 
 export default function BucketsPage() {
   const { data: buckets, isLoading, isError, error } = useBuckets();
@@ -87,7 +85,7 @@ export default function BucketsPage() {
           >
             <Stack spacing={1} alignItems="center">
               <Button
-                startIcon={<AddIcon />}
+                startIcon={<Plus size={18} />}
                 variant="contained"
                 color="primary"
                 onClick={handleOpen}
@@ -118,16 +116,13 @@ export default function BucketsPage() {
                   </Typography>
                   {b.is_default && (
                     <Chip
-                      icon={<StarIcon />}
+                      icon={<Star size={16} />}
                       size="small"
-                      color="warning"
+                      color="success"
                       label="Default"
                     />
                   )}
                 </Stack>
-                <Typography variant="caption" color="text.secondary">
-                  ID: {b.id}
-                </Typography>
               </CardContent>
               <CardActions>
                 <Button size="small" disabled>

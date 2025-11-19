@@ -50,6 +50,18 @@ const theme = createTheme({
         },
       },
     },
+    MuiChip: {
+      defaultProps: {
+        variant: "filled",
+      },
+      styleOverrides: {
+        root: {
+          borderRadius: 10,
+          borderTopRightRadius: 24,
+          borderBottomRightRadius: 16,
+        },
+      },
+    },
   },
 });
 
