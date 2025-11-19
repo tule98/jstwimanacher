@@ -2,6 +2,7 @@
 import "./globals.css";
 import React from "react";
 import AppProvider from "./_components/AppProvider";
+import MuiProvider from "./_components/MuiProvider";
 import AppNav from "./_components/AppNav";
 import BottomNav from "./_components/BottomNav";
 import AuthGuard from "./_components/AuthGuard";
@@ -36,25 +37,27 @@ export default function RootLayout({
         <link rel="icon" type="image/png" href="/jstwi-logo.png" />
       </head>
       <body className="font-poppins min-h-screen dark:from-gray-900 transition-colors duration-300">
-        <AppProvider>
-          <AuthGuard>
-            <header className="sticky top-0 z-50 w-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm shadow-md hidden md:block">
+        <MuiProvider>
+          <AppProvider>
+            <AuthGuard>
+              <header className="sticky top-0 z-50 w-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm shadow-md hidden md:block">
+                <div className="max-w-screen-lg mx-auto">
+                  <AppNav />
+                </div>
+              </header>
               <div className="max-w-screen-lg mx-auto">
-                <AppNav />
+                <main className="flex flex-col items-center justify-start p-4 md:p-6 gap-6 pb-20 pt-4">
+                  {children}
+                </main>
               </div>
-            </header>
-            <div className="max-w-screen-lg mx-auto">
-              <main className="flex flex-col items-center justify-start p-4 md:p-6 gap-6 pb-20 pt-4">
-                {children}
-              </main>
-            </div>
-            {/* Mobile Bottom Navigation */}
-            <div className="md:hidden">
-              <BottomNav />
-            </div>
-          </AuthGuard>
-          <Toaster richColors position="top-right" />
-        </AppProvider>
+              {/* Mobile Bottom Navigation */}
+              <div className="md:hidden">
+                <BottomNav />
+              </div>
+            </AuthGuard>
+            <Toaster richColors position="top-right" />
+          </AppProvider>
+        </MuiProvider>
       </body>
     </html>
   );

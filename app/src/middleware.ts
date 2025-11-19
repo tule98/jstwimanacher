@@ -1,6 +1,15 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+const isLocalhost = (hostname: string) => {
+  return (
+    hostname === "localhost" ||
+    hostname === "127.0.0.1" ||
+    hostname === "[::1]" ||
+    hostname.endsWith(".localhost")
+  );
+};
+
 export function middleware(request: NextRequest) {
   // Allow verify-key endpoint to pass through (bootstrap endpoint for authentication)
   if (request.nextUrl.pathname === "/api/verify-key") {
@@ -22,7 +31,7 @@ export function middleware(request: NextRequest) {
     }
 
     // Check if cookie exists
-    if (!apiKeyFromCookie) {
+    if (!apiKeyFromCookie && !isLocalhost(request.nextUrl.hostname)) {
       return NextResponse.json(
         { error: "Authentication required" },
         { status: 401 }
@@ -30,7 +39,7 @@ export function middleware(request: NextRequest) {
     }
 
     // Validate cookie value
-    if (apiKeyFromCookie !== apiKey) {
+    if (apiKeyFromCookie !== apiKey && !isLocalhost(request.nextUrl.hostname)) {
       return NextResponse.json(
         { error: "Invalid credentials" },
         { status: 401 }
