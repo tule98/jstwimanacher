@@ -105,6 +105,52 @@ export const storySessions = sqliteTable("story_sessions", {
   status: text("status").notNull().default("draft"), // 'draft' | 'submitted'
 });
 
+// Habits table
+export const habits = sqliteTable("habits", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  status: text("status").notNull().default("active"), // 'active' | 'inactive'
+  created_at: text("created_at")
+    .notNull()
+    .default(sql`datetime('now')`),
+  updated_at: text("updated_at")
+    .notNull()
+    .default(sql`datetime('now')`),
+});
+
+// Habit Logs table
+export const habitLogs = sqliteTable("habit_logs", {
+  id: text("id").primaryKey(),
+  habit_id: text("habit_id")
+    .notNull()
+    .references(() => habits.id),
+  date: text("date").notNull(), // Store as ISO date string YYYY-MM-DD
+  completed: integer("completed", { mode: "boolean" }).notNull().default(false),
+  created_at: text("created_at")
+    .notNull()
+    .default(sql`datetime('now')`),
+  updated_at: text("updated_at")
+    .notNull()
+    .default(sql`datetime('now')`),
+});
+
+// Habit Journal Entries table
+export const habitJournalEntries = sqliteTable("habit_journal_entries", {
+  id: text("id").primaryKey(),
+  habit_id: text("habit_id")
+    .notNull()
+    .references(() => habits.id),
+  content: text("content").notNull(), // HTML content with mentions
+  entry_date: text("entry_date").notNull(), // YYYY-MM-DD
+  created_at: text("created_at")
+    .notNull()
+    .default(sql`datetime('now')`),
+  updated_at: text("updated_at")
+    .notNull()
+    .default(sql`datetime('now')`),
+});
+
 // Types cho TypeScript
 export type Category = typeof categories.$inferSelect;
 export type NewCategory = typeof categories.$inferInsert;
@@ -120,3 +166,9 @@ export type StorySession = typeof storySessions.$inferSelect;
 export type NewStorySession = typeof storySessions.$inferInsert;
 export type Bucket = typeof buckets.$inferSelect;
 export type NewBucket = typeof buckets.$inferInsert;
+export type Habit = typeof habits.$inferSelect;
+export type NewHabit = typeof habits.$inferInsert;
+export type HabitLog = typeof habitLogs.$inferSelect;
+export type NewHabitLog = typeof habitLogs.$inferInsert;
+export type HabitJournalEntry = typeof habitJournalEntries.$inferSelect;
+export type NewHabitJournalEntry = typeof habitJournalEntries.$inferInsert;

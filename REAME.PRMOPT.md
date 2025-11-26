@@ -1,3 +1,90 @@
+# Feature descriptions
+Mention habit inside text area with tag insertion using Tiptap editor. Mention Dropdown Menu in tiptap editor.
+
+# Route: `/habits`
+
+# New component
+HabitLogInputWithTagInsertion.tsx
+
+# UI only, not implemented API or database yet.
+
+
+<!--  -->
+# Feature Overview
+Habit log input with tag insertion using Tiptap editor.
+
+# User Interface
+When I type a colon `:` in the habit log input field, a dropdown menu appears showing a list of my habits as tags.
+
+I can click on a tag from the dropdown menu to insert it into the habit log at the current cursor position.
+
+When I hit submit button, the habit log with the inserted tags is saved to the database.
+
+# Implementation Details
+1. Integrate Tiptap editor into the habit log input field.
+2. Fetch the list of habits from the database to populate the dropdown menu.
+3. Implement the dropdown menu that appears when typing `:` and allows selecting a habit tag.
+4. Handle the insertion of the selected habit tag into the Tiptap editor at the current cursor position.
+5. Ensure that the habit log with tags is correctly saved to the database upon submission
+
+# API Implementation Details
+POST `/api/habits/:id/habit-logs`
+GET `/api/habits/:id/habit-logs`
+
+# Database table
+habit_logs table: Log of habits
+For schema details, refer to the schema.ts
+
+# Library and Tools
+Use Tiptap for rich text editing.
+Use react-query for data fetching and state management.
+
+
+
+<!--  -->
+# Feature Overview
+Habit tracking dashboard.
+
+# Route: `/dashboard/habits`
+# User Interface
+A button allow creating a new habit
+A list of activate habits displayed in a card format, showing the habit name, description, and status (active/inactive).
+Each habit card has an edit button to modify the habit details and a toggle button to activate/de
+
+In the card format, showing a contribution graph for each habit, visualizing the completion status over time (e.g., days/weeks).
+
+# Database
+habits table:
+- id (primary key)
+- name (string)
+- description (string)
+- created_at (timestamp)
+- updated_at (timestamp)
+- status (enum: active, inactive)
+
+habit_logs table:
+- id (primary key)
+- habit_id (foreign key to habits.id)
+- date (date)
+- completed (boolean)
+- created_at (timestamp)
+- updated_at (timestamp)
+
+# API Implementation Details
+GET `/api/habits`
+POST `/api/habits`
+PUT `/api/habits/:id`
+DELETE `/api/habits/:id`
+
+# Library and Tools
+Use react-query for data fetching and state management.
+Use Material UI for UI components and styling.
+
+
+
+
+<!--  -->
+
 # Feature Overview
 
 Heatmap visualization for data analysis.
