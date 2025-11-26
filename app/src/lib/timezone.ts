@@ -190,3 +190,38 @@ export function isValidUTCString(dateString: string): dateString is UTCString {
 export function isDateInUTC(date: Date): boolean {
   return date.getTimezoneOffset() === 0;
 }
+
+/**
+ * Get today's date as YYYY-MM-DD string in local timezone
+ * @returns Date string in YYYY-MM-DD format
+ */
+export function getTodayLocal(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth() + 1;
+  const day = now.getDate();
+  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(
+    2,
+    "0"
+  )}`;
+}
+
+/**
+ * Format a local date as YYYY-MM-DD string without timezone conversion
+ * @param year - Year
+ * @param month - Month (1-12 or 0-11 depending on zeroIndexed parameter)
+ * @param day - Day of month
+ * @param zeroIndexed - Whether month is 0-indexed (default: false, meaning 1-12)
+ * @returns Date string in YYYY-MM-DD format
+ */
+export function formatLocalDate(
+  year: number,
+  month: number,
+  day: number,
+  zeroIndexed: boolean = false
+): string {
+  const actualMonth = zeroIndexed ? month + 1 : month;
+  return `${year}-${String(actualMonth).padStart(2, "0")}-${String(
+    day
+  ).padStart(2, "0")}`;
+}

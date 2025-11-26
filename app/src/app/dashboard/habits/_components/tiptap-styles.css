@@ -30,7 +30,7 @@
   white-space: nowrap;
 }
 
-.tiptap-editor p.is-editor-empty:first-child::before {
+.tiptap-editor p.is-editor-empty:first-of-type::before {
   color: #adb5bd;
   content: attr(data-placeholder);
   float: left;

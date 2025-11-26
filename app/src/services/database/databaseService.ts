@@ -6,7 +6,7 @@ import {
   assets,
   assetConversions,
   habits,
-  habitLogs,
+  habitJournalEntries,
   type Category,
   type Transaction,
   type Bucket,
@@ -19,8 +19,7 @@ import {
   type NewAssetConversion,
   type Habit,
   type NewHabit,
-  type HabitLog,
-  type NewHabitLog,
+  type HabitJournalEntry,
 } from "@/db/schema";
 import { eq, desc, and, gte, lt, lte, sql, like } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
@@ -773,30 +772,35 @@ export class DatabaseService {
 
   // Habits methods
   async getHabits(
-    includeLogs: boolean = true,
+    includeEntries: boolean = true,
     days: number = 30
-  ): Promise<(Habit & { logs?: HabitLog[] })[]> {
+  ): Promise<(Habit & { entries?: HabitJournalEntry[] })[]> {
     const result = await db
       .select()
       .from(habits)
       .orderBy(desc(habits.created_at));
-    if (!includeLogs) return result;
+    if (!includeEntries) return result;
 
-    // Calculate date range for logs
+    // Calculate date range for journal entries
     const end = new Date();
     const start = new Date();
     start.setDate(end.getDate() - days + 1);
     const startStr = start.toISOString().slice(0, 10);
     const endStr = end.toISOString().slice(0, 10);
 
-    const logs = await db
+    const entries = await db
       .select()
-      .from(habitLogs)
-      .where(and(gte(habitLogs.date, startStr), lte(habitLogs.date, endStr)));
+      .from(habitJournalEntries)
+      .where(
+        and(
+          gte(habitJournalEntries.entry_date, startStr),
+          lte(habitJournalEntries.entry_date, endStr)
+        )
+      );
 
     return result.map((h) => ({
       ...h,
-      logs: logs.filter((l) => l.habit_id === h.id),
+      entries: entries.filter((e) => e.habit_id === h.id),
     }));
   }
 
@@ -838,41 +842,12 @@ export class DatabaseService {
   }
 
   async deleteHabit(id: string): Promise<boolean> {
-    // delete logs first (on cascade not set)
-    await db.delete(habitLogs).where(eq(habitLogs.habit_id, id));
+    // delete journal entries first (on cascade not set)
+    await db
+      .delete(habitJournalEntries)
+      .where(eq(habitJournalEntries.habit_id, id));
     const result = await db.delete(habits).where(eq(habits.id, id));
     return result.rowsAffected > 0;
-  }
-
-  async logHabitCompletion(
-    habitId: string,
-    date: string,
-    completed: boolean = true
-  ): Promise<HabitLog> {
-    // date should be YYYY-MM-DD
-    const existing = await db
-      .select()
-      .from(habitLogs)
-      .where(and(eq(habitLogs.habit_id, habitId), eq(habitLogs.date, date)))
-      .limit(1);
-    if (existing[0]) {
-      const result = await db
-        .update(habitLogs)
-        .set({ completed, updated_at: nowUTC() })
-        .where(eq(habitLogs.id, existing[0].id))
-        .returning();
-      return result[0];
-    }
-    const newLog: NewHabitLog = {
-      id: uuidv4(),
-      habit_id: habitId,
-      date,
-      completed,
-      created_at: nowUTC(),
-      updated_at: nowUTC(),
-    };
-    const result = await db.insert(habitLogs).values(newLog).returning();
-    return result[0];
   }
 }
 

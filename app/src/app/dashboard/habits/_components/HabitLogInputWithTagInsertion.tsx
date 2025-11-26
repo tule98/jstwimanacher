@@ -198,7 +198,6 @@ const parseJournalContent = (
   const doc = parser.parseFromString(html, "text/html");
   const mentions = doc.querySelectorAll('[data-type="mention"]');
   const dateDocMentions = doc.querySelectorAll('[data-type="dateMention"]');
-  console.log("🚀 ~ parseJournalContent ~ dateDocMentions:", dateDocMentions);
 
   const habitMentions: Array<{ id: string; name: string }> = [];
   const dateMentions: Array<{ label: string; date: string }> = [];
@@ -456,7 +455,7 @@ export default function HabitLogInputWithTagInsertion({
               borderRadius: "4px",
               fontWeight: 500,
             },
-            "& p.is-editor-empty:first-child::before": {
+            "& p.is-editor-empty:first-of-type::before": {
               content: `"${placeholder}"`,
               color: "text.disabled",
               pointerEvents: "none",

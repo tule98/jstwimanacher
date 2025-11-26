@@ -28,8 +28,8 @@ When I hit submit button, the habit log with the inserted tags is saved to the d
 5. Ensure that the habit log with tags is correctly saved to the database upon submission
 
 # API Implementation Details
-POST `/api/habits/:id/habit-logs`
-GET `/api/habits/:id/habit-logs`
+POST `/api/habits/:id/habit-journal-entries`
+GET `/api/habits/:id/habit-journal-entries`
 
 # Database table
 habit_logs table: Log of habits

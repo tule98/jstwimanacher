@@ -16,7 +16,6 @@ import {
   useHabits,
   useCreateHabit,
   useUpdateHabit,
-  useLogHabit,
   useCreateJournalEntry,
 } from "@/services/react-query/hooks/habits";
 import HabitLogInputWithTagInsertion, {
@@ -35,12 +34,11 @@ export default function HabitsPage() {
   );
 
   const { data: habits, isLoading } = useHabits({
-    includeLogs: true,
+    includeEntries: true,
     days: 30,
   });
   const createHabit = useCreateHabit();
   const updateHabit = useUpdateHabit();
-  const logHabit = useLogHabit();
   const createJournalEntry = useCreateJournalEntry();
 
   const handleCreate = async () => {
@@ -75,18 +73,12 @@ export default function HabitsPage() {
         return;
       }
 
-      // Save journal entry and log completion for all mentioned habits
+      // Save journal entry for all mentioned habits
       for (const habitMention of previewData.habitMentions) {
         await createJournalEntry.mutateAsync({
           habitId: habitMention.id,
           content: journalContent,
           entry_date: entryDate,
-        });
-
-        await logHabit.mutateAsync({
-          habitId: habitMention.id,
-          date: entryDate,
-          completed: true,
         });
       }
 
@@ -172,7 +164,11 @@ export default function HabitsPage() {
               habit={h}
               onToggleStatus={toggleStatus}
               onMarkToday={(habitId, date) =>
-                logHabit.mutate({ habitId, date, completed: true })
+                createJournalEntry.mutate({
+                  habitId,
+                  content: "Completed today",
+                  entry_date: date,
+                })
               }
               onOpenJournal={() => {}}
             />

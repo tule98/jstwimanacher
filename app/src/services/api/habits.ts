@@ -9,15 +9,6 @@ export interface Habit {
   updated_at: string;
 }
 
-export interface HabitLog {
-  id: string;
-  habit_id: string;
-  date: string; // YYYY-MM-DD
-  completed: boolean;
-  created_at: string;
-  updated_at: string;
-}
-
 export interface HabitJournalEntry {
   id: string;
   habit_id: string;
@@ -29,13 +20,14 @@ export interface HabitJournalEntry {
 
 export const HabitsAPI = {
   async list(options?: {
-    includeLogs?: boolean;
+    includeEntries?: boolean;
     days?: number;
-  }): Promise<(Habit & { logs?: HabitLog[] })[]> {
+  }): Promise<(Habit & { entries?: HabitJournalEntry[] })[]> {
     const params = new URLSearchParams();
-    if (options?.includeLogs === false) params.set("includeLogs", "false");
+    if (options?.includeEntries === false)
+      params.set("includeEntries", "false");
     if (options?.days) params.set("days", String(options.days));
-    return httpClient.get<(Habit & { logs?: HabitLog[] })[]>(
+    return httpClient.get<(Habit & { entries?: HabitJournalEntry[] })[]>(
       `/api/habits${params.toString() ? `?${params.toString()}` : ""}`
     );
   },
@@ -58,20 +50,13 @@ export const HabitsAPI = {
   async remove(id: string): Promise<{ success: boolean }> {
     return httpClient.delete<{ success: boolean }>(`/api/habits/${id}`);
   },
-  async log(payload: {
-    habitId: string;
-    date: string;
-    completed?: boolean;
-  }): Promise<HabitLog> {
-    return httpClient.post<HabitLog>("/api/habits/log", payload);
-  },
   async createJournalEntry(payload: {
     habitId: string;
     content: string;
     entry_date: string;
   }): Promise<HabitJournalEntry> {
     return httpClient.post<HabitJournalEntry>(
-      `/api/habits/${payload.habitId}/habit-logs`,
+      `/api/habits/${payload.habitId}/habit-journal-entries`,
       {
         content: payload.content,
         entry_date: payload.entry_date,
@@ -85,7 +70,7 @@ export const HabitsAPI = {
     const params = new URLSearchParams();
     if (limit) params.set("limit", String(limit));
     return httpClient.get<HabitJournalEntry[]>(
-      `/api/habits/${habitId}/habit-logs${
+      `/api/habits/${habitId}/habit-journal-entries${
         params.toString() ? `?${params.toString()}` : ""
       }`
     );

@@ -9,17 +9,24 @@ import {
   Switch,
 } from "@mui/material";
 import { useMemo } from "react";
-import type { Habit, HabitLog } from "@/services/api/habits";
+import type { Habit, HabitJournalEntry } from "@/services/api/habits";
+import { getTodayLocal, formatLocalDate } from "@/lib/timezone";
 
 interface HabitCardProps {
-  habit: Habit & { logs?: HabitLog[] };
+  habit: Habit & { entries?: HabitJournalEntry[] };
   onToggleStatus: (id: string, active: boolean) => void;
   onMarkToday: (habitId: string, date: string) => void;
   onOpenJournal: (habitId: string) => void;
 }
 
-// Generate all days in current month with log status
-const generateMonthContribution = (logs: HabitLog[] = []) => {
+// Generate all days in current month with journal entry status
+const generateMonthContribution = (
+  entries: HabitJournalEntry[] = []
+): Array<{
+  date: string;
+  day: number;
+  hasEntry: boolean;
+}> => {
   const now = new Date();
   const year = now.getFullYear();
   const month = now.getMonth();
@@ -31,24 +38,22 @@ const generateMonthContribution = (logs: HabitLog[] = []) => {
   const days: Array<{
     date: string;
     day: number;
-    completed: boolean;
-    hasLog: boolean;
+    hasEntry: boolean;
   }> = [];
 
-  // Create a map of logs for quick lookup
-  const logMap = new Map(logs.map((log) => [log.date, log]));
+  // Create a map of entries for quick lookup
+  const entryMap = new Map(entries.map((entry) => [entry.entry_date, entry]));
 
   // Generate all days
   for (let day = 1; day <= daysInMonth; day++) {
-    const date = new Date(year, month, day);
-    const dateStr = date.toISOString().slice(0, 10);
-    const log = logMap.get(dateStr);
+    // Create date string directly to avoid timezone issues
+    const dateStr = formatLocalDate(year, month, day, true);
+    const entry = entryMap.get(dateStr);
 
     days.push({
       date: dateStr,
       day,
-      completed: log?.completed ?? false,
-      hasLog: !!log,
+      hasEntry: !!entry,
     });
   }
 
@@ -61,11 +66,11 @@ export default function HabitCard({
   onMarkToday,
   onOpenJournal,
 }: HabitCardProps) {
-  const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  const today = useMemo(() => getTodayLocal(), []);
 
   const contributionDays = useMemo(
-    () => generateMonthContribution(habit.logs),
-    [habit.logs]
+    () => generateMonthContribution(habit.entries),
+    [habit.entries]
   );
 
   const currentMonthName = useMemo(() => {
@@ -113,11 +118,7 @@ export default function HabitCard({
                 <Box
                   key={dayData.date}
                   title={`${dayData.date} - ${
-                    dayData.completed
-                      ? "Completed"
-                      : dayData.hasLog
-                      ? "Not completed"
-                      : "No log"
+                    dayData.hasEntry ? "Has entry" : "No entry"
                   }`}
                   sx={{
                     width: 20,
@@ -130,16 +131,12 @@ export default function HabitCard({
                     fontWeight: isToday ? "bold" : "normal",
                     border: isToday ? "1.5px solid" : "1px solid",
                     borderColor: isToday ? "primary.main" : "divider",
-                    backgroundColor: dayData.completed
+                    backgroundColor: dayData.hasEntry
                       ? "success.main"
-                      : dayData.hasLog
-                      ? "error.light"
                       : "grey.100",
-                    color: dayData.completed
+                    color: dayData.hasEntry
                       ? "success.contrastText"
-                      : dayData.hasLog
-                      ? "error.contrastText"
-                      : "text.secondary",
+                      : "success.contrastText",
                     cursor: "default",
                   }}
                 >
@@ -163,24 +160,7 @@ export default function HabitCard({
                 sx={{ fontSize: "0.625rem" }}
                 color="text.secondary"
               >
-                Completed
-              </Typography>
-            </Box>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 0.3 }}>
-              <Box
-                sx={{
-                  width: 10,
-                  height: 10,
-                  borderRadius: 0.5,
-                  bgcolor: "error.light",
-                }}
-              />
-              <Typography
-                variant="caption"
-                sx={{ fontSize: "0.625rem" }}
-                color="text.secondary"
-              >
-                Missed
+                Has Entry
               </Typography>
             </Box>
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.3 }}>
@@ -199,7 +179,7 @@ export default function HabitCard({
                 sx={{ fontSize: "0.625rem" }}
                 color="text.secondary"
               >
-                No log
+                No Entry
               </Typography>
             </Box>
           </Box>

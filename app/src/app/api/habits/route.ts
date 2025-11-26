@@ -4,11 +4,11 @@ import { databaseService } from "@/services/database/databaseService";
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const includeLogs = searchParams.get("includeLogs") !== "false";
+    const includeEntries = searchParams.get("includeEntries") !== "false";
     const daysParam = searchParams.get("days");
     const days = daysParam ? Math.max(1, Number(daysParam)) : 30;
 
-    const data = await databaseService.getHabits(includeLogs, days);
+    const data = await databaseService.getHabits(includeEntries, days);
     return NextResponse.json(data);
   } catch (error) {
     return NextResponse.json(

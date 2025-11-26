@@ -1,16 +1,19 @@
 "use client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { HabitsAPI, Habit, HabitLog } from "@/services/api/habits";
+import { HabitsAPI, Habit, HabitJournalEntry } from "@/services/api/habits";
 
 export const habitQueryKeys = {
   all: ["habits"] as const,
   lists: () => ["habits", "list"] as const,
-  list: (opts?: { includeLogs?: boolean; days?: number }) =>
-    ["habits", "list", opts?.includeLogs ?? true, opts?.days ?? 30] as const,
+  list: (opts?: { includeEntries?: boolean; days?: number }) =>
+    ["habits", "list", opts?.includeEntries ?? true, opts?.days ?? 30] as const,
 };
 
-export function useHabits(options?: { includeLogs?: boolean; days?: number }) {
-  return useQuery<(Habit & { logs?: HabitLog[] })[]>({
+export function useHabits(options?: {
+  includeEntries?: boolean;
+  days?: number;
+}) {
+  return useQuery<(Habit & { entries?: HabitJournalEntry[] })[]>({
     queryKey: habitQueryKeys.list(options),
     queryFn: () => HabitsAPI.list(options),
     staleTime: 60_000,
@@ -49,20 +52,6 @@ export function useDeleteHabit() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => HabitsAPI.remove(id),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: habitQueryKeys.all });
-    },
-  });
-}
-
-export function useLogHabit() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (payload: {
-      habitId: string;
-      date: string;
-      completed?: boolean;
-    }) => HabitsAPI.log(payload),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: habitQueryKeys.all });
     },
