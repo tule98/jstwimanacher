@@ -11,10 +11,15 @@ import {
   Divider,
 } from "@mui/material";
 import { useHabits } from "@/services/react-query/hooks/habits";
-import HabitLogInputWithTagInsertion from "@/app/dashboard/habits/_components/HabitLogInputWithTagInsertion";
+import HabitLogInputWithTagInsertion, {
+  type ParsedJournalData,
+} from "@/app/dashboard/habits/_components/HabitLogInputWithTagInsertion";
 
 export default function HabitsPage() {
   const [content, setContent] = useState("");
+  const [previewData, setPreviewData] = useState<ParsedJournalData | null>(
+    null
+  );
   const { data: habits, isLoading } = useHabits({
     includeLogs: false,
     days: 30,
@@ -28,17 +33,17 @@ export default function HabitsPage() {
   return (
     <Container sx={{ py: 4 }}>
       <Typography variant="h4" gutterBottom>
-        Habit Journal with Mentions
+        Habit Journal with Mentions (Demo)
       </Typography>
       <Typography variant="body2" color="text.secondary" gutterBottom>
-        Type @ to mention a habit in your journal entry
+        Type @ to mention a habit, type : to mention a date
       </Typography>
 
       <Box sx={{ mt: 4 }}>
         <Card>
           <CardContent>
             <Typography variant="h6" gutterBottom>
-              Journal Entry
+              Journal Entry Editor
             </Typography>
 
             {isLoading ? (
@@ -48,7 +53,9 @@ export default function HabitsPage() {
                 habits={habits || []}
                 value={content}
                 onChange={handleContentChange}
-                placeholder="Type @ to mention a habit in your journal..."
+                onPreviewChange={setPreviewData}
+                placeholder="Write your journal... @ for habits, : for dates"
+                showPreview={true}
               />
             )}
 
@@ -86,7 +93,7 @@ export default function HabitsPage() {
 
             <Box>
               <Typography variant="subtitle2" gutterBottom>
-                Preview (HTML Output):
+                Raw HTML Output:
               </Typography>
               <Box
                 sx={{
@@ -104,12 +111,46 @@ export default function HabitsPage() {
               </Box>
             </Box>
 
+            {previewData && (
+              <>
+                <Divider sx={{ my: 2 }} />
+                <Box>
+                  <Typography variant="subtitle2" gutterBottom>
+                    Parsed Data Summary:
+                  </Typography>
+                  <Box
+                    sx={{
+                      mt: 1,
+                      p: 2,
+                      bgcolor: "info.light",
+                      borderRadius: 1,
+                      fontSize: "0.875rem",
+                    }}
+                  >
+                    <Typography variant="body2">
+                      • Habit Mentions: {previewData.habitMentions.length}
+                    </Typography>
+                    <Typography variant="body2">
+                      • Date Mentions: {previewData.dateMentions.length}
+                    </Typography>
+                    {previewData.dateMentions.length > 0 && (
+                      <Typography variant="body2">
+                        • Entry Date: {previewData.dateMentions[0].date} (
+                        {previewData.dateMentions[0].label})
+                      </Typography>
+                    )}
+                  </Box>
+                </Box>
+              </>
+            )}
+
             <Button
               variant="contained"
               sx={{ mt: 2 }}
               onClick={() => {
                 alert("Journal entry saved (UI only demo)");
                 console.log("Saving content:", content);
+                console.log("Parsed data:", previewData);
               }}
             >
               Save Entry (Demo)
@@ -124,12 +165,24 @@ export default function HabitsPage() {
         </Typography>
         <Typography variant="body2" component="div">
           <ol>
-            <li>Type @ in the text editor to trigger the mention dropdown</li>
-            <li>Use arrow keys (↑↓) to navigate through habits</li>
-            <li>Press Enter or click to insert a habit mention</li>
-            <li>Continue typing after inserting a mention</li>
-            <li>Mentions are highlighted in the editor</li>
-            <li>The HTML output shows how mentions are stored</li>
+            <li>
+              Type @ in the text editor to trigger the habit mention dropdown
+            </li>
+            <li>
+              Type : to trigger the date mention dropdown (today, tomorrow,
+              yesterday)
+            </li>
+            <li>Use arrow keys (↑↓) to navigate through options</li>
+            <li>Press Enter or click to insert a mention</li>
+            <li>
+              Habit mentions appear in{" "}
+              <strong style={{ color: "#1976d2" }}>blue</strong>, date mentions
+              in <strong style={{ color: "#2e7d32" }}>green</strong>
+            </li>
+            <li>The preview section shows parsed data that will be saved</li>
+            <li>
+              Multiple mentions of the same habit/date are tracked separately
+            </li>
           </ol>
         </Typography>
       </Box>

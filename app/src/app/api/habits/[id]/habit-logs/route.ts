@@ -35,6 +35,7 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
+    const id = await params.id;
     const body = await request.json();
     const { content, entry_date } = body;
 
@@ -49,7 +50,7 @@ export async function POST(
     const habit = await db
       .select()
       .from(habits)
-      .where(eq(habits.id, params.id))
+      .where(eq(habits.id, id))
       .limit(1);
 
     if (!habit.length) {
@@ -61,7 +62,7 @@ export async function POST(
       .insert(habitJournalEntries)
       .values({
         id: uuidv4(),
-        habit_id: params.id,
+        habit_id: id,
         content,
         entry_date,
         created_at: now,

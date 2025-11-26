@@ -12,8 +12,17 @@
   padding: 0;
 }
 
-.tiptap-editor .mention {
+.tiptap-editor .mention-habit {
   background-color: #1976d2;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.tiptap-editor .mention-date {
+  background-color: #2e7d32;
   color: white;
   padding: 2px 6px;
   border-radius: 4px;
