@@ -43,11 +43,13 @@ interface HabitMention {
 
 type MentionItem = DateMention | HabitMention;
 
-export interface ParsedJournalData {
-  habitMentions: Array<{ id: string; name: string }>;
-  dateMentions: Array<{ label: string; date: string }>;
+export interface JournalEntry {
+  habit: { id: string; name: string };
+  date: string; // YYYY-MM-DD
   content: string;
 }
+
+export type ParsedJournalData = JournalEntry[];
 
 interface MentionListProps {
   items: MentionItem[];
@@ -189,41 +191,72 @@ const getDateSuggestions = (): DateMention[] => {
   ];
 };
 
-// Parser function to extract all mentions from HTML content
+// Parser function to extract all mentions from HTML content by line
 const parseJournalContent = (
   html: string,
   habits: Habit[]
 ): ParsedJournalData => {
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, "text/html");
-  const mentions = doc.querySelectorAll('[data-type="mention"]');
-  const dateDocMentions = doc.querySelectorAll('[data-type="dateMention"]');
-
-  const habitMentions: Array<{ id: string; name: string }> = [];
-  const dateMentions: Array<{ label: string; date: string }> = [];
   const dateSuggestions = getDateSuggestions();
+  const entries: JournalEntry[] = [];
 
-  [...mentions, ...dateDocMentions].forEach((mention) => {
-    const id = mention.getAttribute("data-id") || "";
+  // Get all paragraph elements (lines in the editor)
+  const paragraphs = doc.querySelectorAll("p");
 
-    // Check if it's a date mention
-    const dateMention = dateSuggestions.find((d) => d.id === id);
-    if (dateMention) {
-      dateMentions.push({ label: dateMention.label, date: dateMention.value });
-    } else {
-      // It's a habit mention
+  paragraphs.forEach((paragraph) => {
+    const lineContent = paragraph.innerHTML;
+    if (!lineContent.trim()) return; // Skip empty lines
+
+    // Extract mentions from this line
+    const lineMentions = paragraph.querySelectorAll('[data-type="mention"]');
+    const lineDateMentions = paragraph.querySelectorAll(
+      '[data-type="dateMention"]'
+    );
+
+    const habitMentionsInLine: Array<{ id: string; name: string }> = [];
+    const dateMentionsInLine: Array<{ date: string }> = [];
+
+    // Process habit mentions in this line
+    lineMentions.forEach((mention) => {
+      const id = mention.getAttribute("data-id") || "";
       const habit = habits.find((h) => h.id === id);
-      if (habit) {
-        habitMentions.push({ id: habit.id, name: habit.name });
+      if (habit && !habitMentionsInLine.find((hm) => hm.id === habit.id)) {
+        habitMentionsInLine.push({ id: habit.id, name: habit.name });
+      }
+    });
+
+    // Process date mentions in this line
+    lineDateMentions.forEach((mention) => {
+      const id = mention.getAttribute("data-id") || "";
+      const dateMention = dateSuggestions.find((d) => d.id === id);
+      if (
+        dateMention &&
+        !dateMentionsInLine.find((dm) => dm.date === dateMention.value)
+      ) {
+        dateMentionsInLine.push({ date: dateMention.value });
+      }
+    });
+
+    // Default to today if no date mention in this line
+    const dates =
+      dateMentionsInLine.length > 0
+        ? dateMentionsInLine
+        : [{ date: new Date().toISOString().slice(0, 10) }];
+
+    // Create entries for each habit-date combination in this line
+    for (const habit of habitMentionsInLine) {
+      for (const dateMention of dates) {
+        entries.push({
+          habit: { id: habit.id, name: habit.name },
+          date: dateMention.date,
+          content: lineContent,
+        });
       }
     }
   });
 
-  return {
-    habitMentions,
-    dateMentions,
-    content: html,
-  };
+  return entries;
 };
 
 export default function HabitLogInputWithTagInsertion({
@@ -468,78 +501,60 @@ export default function HabitLogInputWithTagInsertion({
         <EditorContent editor={editor} />
       </Box>
 
-      {showPreview &&
-        (parsedData.habitMentions.length > 0 ||
-          parsedData.dateMentions.length > 0) && (
-          <Paper
-            elevation={0}
-            sx={{
-              mt: 2,
-              p: 2,
-              bgcolor: "grey.50",
-              border: "1px solid",
-              borderColor: "divider",
-              borderRadius: 1,
-            }}
+      {showPreview && parsedData.length > 0 && (
+        <Paper
+          elevation={0}
+          sx={{
+            mt: 2,
+            p: 2,
+            border: "1px solid",
+            borderColor: "divider",
+            borderRadius: 1,
+          }}
+        >
+          <Typography
+            variant="caption"
+            fontWeight="bold"
+            gutterBottom
+            display="block"
           >
-            <Typography
-              variant="caption"
-              fontWeight="bold"
-              gutterBottom
-              display="block"
-            >
-              Preview - Data to be saved:
-            </Typography>
+            Preview - Entries to be saved ({parsedData.length}):
+          </Typography>
 
-            {parsedData.habitMentions.length > 0 && (
-              <Box sx={{ mb: 1.5 }}>
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                  gutterBottom
-                  display="block"
-                >
-                  Habit Mentions ({parsedData.habitMentions.length}):
-                </Typography>
-                <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                  {parsedData.habitMentions.map((mention, idx) => (
-                    <Chip
-                      key={`${mention.id}-${idx}`}
-                      label={mention.name}
-                      size="small"
-                      color="primary"
-                      variant="outlined"
-                    />
-                  ))}
+          <Stack spacing={1} sx={{ mt: 1 }}>
+            {parsedData.map((entry, idx) => (
+              <Box
+                key={`${entry.habit.id}-${entry.date}-${idx}`}
+                sx={{
+                  p: 1,
+                  bgcolor: "background.paper",
+                  borderRadius: 1,
+                  border: "1px solid",
+                  borderColor: "divider",
+                }}
+              >
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <Chip
+                    label={entry.habit.name}
+                    size="small"
+                    color="primary"
+                    variant="outlined"
+                  />
+                  <Typography variant="caption" color="text.secondary">
+                    on
+                  </Typography>
+                  <Chip
+                    label={entry.date}
+                    size="small"
+                    color="success"
+                    variant="outlined"
+                  />
                 </Stack>
               </Box>
-            )}
-
-            {parsedData.dateMentions.length > 0 && (
-              <Box>
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                  gutterBottom
-                  display="block"
-                >
-                  Date Mentions ({parsedData.dateMentions.length}):
-                </Typography>
-                <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                  {parsedData.dateMentions.map((mention, idx) => (
-                    <Chip
-                      key={`${mention.date}-${idx}`}
-                      label={`${mention.label} (${mention.date})`}
-                      size="small"
-                      color="success"
-                      variant="outlined"
-                    />
-                  ))}
-                </Stack>
-              </Box>
-            )}
-          </Paper>
-        )}
+            ))}
+          </Stack>
+        </Paper>
+      )}
     </Box>
   );
 }

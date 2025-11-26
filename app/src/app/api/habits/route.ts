@@ -5,10 +5,13 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const includeEntries = searchParams.get("includeEntries") !== "false";
-    const daysParam = searchParams.get("days");
-    const days = daysParam ? Math.max(1, Number(daysParam)) : 30;
+    const monthParam = searchParams.get("month");
+    const yearParam = searchParams.get("year");
 
-    const data = await databaseService.getHabits(includeEntries, days);
+    const month = monthParam ? Number(monthParam) : undefined;
+    const year = yearParam ? Number(yearParam) : undefined;
+
+    const data = await databaseService.getHabits(includeEntries, month, year);
     return NextResponse.json(data);
   } catch (error) {
     return NextResponse.json(

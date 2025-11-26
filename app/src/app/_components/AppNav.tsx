@@ -1,7 +1,14 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CreditCard, PieChart, Settings, Link2, BookOpen } from "lucide-react";
+import {
+  CreditCard,
+  PieChart,
+  Settings,
+  Link2,
+  BookOpen,
+  CheckSquare,
+} from "lucide-react";
 
 export default function AppNav() {
   const pathname = usePathname();
@@ -17,7 +24,7 @@ export default function AppNav() {
         }`}
       >
         <CreditCard size={18} />
-        <span className="text-xs sm:text-sm">Giao dịch</span>
+        <span className="text-xs sm:text-sm">Transactions</span>
       </Link>
       <Link
         href="/stats"
@@ -26,7 +33,7 @@ export default function AppNav() {
         }`}
       >
         <PieChart size={18} />
-        <span className="text-xs sm:text-sm">Thống kê</span>
+        <span className="text-xs sm:text-sm">Statistics</span>
       </Link>
       <Link
         href="/conversions"
@@ -37,7 +44,7 @@ export default function AppNav() {
         }`}
       >
         <Link2 size={18} />
-        <span className="text-xs sm:text-sm">Chuyển đổi</span>
+        <span className="text-xs sm:text-sm">Conversions</span>
       </Link>
       <Link
         href="/config"
@@ -46,7 +53,7 @@ export default function AppNav() {
         }`}
       >
         <Settings size={18} />
-        <span className="text-xs sm:text-sm">Cấu hình</span>
+        <span className="text-xs sm:text-sm">Settings</span>
       </Link>
 
       <Link
@@ -56,7 +63,17 @@ export default function AppNav() {
         }`}
       >
         <BookOpen size={18} />
-        <span className="text-xs sm:text-sm">Sáng truyện</span>
+        <span className="text-xs sm:text-sm">Stories</span>
+      </Link>
+
+      <Link
+        href="/habits"
+        className={`font-semibold hover:text-green-200 dark:hover:text-green-300 transition-colors flex flex-col sm:flex-row items-center gap-1 px-2 py-1 rounded-md ${
+          pathname === "/habits" ? "bg-green-600/30 dark:bg-green-900/30" : ""
+        }`}
+      >
+        <CheckSquare size={18} />
+        <span className="text-xs sm:text-sm">Habits</span>
       </Link>
     </nav>
   );

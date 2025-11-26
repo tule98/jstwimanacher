@@ -5,13 +5,20 @@ import { HabitsAPI, Habit, HabitJournalEntry } from "@/services/api/habits";
 export const habitQueryKeys = {
   all: ["habits"] as const,
   lists: () => ["habits", "list"] as const,
-  list: (opts?: { includeEntries?: boolean; days?: number }) =>
-    ["habits", "list", opts?.includeEntries ?? true, opts?.days ?? 30] as const,
+  list: (opts?: { includeEntries?: boolean; month?: number; year?: number }) =>
+    [
+      "habits",
+      "list",
+      opts?.includeEntries ?? true,
+      opts?.month,
+      opts?.year,
+    ] as const,
 };
 
 export function useHabits(options?: {
   includeEntries?: boolean;
-  days?: number;
+  month?: number;
+  year?: number;
 }) {
   return useQuery<(Habit & { entries?: HabitJournalEntry[] })[]>({
     queryKey: habitQueryKeys.list(options),

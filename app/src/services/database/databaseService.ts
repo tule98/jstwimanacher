@@ -773,7 +773,8 @@ export class DatabaseService {
   // Habits methods
   async getHabits(
     includeEntries: boolean = true,
-    days: number = 30
+    month?: number,
+    year?: number
   ): Promise<(Habit & { entries?: HabitJournalEntry[] })[]> {
     const result = await db
       .select()
@@ -782,11 +783,23 @@ export class DatabaseService {
     if (!includeEntries) return result;
 
     // Calculate date range for journal entries
-    const end = new Date();
-    const start = new Date();
-    start.setDate(end.getDate() - days + 1);
-    const startStr = start.toISOString().slice(0, 10);
-    const endStr = end.toISOString().slice(0, 10);
+    let startStr: string;
+    let endStr: string;
+
+    if (month !== undefined && year !== undefined) {
+      // Get entries for specific month/year
+      const startDate = new Date(year, month - 1, 1);
+      const endDate = new Date(year, month, 0); // Last day of the month
+      startStr = startDate.toISOString().slice(0, 10);
+      endStr = endDate.toISOString().slice(0, 10);
+    } else {
+      // Default to current month if not specified
+      const now = new Date();
+      const startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+      const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      startStr = startDate.toISOString().slice(0, 10);
+      endStr = endDate.toISOString().slice(0, 10);
+    }
 
     const entries = await db
       .select()

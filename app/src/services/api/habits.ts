@@ -21,12 +21,14 @@ export interface HabitJournalEntry {
 export const HabitsAPI = {
   async list(options?: {
     includeEntries?: boolean;
-    days?: number;
+    month?: number;
+    year?: number;
   }): Promise<(Habit & { entries?: HabitJournalEntry[] })[]> {
     const params = new URLSearchParams();
     if (options?.includeEntries === false)
       params.set("includeEntries", "false");
-    if (options?.days) params.set("days", String(options.days));
+    if (options?.month) params.set("month", String(options.month));
+    if (options?.year) params.set("year", String(options.year));
     return httpClient.get<(Habit & { entries?: HabitJournalEntry[] })[]>(
       `/api/habits${params.toString() ? `?${params.toString()}` : ""}`
     );

@@ -1,191 +1,207 @@
 "use client";
-
 import { useState } from "react";
 import {
-  Container,
   Box,
-  Card,
-  CardContent,
   Typography,
   Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  TextField,
   Divider,
+  Alert,
 } from "@mui/material";
-import { useHabits } from "@/services/react-query/hooks/habits";
+import {
+  useHabits,
+  useCreateHabit,
+  useUpdateHabit,
+  useCreateJournalEntry,
+} from "@/services/react-query/hooks/habits";
 import HabitLogInputWithTagInsertion, {
   type ParsedJournalData,
-} from "@/app/dashboard/habits/_components/HabitLogInputWithTagInsertion";
+} from "./_components/HabitLogInputWithTagInsertion";
+import HabitCard from "./_components/HabitCard";
+import AppNav from "@/app/_components/AppNav";
+import AppPageLayout from "@/app/_components/AppPageLayout";
+import AppPageNav from "../_components/AppPageNav";
+import { CheckSquare } from "lucide-react";
 
 export default function HabitsPage() {
-  const [content, setContent] = useState("");
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [journalContent, setJournalContent] = useState("");
+  const [submitMessage, setSubmitMessage] = useState("");
   const [previewData, setPreviewData] = useState<ParsedJournalData | null>(
     null
   );
-  const { data: habits, isLoading } = useHabits({
-    includeLogs: false,
-    days: 30,
-  });
 
-  const handleContentChange = (html: string) => {
-    setContent(html);
-    console.log("Content updated:", html);
+  const { data: habits, isLoading } = useHabits({
+    includeEntries: true,
+    month: new Date().getMonth() + 1,
+    year: new Date().getFullYear(),
+  });
+  const createHabit = useCreateHabit();
+  const updateHabit = useUpdateHabit();
+  const createJournalEntry = useCreateJournalEntry();
+
+  const handleCreate = async () => {
+    if (!name.trim()) return;
+    await createHabit.mutateAsync({ name, description });
+    setName("");
+    setDescription("");
+    setOpen(false);
+  };
+
+  const toggleStatus = async (id: string, active: boolean) => {
+    await updateHabit.mutateAsync({
+      id,
+      data: { status: active ? "active" : "inactive" },
+    });
+  };
+
+  const handleSubmitJournal = async () => {
+    if (!journalContent.trim() || !previewData || previewData.length === 0)
+      return;
+
+    try {
+      // Save all entries from the parsed data
+      for (const entry of previewData) {
+        await createJournalEntry.mutateAsync({
+          habitId: entry.habit.id,
+          content: entry.content,
+          entry_date: entry.date,
+        });
+      }
+
+      // Get unique habits and dates for the success message
+      const uniqueHabits = new Set(previewData.map((e) => e.habit.name));
+      const uniqueDates = new Set(previewData.map((e) => e.date));
+
+      setSubmitMessage(
+        `Journal saved! ${previewData.length} entr${
+          previewData.length === 1 ? "y" : "ies"
+        } for ${uniqueHabits.size} habit(s) across ${uniqueDates.size} date(s)`
+      );
+      setJournalContent("");
+      setPreviewData(null);
+
+      // Clear message after 3 seconds
+      setTimeout(() => {
+        setSubmitMessage("");
+      }, 3000);
+    } catch (error) {
+      setSubmitMessage("Error saving journal entry");
+      console.error(error);
+    }
   };
 
   return (
-    <Container sx={{ py: 4 }}>
-      <Typography variant="h4" gutterBottom>
-        Habit Journal with Mentions (Demo)
-      </Typography>
-      <Typography variant="body2" color="text.secondary" gutterBottom>
-        Type @ to mention a habit, type : to mention a date
-      </Typography>
+    <AppPageLayout
+      header={<AppPageNav title="Habits" icon={<CheckSquare />} />}
+    >
+      <Box sx={{ py: 3 }}>
+        <Button variant="contained" onClick={() => setOpen(true)}>
+          New Habit
+        </Button>
 
-      <Box sx={{ mt: 4 }}>
-        <Card>
-          <CardContent>
-            <Typography variant="h6" gutterBottom>
-              Journal Entry Editor
-            </Typography>
-
-            {isLoading ? (
-              <Typography>Loading habits...</Typography>
-            ) : (
+        {/* Journal Entry Section */}
+        <Box sx={{ mt: 3, mb: 3 }}>
+          <Typography variant="h6" gutterBottom>
+            Journal Entry
+          </Typography>
+          <Typography variant="body2" color="text.secondary" gutterBottom>
+            Use @ for habits and : for dates (today, tomorrow, yesterday)
+          </Typography>
+          {!!habits?.length && (
+            <Box sx={{ mt: 2 }}>
               <HabitLogInputWithTagInsertion
                 habits={habits || []}
-                value={content}
-                onChange={handleContentChange}
+                value={journalContent}
+                onChange={setJournalContent}
                 onPreviewChange={setPreviewData}
-                placeholder="Write your journal... @ for habits, : for dates"
+                placeholder="Write your journal entry... @ for habits, : for dates"
                 showPreview={true}
               />
-            )}
-
-            <Divider sx={{ my: 2 }} />
-
-            <Box>
-              <Typography variant="subtitle2" gutterBottom>
-                Available Habits ({habits?.length || 0}):
-              </Typography>
-              <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mt: 1 }}>
-                {habits?.map((habit) => (
-                  <Box
-                    key={habit.id}
-                    sx={{
-                      px: 1.5,
-                      py: 0.5,
-                      borderRadius: 1,
-                      bgcolor: "primary.light",
-                      color: "primary.contrastText",
-                      fontSize: "0.875rem",
-                    }}
-                  >
-                    {habit.name}
-                  </Box>
-                ))}
-                {(!habits || habits.length === 0) && (
-                  <Typography variant="body2" color="text.secondary">
-                    No habits available. Create habits first in the dashboard.
-                  </Typography>
-                )}
-              </Box>
             </Box>
+          )}
 
-            <Divider sx={{ my: 2 }} />
+          {submitMessage && (
+            <Alert severity="success" sx={{ mt: 2 }}>
+              {submitMessage}
+            </Alert>
+          )}
 
-            <Box>
-              <Typography variant="subtitle2" gutterBottom>
-                Raw HTML Output:
-              </Typography>
-              <Box
-                sx={{
-                  mt: 1,
-                  p: 2,
-                  bgcolor: "grey.100",
-                  borderRadius: 1,
-                  maxHeight: 200,
-                  overflow: "auto",
-                  fontSize: "0.875rem",
-                  fontFamily: "monospace",
-                }}
-              >
-                {content || "<empty>"}
-              </Box>
-            </Box>
-
-            {previewData && (
-              <>
-                <Divider sx={{ my: 2 }} />
-                <Box>
-                  <Typography variant="subtitle2" gutterBottom>
-                    Parsed Data Summary:
-                  </Typography>
-                  <Box
-                    sx={{
-                      mt: 1,
-                      p: 2,
-                      bgcolor: "info.light",
-                      borderRadius: 1,
-                      fontSize: "0.875rem",
-                    }}
-                  >
-                    <Typography variant="body2">
-                      • Habit Mentions: {previewData.habitMentions.length}
-                    </Typography>
-                    <Typography variant="body2">
-                      • Date Mentions: {previewData.dateMentions.length}
-                    </Typography>
-                    {previewData.dateMentions.length > 0 && (
-                      <Typography variant="body2">
-                        • Entry Date: {previewData.dateMentions[0].date} (
-                        {previewData.dateMentions[0].label})
-                      </Typography>
-                    )}
-                  </Box>
-                </Box>
-              </>
-            )}
-
+          <Box
+            sx={{ mt: 2, display: "flex", gap: 1, justifyContent: "flex-end" }}
+          >
             <Button
               variant="contained"
-              sx={{ mt: 2 }}
-              onClick={() => {
-                alert("Journal entry saved (UI only demo)");
-                console.log("Saving content:", content);
-                console.log("Parsed data:", previewData);
-              }}
+              onClick={handleSubmitJournal}
+              disabled={!journalContent.trim()}
             >
-              Save Entry (Demo)
+              Save Journal Entry
             </Button>
-          </CardContent>
-        </Card>
-      </Box>
+          </Box>
+        </Box>
 
-      <Box sx={{ mt: 4 }}>
-        <Typography variant="h6" gutterBottom>
-          Demo Instructions
-        </Typography>
-        <Typography variant="body2" component="div">
-          <ol>
-            <li>
-              Type @ in the text editor to trigger the habit mention dropdown
-            </li>
-            <li>
-              Type : to trigger the date mention dropdown (today, tomorrow,
-              yesterday)
-            </li>
-            <li>Use arrow keys (↑↓) to navigate through options</li>
-            <li>Press Enter or click to insert a mention</li>
-            <li>
-              Habit mentions appear in{" "}
-              <strong style={{ color: "#1976d2" }}>blue</strong>, date mentions
-              in <strong style={{ color: "#2e7d32" }}>green</strong>
-            </li>
-            <li>The preview section shows parsed data that will be saved</li>
-            <li>
-              Multiple mentions of the same habit/date are tracked separately
-            </li>
-          </ol>
-        </Typography>
+        <Divider sx={{ my: 3 }} />
+
+        <Box
+          sx={{
+            mt: 2,
+            display: "grid",
+            gridTemplateColumns: {
+              xs: "1fr",
+              md: "1fr 1fr",
+              lg: "1fr 1fr 1fr",
+            },
+            gap: 2,
+          }}
+        >
+          {isLoading && <Typography>Loading...</Typography>}
+          {habits?.map((h) => (
+            <Box key={h.id}>
+              <HabitCard
+                habit={h}
+                onToggleStatus={toggleStatus}
+                onMarkToday={(habitId, date) =>
+                  createJournalEntry.mutate({
+                    habitId,
+                    content: "Completed today",
+                    entry_date: date,
+                  })
+                }
+                onOpenJournal={() => {}}
+              />
+            </Box>
+          ))}
+        </Box>
+
+        <Dialog open={open} onClose={() => setOpen(false)}>
+          <DialogTitle>New Habit</DialogTitle>
+          <DialogContent sx={{ pt: 2 }}>
+            <TextField
+              fullWidth
+              label="Name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              sx={{ mb: 2 }}
+            />
+            <TextField
+              fullWidth
+              label="Description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              multiline
+              minRows={2}
+            />
+            <Button sx={{ mt: 2 }} variant="contained" onClick={handleCreate}>
+              Create
+            </Button>
+          </DialogContent>
+        </Dialog>
       </Box>
-    </Container>
+    </AppPageLayout>
   );
 }
