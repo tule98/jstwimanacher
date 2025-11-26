@@ -5,6 +5,7 @@ import {
   LearningWord,
   StorySession,
   Bucket,
+  HeatmapDataPoint,
 } from "@/services/api/client";
 import { queryKeys } from "./query-keys";
 
@@ -66,5 +67,12 @@ export function useTransactions(
     },
     initialPageParam: 0,
     staleTime: 30000, // 30 seconds
+  });
+}
+
+export function useHeatmapData(year: number, month?: number) {
+  return useQuery<HeatmapDataPoint[]>({
+    queryKey: queryKeys.heatmap.data(year, month),
+    queryFn: () => API.heatmap.getData({ year, month }),
   });
 }

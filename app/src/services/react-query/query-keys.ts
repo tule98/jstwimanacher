@@ -49,4 +49,11 @@ export const queryKeys = {
         ? (["buckets", "balance", bucketId] as const)
         : (["buckets", "balance"] as const),
   },
+  heatmap: {
+    all: ["heatmap"] as const,
+    data: (year: number, month?: number) =>
+      month
+        ? (["heatmap", "data", year, month] as const)
+        : (["heatmap", "data", year] as const),
+  },
 } as const;

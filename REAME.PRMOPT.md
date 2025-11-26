@@ -1,5 +1,52 @@
 # Feature Overview
 
+Heatmap visualization for data analysis.
+
+I want to create a heatmap for visualizing money spent by day of the week.
+
+The user can select and view by month or year.
+
+Each cell in the heatmap represents a day, with color intensity indicating the amount of money spent on that day.
+The saturation of the color increases with the amount spent, providing a quick visual cue for high and low spending days. Primary colors used are shades of green, with lighter shades for lower amounts and darker shades for higher amounts.
+
+Total of a day is calculated by summing up all transactions for that day and displaying the total amount spent in that cell.
+
+The total heatmap view will be display inside a dialog when user click a button on the main dashboard.
+
+# API Implementation Details
+
+POST `/api/heatmap`
+Request Body:
+
+```json
+{
+  "year": 2023,
+  "month": 5
+}
+```
+
+Response Body:
+
+```json
+{
+  "heatmapData": [
+    {
+      "date": "2023-05-01",
+      "totalSpent": 150.0
+    },
+    {
+      "date": "2023-05-02",
+      "totalSpent": 75.5
+    }
+    // ... more days
+  ]
+}
+```
+
+<!--  -->
+
+# Feature Overview
+
 View bucket list.
 
 # User Interface

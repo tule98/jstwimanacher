@@ -18,6 +18,7 @@ import TransactionList from "./_components/TransactionList";
 import TransactionFormDialog from "./_components/TransactionFormDialog";
 import TransactionFilterBox from "./_components/TransactionFilterBox";
 import BucketBalanceStatsBox from "./_components/BucketBalanceStatsBox";
+import HeatmapDialog from "./_components/HeatmapDialog";
 import { useTransactionQueries } from "./_hooks/useTransactionQueries";
 import {
   Transaction,
@@ -38,6 +39,9 @@ export default function TransactionsPage() {
 
   // State for create dialog
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+
+  // State for heatmap dialog
+  const [heatmapDialogOpen, setHeatmapDialogOpen] = useState(false);
 
   // Use transaction queries hook for filter state management
   const { filters, setSearch, setCategoryId, setOnlyUnresolved, setBucketId } =
@@ -233,7 +237,21 @@ export default function TransactionsPage() {
   };
 
   return (
-    <AppPageLayout header={<AppPageNav title="Transactions" icon={<List />} />}>
+    <AppPageLayout
+      header={
+        <div className="flex items-center justify-between">
+          <AppPageNav title="Transactions" icon={<List />} />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setHeatmapDialogOpen(true)}
+            className="hidden md:flex"
+          >
+            View Heatmap
+          </Button>
+        </div>
+      }
+    >
       <TransactionFilterBox
         searchQuery={filters.search}
         onSearchChange={setSearch}
@@ -339,6 +357,12 @@ export default function TransactionsPage() {
           onUpdate={handleUpdateTransaction}
         />
       )}
+
+      {/* Heatmap Dialog */}
+      <HeatmapDialog
+        open={heatmapDialogOpen}
+        onClose={() => setHeatmapDialogOpen(false)}
+      />
     </AppPageLayout>
   );
 }

@@ -639,6 +639,37 @@ export const StoryAPI = {
   },
 };
 
+// --- Heatmap ---
+export interface HeatmapDataPoint {
+  date: string;
+  totalSpent: number;
+}
+
+export interface HeatmapRequest {
+  year: number;
+  month?: number;
+}
+
+export const HeatmapAPI = {
+  /**
+   * Get heatmap data for a specific month or year
+   */
+  async getData(request: HeatmapRequest): Promise<HeatmapDataPoint[]> {
+    const response = await fetch("/api/heatmap", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(request),
+    });
+    if (!response.ok) {
+      throw new Error("Failed to fetch heatmap data");
+    }
+    const result = await response.json();
+    return result.heatmapData;
+  },
+};
+
 /**
  * Combined API client export
  */
@@ -651,6 +682,7 @@ export const API = {
   buckets: BucketsAPI,
   words: LearningWordsAPI,
   stories: StoryAPI,
+  heatmap: HeatmapAPI,
 };
 
 export default API;

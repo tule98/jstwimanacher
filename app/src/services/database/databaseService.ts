@@ -721,6 +721,49 @@ export class DatabaseService {
         portfolio.total_quantity > 0 ? "owned" : ("sold" as "owned" | "sold"),
     }));
   }
+
+  // Heatmap methods
+  async getHeatmapData(
+    year: number,
+    month?: number
+  ): Promise<{ date: string; totalSpent: number }[]> {
+    let startDate: Date;
+    let endDate: Date;
+
+    if (month !== undefined) {
+      // Get data for a specific month
+      startDate = new Date(year, month - 1, 1);
+      endDate = new Date(year, month, 1);
+    } else {
+      // Get data for entire year
+      startDate = new Date(year, 0, 1);
+      endDate = new Date(year + 1, 0, 1);
+    }
+
+    const startUTC = toUTC(startDate);
+    const endUTC = toUTC(endDate);
+
+    // Query transactions grouped by date
+    const result = await db
+      .select({
+        date: sql<string>`DATE(${transactions.created_at})`.as("date"),
+        totalSpent:
+          sql<number>`COALESCE(SUM(CASE WHEN ${transactions.amount} < 0 THEN ABS(${transactions.amount}) ELSE 0 END), 0)`.as(
+            "totalSpent"
+          ),
+      })
+      .from(transactions)
+      .where(
+        and(
+          gte(transactions.created_at, startUTC),
+          lt(transactions.created_at, endUTC)
+        )
+      )
+      .groupBy(sql`DATE(${transactions.created_at})`)
+      .orderBy(sql`DATE(${transactions.created_at})`);
+
+    return result;
+  }
 }
 
 // Export singleton instance
