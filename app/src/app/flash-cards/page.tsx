@@ -35,6 +35,7 @@ export default function FlashCardsPage() {
     word: string;
     phonetic?: string;
     meaning: string;
+    example?: string;
   }) => {
     try {
       await createMutation.mutateAsync(data);
@@ -48,6 +49,7 @@ export default function FlashCardsPage() {
     word: string;
     phonetic?: string;
     meaning: string;
+    example?: string;
   }) => {
     if (!editingCard) return;
     try {

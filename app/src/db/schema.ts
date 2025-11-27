@@ -141,6 +141,7 @@ export const flashCards = sqliteTable("flash_cards", {
   word: text("word").notNull(),
   phonetic: text("phonetic"),
   meaning: text("meaning").notNull(),
+  example: text("example"),
   status: text("status").notNull().default("not_learned"), // 'not_learned' | 'learning' | 'learned' | 'mastered'
   created_at: text("created_at")
     .notNull()

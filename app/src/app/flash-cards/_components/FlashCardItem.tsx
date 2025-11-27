@@ -109,10 +109,34 @@ export default function FlashCardItem({
             )}
           </Box>
         ) : (
-          <Box sx={{ flexGrow: 1, display: "flex", alignItems: "center" }}>
-            <Typography variant="body1" color="text.secondary">
+          <Box
+            sx={{
+              flexGrow: 1,
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+            }}
+          >
+            <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
               {card.meaning}
             </Typography>
+            {card.example && (
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{
+                  fontStyle: "italic",
+                  fontSize: "0.875rem",
+                  opacity: 0.8,
+                  mt: 1,
+                  p: 1,
+                  bgcolor: "action.hover",
+                  borderRadius: 1,
+                }}
+              >
+                &ldquo;{card.example}&rdquo;
+              </Typography>
+            )}
           </Box>
         )}
 

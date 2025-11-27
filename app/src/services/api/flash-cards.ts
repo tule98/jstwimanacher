@@ -5,6 +5,7 @@ export interface FlashCard {
   word: string;
   phonetic?: string | null;
   meaning: string;
+  example?: string | null;
   status: "not_learned" | "learning" | "learned" | "mastered";
   created_at: string;
   updated_at: string;

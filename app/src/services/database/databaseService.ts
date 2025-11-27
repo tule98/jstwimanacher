@@ -888,12 +888,14 @@ export class DatabaseService {
     word: string;
     phonetic?: string;
     meaning: string;
+    example?: string;
   }): Promise<FlashCard> {
     const newCard: NewFlashCard = {
       id: uuidv4(),
       word: data.word,
       phonetic: data.phonetic,
       meaning: data.meaning,
+      example: data.example,
       status: "not_learned",
       created_at: nowUTC(),
       updated_at: nowUTC(),
@@ -908,6 +910,7 @@ export class DatabaseService {
       word: string;
       phonetic: string;
       meaning: string;
+      example: string;
       status: string;
     }>
   ): Promise<FlashCard | null> {
@@ -917,6 +920,7 @@ export class DatabaseService {
     if (data.word !== undefined) updateData.word = data.word;
     if (data.phonetic !== undefined) updateData.phonetic = data.phonetic;
     if (data.meaning !== undefined) updateData.meaning = data.meaning;
+    if (data.example !== undefined) updateData.example = data.example;
     if (data.status !== undefined)
       updateData.status = data.status as FlashCard["status"];
 
