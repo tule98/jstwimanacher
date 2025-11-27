@@ -9,8 +9,10 @@ interface AuthGuardProps {
 export default function AuthGuard({ children }: AuthGuardProps) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    setIsMounted(true);
     // Kiểm tra xem có key trong cookie không
     const cookies = document.cookie.split(";");
     const protectionKeyCookie = cookies.find((cookie) =>
@@ -53,6 +55,11 @@ export default function AuthGuard({ children }: AuthGuardProps) {
   const handleValidKey = () => {
     setIsAuthenticated(true);
   };
+
+  // Prevent hydration mismatch by not rendering anything until mounted
+  if (!isMounted) {
+    return null;
+  }
 
   if (isLoading) {
     return (

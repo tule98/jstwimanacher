@@ -7,8 +7,14 @@ import {
   Typography,
   Button,
   Switch,
+  IconButton,
+  Tooltip,
 } from "@mui/material";
-import { useMemo } from "react";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
+import SaveIcon from "@mui/icons-material/Check";
+import CloseIcon from "@mui/icons-material/Close";
+import { useMemo, useState } from "react";
 import type { Habit, HabitJournalEntry } from "@/services/api/habits";
 import { getTodayLocal, formatLocalDate } from "@/lib/timezone";
 
@@ -17,6 +23,15 @@ interface HabitCardProps {
   onToggleStatus: (id: string, active: boolean) => void;
   onMarkToday: (habitId: string, date: string) => void;
   onOpenJournal: (habitId: string) => void;
+  onUpdateHabit: (
+    id: string,
+    data: Partial<{
+      name: string;
+      description: string;
+      status: Habit["status"];
+    }>
+  ) => void;
+  onDeleteHabit: (id: string) => void;
 }
 
 // Generate all days in current month with journal entry status
@@ -65,8 +80,14 @@ export default function HabitCard({
   onToggleStatus,
   onMarkToday,
   onOpenJournal,
+  onUpdateHabit,
+  onDeleteHabit,
 }: HabitCardProps) {
   const today = useMemo(() => getTodayLocal(), []);
+  const [editing, setEditing] = useState(false);
+  const [name, setName] = useState(habit.name);
+  const [description, setDescription] = useState(habit.description || "");
+  const [saving, setSaving] = useState(false);
 
   const contributionDays = useMemo(
     () => generateMonthContribution(habit.entries),
@@ -83,11 +104,73 @@ export default function HabitCard({
   return (
     <Card>
       <CardContent>
-        <Typography variant="h6">{habit.name}</Typography>
-        {habit.description && (
-          <Typography variant="body2" color="text.secondary">
-            {habit.description}
-          </Typography>
+        {editing ? (
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              disabled={saving}
+              style={{
+                padding: "6px 8px",
+                fontSize: "0.875rem",
+                borderRadius: 4,
+                border: "1px solid var(--mui-palette-divider)",
+              }}
+              placeholder="Habit name"
+            />
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              disabled={saving}
+              style={{
+                padding: "6px 8px",
+                fontSize: "0.75rem",
+                borderRadius: 4,
+                border: "1px solid var(--mui-palette-divider)",
+                resize: "vertical",
+                minHeight: 60,
+              }}
+              placeholder="Description"
+            />
+            <Box sx={{ display: "flex", gap: 1 }}>
+              <Button
+                size="small"
+                disabled={saving || name.trim() === ""}
+                onClick={async () => {
+                  setSaving(true);
+                  await onUpdateHabit(habit.id, {
+                    name: name.trim(),
+                    description: description.trim() || undefined,
+                  });
+                  setSaving(false);
+                  setEditing(false);
+                }}
+              >
+                Save
+              </Button>
+              <Button
+                size="small"
+                color="inherit"
+                disabled={saving}
+                onClick={() => {
+                  setEditing(false);
+                  setName(habit.name);
+                  setDescription(habit.description || "");
+                }}
+              >
+                Cancel
+              </Button>
+            </Box>
+          </Box>
+        ) : (
+          <>
+            <Typography variant="h6">{habit.name}</Typography>
+            {habit.description && (
+              <Typography variant="body2" color="text.secondary">
+                {habit.description}
+              </Typography>
+            )}
+          </>
         )}
         <Typography variant="caption" sx={{ display: "block", mt: 1 }}>
           Status: {habit.status}
@@ -200,6 +283,65 @@ export default function HabitCard({
         >
           Journal
         </Button>
+        {editing ? (
+          <>
+            <Tooltip title="Save">
+              <span>
+                <IconButton
+                  size="small"
+                  color="primary"
+                  disabled={saving || name.trim() === ""}
+                  onClick={async () => {
+                    setSaving(true);
+                    await onUpdateHabit(habit.id, {
+                      name: name.trim(),
+                      description: description.trim() || undefined,
+                    });
+                    setSaving(false);
+                    setEditing(false);
+                  }}
+                >
+                  <SaveIcon fontSize="small" />
+                </IconButton>
+              </span>
+            </Tooltip>
+            <Tooltip title="Cancel">
+              <IconButton
+                size="small"
+                color="inherit"
+                disabled={saving}
+                onClick={() => {
+                  setEditing(false);
+                  setName(habit.name);
+                  setDescription(habit.description || "");
+                }}
+              >
+                <CloseIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          </>
+        ) : (
+          <>
+            <Tooltip title="Edit">
+              <IconButton
+                size="small"
+                color="primary"
+                onClick={() => setEditing(true)}
+              >
+                <EditIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Delete">
+              <IconButton
+                size="small"
+                color="error"
+                onClick={() => onDeleteHabit(habit.id)}
+              >
+                <DeleteIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          </>
+        )}
       </CardActions>
     </Card>
   );

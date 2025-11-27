@@ -753,7 +753,7 @@ export class DatabaseService {
       .select({
         date: sql<string>`DATE(${transactions.created_at})`.as("date"),
         totalSpent:
-          sql<number>`COALESCE(SUM(CASE WHEN ${transactions.amount} < 0 THEN ABS(${transactions.amount}) ELSE 0 END), 0)`.as(
+          sql<number>`COALESCE(SUM(CASE WHEN ${transactions.amount} < 0 THEN ABS(${transactions.amount}) ELSE ${transactions.amount} END), 0)`.as(
             "totalSpent"
           ),
       })
@@ -779,6 +779,7 @@ export class DatabaseService {
     const result = await db
       .select()
       .from(habits)
+      .where(eq(habits.status, "active"))
       .orderBy(desc(habits.created_at));
     if (!includeEntries) return result;
 
