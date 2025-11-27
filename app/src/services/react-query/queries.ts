@@ -7,6 +7,7 @@ import {
   Bucket,
   HeatmapDataPoint,
 } from "@/services/api/client";
+import { FlashCardsAPI, type FlashCard } from "@/services/api/flash-cards";
 import { queryKeys } from "./query-keys";
 
 export function useWords() {
@@ -74,5 +75,12 @@ export function useHeatmapData(year: number, month?: number) {
   return useQuery<HeatmapDataPoint[]>({
     queryKey: queryKeys.heatmap.data(year, month),
     queryFn: () => API.heatmap.getData({ year, month }),
+  });
+}
+
+export function useFlashCards() {
+  return useQuery<FlashCard[]>({
+    queryKey: queryKeys.flashCards.all,
+    queryFn: FlashCardsAPI.list,
   });
 }

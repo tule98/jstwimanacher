@@ -56,4 +56,10 @@ export const queryKeys = {
         ? (["heatmap", "data", year, month] as const)
         : (["heatmap", "data", year] as const),
   },
+  flashCards: {
+    all: ["flash-cards"] as const,
+    lists: () => ["flash-cards", "list"] as const,
+    details: () => ["flash-cards", "detail"] as const,
+    detail: (id: string) => ["flash-cards", "detail", id] as const,
+  },
 } as const;

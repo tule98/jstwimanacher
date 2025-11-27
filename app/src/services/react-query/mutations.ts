@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import API from "@/services/api/client";
+import { FlashCardsAPI } from "@/services/api/flash-cards";
 import { queryKeys } from "./query-keys";
 
 // Mutations for creating new words to learn
@@ -128,6 +129,43 @@ export function useCreateCategory() {
     }) => API.categories.create(data.name, data.color, data.type),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.categories.all });
+    },
+  });
+}
+
+// Flash Cards mutations
+export function useCreateFlashCard() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: FlashCardsAPI.create,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.flashCards.all });
+    },
+  });
+}
+
+export function useUpdateFlashCard() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: Parameters<typeof FlashCardsAPI.update>[1];
+    }) => FlashCardsAPI.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.flashCards.all });
+    },
+  });
+}
+
+export function useDeleteFlashCard() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: FlashCardsAPI.remove,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.flashCards.all });
     },
   });
 }

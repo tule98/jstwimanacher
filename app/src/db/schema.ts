@@ -135,6 +135,21 @@ export const habitJournalEntries = sqliteTable("habit_journal_entries", {
     .default(sql`datetime('now')`),
 });
 
+// Flash Cards table
+export const flashCards = sqliteTable("flash_cards", {
+  id: text("id").primaryKey(),
+  word: text("word").notNull(),
+  phonetic: text("phonetic"),
+  meaning: text("meaning").notNull(),
+  status: text("status").notNull().default("not_learned"), // 'not_learned' | 'learning' | 'learned' | 'mastered'
+  created_at: text("created_at")
+    .notNull()
+    .default(sql`datetime('now')`),
+  updated_at: text("updated_at")
+    .notNull()
+    .default(sql`datetime('now')`),
+});
+
 // Types cho TypeScript
 export type Category = typeof categories.$inferSelect;
 export type NewCategory = typeof categories.$inferInsert;
@@ -154,3 +169,5 @@ export type Habit = typeof habits.$inferSelect;
 export type NewHabit = typeof habits.$inferInsert;
 export type HabitJournalEntry = typeof habitJournalEntries.$inferSelect;
 export type NewHabitJournalEntry = typeof habitJournalEntries.$inferInsert;
+export type FlashCard = typeof flashCards.$inferSelect;
+export type NewFlashCard = typeof flashCards.$inferInsert;

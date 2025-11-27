@@ -11,6 +11,8 @@ import {
   Settings,
   BookOpen,
   FolderKanban,
+  Layers,
+  CheckSquare,
 } from "lucide-react";
 import {
   Dialog,
@@ -31,6 +33,8 @@ const MORE_ITEMS: MoreItem[] = [
   { href: "/config", label: "Settings", icon: Settings },
   { href: "/stories", label: "Stories", icon: BookOpen },
   { href: "/categories", label: "Categories", icon: FolderKanban },
+  { href: "/habits", label: "Habits", icon: CheckSquare },
+  { href: "/flash-cards", label: "Flash Cards", icon: Layers },
 ];
 
 export default function BottomNav() {

@@ -2,6 +2,42 @@ must follow:
 use react-query for data fetching and state management.
 use material ui for ui components and styling.
 
+# Feature
+
+Add module flash card to the Navigation bar.
+The flash card module will have the following features:
+
+- A list of flash cards
+- A button to add a new flash card
+- A button to edit a flash card
+- A button to delete a flash card
+- A button to shuffle the flash cards
+- A card will have status: not learned, learning, learned, mastered.
+- A card will have a button to toggle the status.
+- A card will have a button to edit the flash card.
+- A card will have a button to delete the flash card.
+- A card will have a button to shuffle the flash cards.
+
+# API Implementation Details
+
+POST `/api/flash-cards`
+GET `/api/flash-cards`
+PUT `/api/flash-cards/:id`
+DELETE `/api/flash-cards/:id`
+
+# Database table
+
+flash_cards table:
+
+- id (primary key)
+- word (string)
+- meaning (string)
+- status (enum: not learned, learning, learned, mastered)
+- created_at (timestamp)
+- updated_at (timestamp)
+
+<!--  -->
+
 # Feature overview
 
 Mention the day of the habit right in the text editor.

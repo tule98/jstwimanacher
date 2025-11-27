@@ -7,6 +7,7 @@ import {
   assetConversions,
   habits,
   habitJournalEntries,
+  flashCards,
   type Category,
   type Transaction,
   type Bucket,
@@ -20,6 +21,8 @@ import {
   type Habit,
   type NewHabit,
   type HabitJournalEntry,
+  type FlashCard,
+  type NewFlashCard,
 } from "@/db/schema";
 import { eq, desc, and, gte, lt, lte, sql, like } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
@@ -861,6 +864,72 @@ export class DatabaseService {
       .delete(habitJournalEntries)
       .where(eq(habitJournalEntries.habit_id, id));
     const result = await db.delete(habits).where(eq(habits.id, id));
+    return result.rowsAffected > 0;
+  }
+
+  // Flash Cards methods
+  async getFlashCards(): Promise<FlashCard[]> {
+    return await db
+      .select()
+      .from(flashCards)
+      .orderBy(desc(flashCards.created_at));
+  }
+
+  async getFlashCard(id: string): Promise<FlashCard | null> {
+    const result = await db
+      .select()
+      .from(flashCards)
+      .where(eq(flashCards.id, id))
+      .limit(1);
+    return result[0] || null;
+  }
+
+  async createFlashCard(data: {
+    word: string;
+    phonetic?: string;
+    meaning: string;
+  }): Promise<FlashCard> {
+    const newCard: NewFlashCard = {
+      id: uuidv4(),
+      word: data.word,
+      phonetic: data.phonetic,
+      meaning: data.meaning,
+      status: "not_learned",
+      created_at: nowUTC(),
+      updated_at: nowUTC(),
+    };
+    const result = await db.insert(flashCards).values(newCard).returning();
+    return result[0];
+  }
+
+  async updateFlashCard(
+    id: string,
+    data: Partial<{
+      word: string;
+      phonetic: string;
+      meaning: string;
+      status: string;
+    }>
+  ): Promise<FlashCard | null> {
+    const updateData: Partial<NewFlashCard> = {
+      updated_at: nowUTC(),
+    };
+    if (data.word !== undefined) updateData.word = data.word;
+    if (data.phonetic !== undefined) updateData.phonetic = data.phonetic;
+    if (data.meaning !== undefined) updateData.meaning = data.meaning;
+    if (data.status !== undefined)
+      updateData.status = data.status as FlashCard["status"];
+
+    const result = await db
+      .update(flashCards)
+      .set(updateData)
+      .where(eq(flashCards.id, id))
+      .returning();
+    return result[0] || null;
+  }
+
+  async deleteFlashCard(id: string): Promise<boolean> {
+    const result = await db.delete(flashCards).where(eq(flashCards.id, id));
     return result.rowsAffected > 0;
   }
 }

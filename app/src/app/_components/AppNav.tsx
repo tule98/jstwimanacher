@@ -8,6 +8,7 @@ import {
   Link2,
   BookOpen,
   CheckSquare,
+  Layers,
 } from "lucide-react";
 
 export default function AppNav() {
@@ -74,6 +75,18 @@ export default function AppNav() {
       >
         <CheckSquare size={18} />
         <span className="text-xs sm:text-sm">Habits</span>
+      </Link>
+
+      <Link
+        href="/flash-cards"
+        className={`font-semibold hover:text-green-200 dark:hover:text-green-300 transition-colors flex flex-col sm:flex-row items-center gap-1 px-2 py-1 rounded-md ${
+          pathname === "/flash-cards"
+            ? "bg-green-600/30 dark:bg-green-900/30"
+            : ""
+        }`}
+      >
+        <Layers size={18} />
+        <span className="text-xs sm:text-sm">Flash Cards</span>
       </Link>
     </nav>
   );
