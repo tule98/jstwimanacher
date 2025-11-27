@@ -1,12 +1,12 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { databaseService } from "@/services/database/databaseService";
 
 export async function PUT(
-  request: Request,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
     const updated = await databaseService.updateHabit(id, body);
     if (!updated) {
@@ -22,11 +22,12 @@ export async function PUT(
 }
 
 export async function DELETE(
-  _request: Request,
-  { params }: { params: { id: string } }
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const ok = await databaseService.deleteHabit(params.id);
+    const { id } = await params;
+    const ok = await databaseService.deleteHabit(id);
     return NextResponse.json({ success: ok });
   } catch (error) {
     return NextResponse.json(

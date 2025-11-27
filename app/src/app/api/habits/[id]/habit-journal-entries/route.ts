@@ -1,14 +1,15 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { habitJournalEntries, habits } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 
 export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const { searchParams } = new URL(request.url);
     const limit = searchParams.get("limit")
       ? parseInt(searchParams.get("limit")!)
@@ -17,7 +18,7 @@ export async function GET(
     const entries = await db
       .select()
       .from(habitJournalEntries)
-      .where(eq(habitJournalEntries.habit_id, params.id))
+      .where(eq(habitJournalEntries.habit_id, id))
       .orderBy(desc(habitJournalEntries.entry_date))
       .limit(limit);
 
@@ -31,7 +32,7 @@ export async function GET(
 }
 
 export async function POST(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
