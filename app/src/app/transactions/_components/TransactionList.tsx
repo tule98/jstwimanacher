@@ -1,11 +1,19 @@
 import React from "react";
-import { Button } from "@/components/ui/button";
+import {
+  Box,
+  Paper,
+  Typography,
+  IconButton,
+  Chip,
+  CircularProgress,
+  useTheme,
+  Stack,
+} from "@mui/material";
 import {
   Edit,
   Trash2,
-  Loader2,
-  AlertCircle,
   CheckCircle,
+  AlertCircle,
   TrendingUp,
   TrendingDown,
   Eye,
@@ -78,6 +86,7 @@ export default function TransactionList({
   togglingVirtualId,
 }: TransactionListProps) {
   const { data: categories = [] } = useCategories();
+  const theme = useTheme();
 
   const getCategoryColor = (categoryId: string): string => {
     const category = categories.find((cat) => cat.id === categoryId);
@@ -98,16 +107,29 @@ export default function TransactionList({
 
   if (transactions.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-32 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-        <p className="text-gray-500 dark:text-gray-400 text-sm">
+      <Paper
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          minHeight: 128,
+          bgcolor:
+            theme.palette.mode === "dark"
+              ? "rgba(255,255,255,0.05)"
+              : "grey.50",
+          p: 3,
+        }}
+      >
+        <Typography variant="body2" color="text.secondary">
           Chưa có giao dịch nào. Hãy thêm giao dịch mới!
-        </p>
-      </div>
+        </Typography>
+      </Paper>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <Stack spacing={2}>
       {groupedTransactions.map(({ date, transactions: dayTransactions }) => {
         const isToday = isSameDay(date, new Date());
         const isYesterday = isSameDay(
@@ -134,119 +156,232 @@ export default function TransactionList({
         const dailyBalance = dailyIncome - dailyExpense;
 
         return (
-          <div key={format(date, "yyyy-MM-dd")} className="space-y-2">
+          <Box key={format(date, "yyyy-MM-dd")}>
             {/* Date Header */}
-            <div className="space-y-2">
+            <Box
+              sx={{
+                py: 1,
+                borderBottom: 1,
+                borderColor: "divider",
+                mb: 1,
+              }}
+            >
               {/* Desktop: All in one line */}
-              <div className="hidden md:flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-700">
-                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              <Box
+                sx={{
+                  display: { xs: "none", md: "flex" },
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <Typography
+                  variant="body2"
+                  fontWeight={500}
+                  color="text.secondary"
+                >
                   {dateLabel}
-                </h3>
-                <div className="flex items-center gap-2">
+                </Typography>
+                <Stack direction="row" spacing={1} alignItems="center">
                   {/* Show unresolved count for this day */}
                   {dayTransactions.some((tx) => tx.is_resolved === false) && (
-                    <span className="text-xs bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 px-2 py-1 rounded-full">
-                      {
+                    <Chip
+                      label={`${
                         dayTransactions.filter((tx) => tx.is_resolved === false)
                           .length
-                      }{" "}
-                      cần xem xét
-                    </span>
+                      } cần xem xét`}
+                      size="small"
+                      sx={{
+                        bgcolor:
+                          theme.palette.mode === "dark"
+                            ? "rgba(234, 179, 8, 0.2)"
+                            : "warning.light",
+                        color:
+                          theme.palette.mode === "dark"
+                            ? "warning.light"
+                            : "warning.dark",
+                        fontSize: "0.75rem",
+                      }}
+                    />
                   )}
-                  <span className="text-sm font-semibold flex items-center gap-2">
+                  <Stack direction="row" spacing={1} alignItems="center">
                     {dailyIncome > 0 && (
-                      <span className="text-green-600 dark:text-green-400 flex items-center gap-1">
-                        <TrendingUp size={12} />
-                        {formatCurrency(dailyIncome)}
-                      </span>
+                      <Chip
+                        icon={<TrendingUp size={14} />}
+                        label={formatCurrency(dailyIncome)}
+                        size="small"
+                        color="success"
+                        sx={{ fontWeight: 600 }}
+                      />
                     )}
                     {dailyExpense > 0 && (
-                      <span className="text-red-600 dark:text-red-400 flex items-center gap-1">
-                        <TrendingDown size={12} />
-                        {formatCurrency(dailyExpense)}
-                      </span>
+                      <Chip
+                        icon={<TrendingDown size={14} />}
+                        label={formatCurrency(dailyExpense)}
+                        size="small"
+                        color="error"
+                        sx={{ fontWeight: 600 }}
+                      />
                     )}
                     {dailyIncome > 0 && dailyExpense > 0 && (
-                      <span
-                        className={`${
-                          dailyBalance >= 0
-                            ? "text-green-600 dark:text-green-400"
-                            : "text-red-600 dark:text-red-400"
-                        }`}
+                      <Typography
+                        variant="body2"
+                        fontWeight={600}
+                        color={
+                          dailyBalance >= 0 ? "success.main" : "error.main"
+                        }
                       >
                         (={formatCurrency(Math.abs(dailyBalance))})
-                      </span>
+                      </Typography>
                     )}
-                  </span>
-                </div>
-              </div>
+                  </Stack>
+                </Stack>
+              </Box>
 
               {/* Mobile: Split into 2 lines */}
-              <div className="md:hidden border-b border-gray-200 dark:border-gray-700 pb-2">
+              <Box sx={{ display: { xs: "block", md: "none" } }}>
                 {/* First line: Date + unresolved count */}
-                <div className="flex justify-between items-center mb-2">
-                  <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                <Stack
+                  direction="row"
+                  justifyContent="space-between"
+                  alignItems="center"
+                  sx={{ mb: 1 }}
+                >
+                  <Typography
+                    variant="body2"
+                    fontWeight={500}
+                    color="text.secondary"
+                  >
                     {dateLabel}
-                  </h3>
+                  </Typography>
                   {dayTransactions.some((tx) => tx.is_resolved === false) && (
-                    <span className="text-xs bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 px-2 py-1 rounded-full">
-                      {
+                    <Chip
+                      label={`${
                         dayTransactions.filter((tx) => tx.is_resolved === false)
                           .length
-                      }{" "}
-                      cần xem xét
-                    </span>
+                      } cần xem xét`}
+                      size="small"
+                      sx={{
+                        bgcolor:
+                          theme.palette.mode === "dark"
+                            ? "rgba(234, 179, 8, 0.2)"
+                            : "warning.light",
+                        color:
+                          theme.palette.mode === "dark"
+                            ? "warning.light"
+                            : "warning.dark",
+                        fontSize: "0.75rem",
+                      }}
+                    />
                   )}
-                </div>
+                </Stack>
 
                 {/* Second line: Financial summary */}
-                <div className="flex items-center justify-center">
-                  <span className="text-sm font-semibold flex items-center gap-2 flex-wrap justify-center">
-                    {dailyIncome > 0 && (
-                      <span className="text-green-600 dark:text-green-400 flex items-center gap-1">
-                        <TrendingUp size={12} />
-                        {formatCurrency(dailyIncome)}
-                      </span>
-                    )}
-                    {dailyExpense > 0 && (
-                      <span className="text-red-600 dark:text-red-400 flex items-center gap-1">
-                        <TrendingDown size={12} />
-                        {formatCurrency(dailyExpense)}
-                      </span>
-                    )}
-                    {dailyIncome > 0 && dailyExpense > 0 && (
-                      <span
-                        className={`${
-                          dailyBalance >= 0
-                            ? "text-green-600 dark:text-green-400"
-                            : "text-red-600 dark:text-red-400"
-                        }`}
-                      >
-                        (={formatCurrency(Math.abs(dailyBalance))})
-                      </span>
-                    )}
-                  </span>
-                </div>
-              </div>
-            </div>
+                <Stack
+                  direction="row"
+                  spacing={1}
+                  justifyContent="center"
+                  alignItems="center"
+                  flexWrap="wrap"
+                >
+                  {dailyIncome > 0 && (
+                    <Chip
+                      icon={<TrendingUp size={14} />}
+                      label={formatCurrency(dailyIncome)}
+                      size="small"
+                      color="success"
+                      sx={{ fontWeight: 600 }}
+                    />
+                  )}
+                  {dailyExpense > 0 && (
+                    <Chip
+                      icon={<TrendingDown size={14} />}
+                      label={formatCurrency(dailyExpense)}
+                      size="small"
+                      color="error"
+                      sx={{ fontWeight: 600 }}
+                    />
+                  )}
+                  {dailyIncome > 0 && dailyExpense > 0 && (
+                    <Typography
+                      variant="body2"
+                      fontWeight={600}
+                      color={dailyBalance >= 0 ? "success.main" : "error.main"}
+                    >
+                      (={formatCurrency(Math.abs(dailyBalance))})
+                    </Typography>
+                  )}
+                </Stack>
+              </Box>
+            </Box>
 
             {/* Transactions table for this day */}
-            <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
-              <div className="hidden md:block">
+            <Paper variant="outlined" sx={{ overflow: "hidden" }}>
+              {/* Desktop layout */}
+              <Box sx={{ display: { xs: "none", md: "block" } }}>
                 {/* Desktop table header */}
-                <div className="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
-                  <div className="grid grid-cols-12 gap-4 px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    <div className="col-span-1"></div>
-                    <div className="col-span-4">Ghi chú</div>
-                    <div className="col-span-3">Danh mục</div>
-                    <div className="col-span-2">Số tiền</div>
-                    <div className="col-span-2">Thao tác</div>
-                  </div>
-                </div>
+                <Box
+                  sx={{
+                    bgcolor:
+                      theme.palette.mode === "dark"
+                        ? "rgba(255,255,255,0.05)"
+                        : "grey.50",
+                    borderBottom: 1,
+                    borderColor: "divider",
+                  }}
+                >
+                  <Box
+                    sx={{
+                      display: "grid",
+                      gridTemplateColumns: "1fr 4fr 3fr 2fr 2fr",
+                      gap: 2,
+                      px: 2,
+                      py: 1.5,
+                    }}
+                  >
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      fontWeight={600}
+                      sx={{ textTransform: "uppercase" }}
+                    ></Typography>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      fontWeight={600}
+                      sx={{ textTransform: "uppercase" }}
+                    >
+                      Ghi chú
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      fontWeight={600}
+                      sx={{ textTransform: "uppercase" }}
+                    >
+                      Danh mục
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      fontWeight={600}
+                      sx={{ textTransform: "uppercase" }}
+                    >
+                      Số tiền
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      fontWeight={600}
+                      sx={{ textTransform: "uppercase" }}
+                    >
+                      Thao tác
+                    </Typography>
+                  </Box>
+                </Box>
 
                 {/* Desktop table body */}
-                <div className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                  {dayTransactions.map((tx) => {
+                <Box sx={{ bgcolor: "background.paper" }}>
+                  {dayTransactions.map((tx, index) => {
                     const categoryColor = getCategoryColor(tx.category_id);
                     const categoryName = getCategoryName(tx.category_id);
                     const transactionType =
@@ -255,90 +390,141 @@ export default function TransactionList({
                     const isUnresolved = !isResolved;
 
                     return (
-                      <div
+                      <Box
                         key={tx.id}
-                        className={`grid grid-cols-12 gap-4 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors ${
-                          isUnresolved
-                            ? "bg-yellow-50 dark:bg-yellow-900/10"
-                            : ""
-                        }`}
+                        sx={{
+                          display: "grid",
+                          gridTemplateColumns: "1fr 4fr 3fr 2fr 2fr",
+                          gap: 2,
+                          px: 2,
+                          py: 1.5,
+                          borderBottom:
+                            index < dayTransactions.length - 1 ? 1 : 0,
+                          borderColor: "divider",
+                          bgcolor: isUnresolved
+                            ? theme.palette.mode === "dark"
+                              ? "rgba(234, 179, 8, 0.1)"
+                              : "rgba(254, 252, 232, 1)"
+                            : "transparent",
+                          "&:hover": {
+                            bgcolor:
+                              theme.palette.mode === "dark"
+                                ? "rgba(255,255,255,0.05)"
+                                : "grey.50",
+                          },
+                        }}
                       >
                         {/* Status column */}
-                        <div className="col-span-1 flex items-center">
-                          <div className="flex items-center gap-2">
-                            <div
-                              className="w-3 h-3 rounded-full flex-shrink-0"
-                              style={{ backgroundColor: categoryColor }}
+                        <Stack
+                          direction="row"
+                          alignItems="center"
+                          spacing={0.5}
+                        >
+                          <Box
+                            sx={{
+                              width: 12,
+                              height: 12,
+                              borderRadius: "50%",
+                              bgcolor: categoryColor,
+                              flexShrink: 0,
+                            }}
+                          />
+                          {isUnresolved && (
+                            <AlertCircle
+                              size={16}
+                              color="currentColor"
+                              style={{
+                                color: "var(--mui-palette-warning-main)",
+                              }}
                             />
-                            {isUnresolved && (
-                              <AlertCircle className="w-4 h-4 text-yellow-600 dark:text-yellow-500" />
-                            )}
-                          </div>
-                        </div>
+                          )}
+                        </Stack>
 
                         {/* Note column */}
-                        <div className="col-span-4 flex items-center gap-2">
-                          <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate flex-1">
+                        <Stack direction="row" alignItems="center" spacing={1}>
+                          <Typography
+                            variant="body2"
+                            fontWeight={500}
+                            sx={{
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                              flex: 1,
+                            }}
+                          >
                             {tx.note || "Không có ghi chú"}
-                          </span>
+                          </Typography>
                           {tx.is_virtual && (
-                            <span className="text-xs px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full whitespace-nowrap">
-                              Ảo
-                            </span>
+                            <Chip
+                              label="Ảo"
+                              size="small"
+                              sx={{
+                                bgcolor:
+                                  theme.palette.mode === "dark"
+                                    ? "rgba(168, 85, 247, 0.2)"
+                                    : "rgba(243, 232, 255, 1)",
+                                color:
+                                  theme.palette.mode === "dark"
+                                    ? "rgba(216, 180, 254, 1)"
+                                    : "rgba(126, 34, 206, 1)",
+                                fontSize: "0.7rem",
+                                height: 20,
+                              }}
+                            />
                           )}
-                        </div>
+                        </Stack>
 
                         {/* Category column */}
-                        <div className="col-span-3 flex items-center">
-                          <div className="flex items-center gap-2">
-                            <span
-                              className={`text-xs px-2 py-1 rounded-full flex items-center gap-1 whitespace-nowrap ${
-                                transactionType === "income"
-                                  ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                                  : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
-                              }`}
-                            >
-                              {transactionType === "income" ? (
-                                <>
-                                  <TrendingUp size={10} />
-                                  Thu
-                                </>
+                        <Stack direction="row" alignItems="center" spacing={1}>
+                          <Chip
+                            variant="outlined"
+                            icon={
+                              transactionType === "income" ? (
+                                <TrendingUp size={12} />
                               ) : (
-                                <>
-                                  <TrendingDown size={10} />
-                                  Chi
-                                </>
-                              )}
-                            </span>
-                            <span className="text-sm text-gray-600 dark:text-gray-300 truncate text-nowrap line-clamp-1">
-                              {categoryName}
-                            </span>
-                          </div>
-                        </div>
+                                <TrendingDown size={12} />
+                              )
+                            }
+                            label={transactionType === "income" ? "Thu" : "Chi"}
+                            size="small"
+                            color={
+                              transactionType === "income" ? "success" : "error"
+                            }
+                            sx={{ fontSize: "0.7rem", height: 20 }}
+                          />
+                          <Typography
+                            variant="body2"
+                            color="text.secondary"
+                            sx={{
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            {categoryName}
+                          </Typography>
+                        </Stack>
 
                         {/* Amount column */}
-                        <div className="col-span-2 flex items-center">
-                          <span
-                            className={`px-3 py-1 text-sm font-semibold rounded-full ${
-                              transactionType === "income"
-                                ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
-                                : "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300"
-                            }`}
-                          >
-                            {formatCurrency(tx.amount)}
-                          </span>
-                        </div>
+                        <Box sx={{ display: "flex", alignItems: "center" }}>
+                          <Chip
+                            variant="outlined"
+                            label={formatCurrency(tx.amount)}
+                            color={
+                              transactionType === "income" ? "success" : "error"
+                            }
+                            sx={{ fontWeight: 600, fontSize: "0.875rem" }}
+                          />
+                        </Box>
 
                         {/* Actions column */}
-                        <div className="col-span-2 flex items-center gap-1">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className={`h-8 w-8 p-0 transition-colors ${
-                              isResolved
-                                ? "text-green-600 hover:bg-green-50 hover:text-green-700 dark:text-green-400 dark:hover:bg-green-900/20"
-                                : "text-yellow-600 hover:bg-yellow-50 hover:text-yellow-700 dark:text-yellow-400 dark:hover:bg-yellow-900/20"
-                            }`}
+                        <Stack
+                          direction="row"
+                          alignItems="center"
+                          spacing={0.5}
+                        >
+                          <IconButton
+                            size="small"
                             onClick={() => onToggleResolved(tx.id)}
                             disabled={isDeleting || isTogglingResolved}
                             title={
@@ -346,24 +532,32 @@ export default function TransactionList({
                                 ? "Đánh dấu cần xem xét lại"
                                 : "Đánh dấu đã xác nhận"
                             }
+                            sx={{
+                              color: isResolved
+                                ? "success.main"
+                                : "warning.main",
+                              "&:hover": {
+                                bgcolor: isResolved
+                                  ? theme.palette.mode === "dark"
+                                    ? "rgba(34, 197, 94, 0.2)"
+                                    : "rgba(220, 252, 231, 1)"
+                                  : theme.palette.mode === "dark"
+                                  ? "rgba(234, 179, 8, 0.2)"
+                                  : "rgba(254, 252, 232, 1)",
+                              },
+                            }}
                           >
                             {isTogglingResolved && togglingId === tx.id ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
+                              <CircularProgress size={16} />
                             ) : isResolved ? (
-                              <CheckCircle className="h-4 w-4" />
+                              <CheckCircle size={16} />
                             ) : (
-                              <AlertCircle className="h-4 w-4" />
+                              <AlertCircle size={16} />
                             )}
-                          </Button>
+                          </IconButton>
                           {onToggleVirtual && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className={`h-8 w-8 p-0 transition-colors ${
-                                tx.is_virtual
-                                  ? "text-purple-600 hover:bg-purple-50 hover:text-purple-700 dark:text-purple-400 dark:hover:bg-purple-900/20"
-                                  : "text-gray-400 hover:bg-gray-50 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-gray-800"
-                              }`}
+                            <IconButton
+                              size="small"
                               onClick={() => onToggleVirtual(tx.id)}
                               disabled={
                                 isDeleting ||
@@ -375,50 +569,78 @@ export default function TransactionList({
                                   ? "Chuyển thành giao dịch thực tế"
                                   : "Đánh dấu là giao dịch ảo"
                               }
+                              sx={{
+                                color: tx.is_virtual
+                                  ? "secondary.main"
+                                  : "text.disabled",
+                                "&:hover": {
+                                  bgcolor: tx.is_virtual
+                                    ? theme.palette.mode === "dark"
+                                      ? "rgba(168, 85, 247, 0.2)"
+                                      : "rgba(243, 232, 255, 1)"
+                                    : theme.palette.mode === "dark"
+                                    ? "rgba(255,255,255,0.05)"
+                                    : "grey.100",
+                                },
+                              }}
                             >
                               {isTogglingVirtual &&
                               togglingVirtualId === tx.id ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
+                                <CircularProgress size={16} />
                               ) : tx.is_virtual ? (
-                                <EyeOff className="h-4 w-4" />
+                                <EyeOff size={16} />
                               ) : (
-                                <Eye className="h-4 w-4" />
+                                <Eye size={16} />
                               )}
-                            </Button>
+                            </IconButton>
                           )}
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 w-8 p-0 text-blue-500 hover:bg-blue-50 hover:text-blue-600 dark:text-blue-400 dark:hover:bg-blue-900/20"
+                          <IconButton
+                            size="small"
                             onClick={() => onEdit(tx)}
                             disabled={isDeleting || isTogglingResolved}
+                            sx={{
+                              color: "info.main",
+                              "&:hover": {
+                                bgcolor:
+                                  theme.palette.mode === "dark"
+                                    ? "rgba(59, 130, 246, 0.2)"
+                                    : "rgba(219, 234, 254, 1)",
+                              },
+                            }}
                           >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 w-8 p-0 text-red-500 hover:bg-red-50 hover:text-red-600 dark:text-red-400 dark:hover:bg-red-900/20"
+                            <Edit size={16} />
+                          </IconButton>
+                          <IconButton
+                            size="small"
                             onClick={() => onDelete(tx.id)}
                             disabled={isDeleting || isTogglingResolved}
+                            sx={{
+                              color: "error.main",
+                              "&:hover": {
+                                bgcolor:
+                                  theme.palette.mode === "dark"
+                                    ? "rgba(239, 68, 68, 0.2)"
+                                    : "rgba(254, 226, 226, 1)",
+                              },
+                            }}
                           >
                             {isDeleting && deletingId === tx.id ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
+                              <CircularProgress size={16} />
                             ) : (
-                              <Trash2 className="h-4 w-4" />
+                              <Trash2 size={16} />
                             )}
-                          </Button>
-                        </div>
-                      </div>
+                          </IconButton>
+                        </Stack>
+                      </Box>
                     );
                   })}
-                </div>
-              </div>
+                </Box>
+              </Box>
 
               {/* Mobile layout - 2 lines per transaction */}
-              <div className="md:hidden">
-                <div className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                  {dayTransactions.map((tx) => {
+              <Box sx={{ display: { xs: "block", md: "none" } }}>
+                <Box sx={{ bgcolor: "background.paper" }}>
+                  {dayTransactions.map((tx, index) => {
                     const categoryColor = getCategoryColor(tx.category_id);
                     const categoryName = getCategoryName(tx.category_id);
                     const transactionType =
@@ -427,80 +649,151 @@ export default function TransactionList({
                     const isUnresolved = !isResolved;
 
                     return (
-                      <div
+                      <Box
                         key={tx.id}
-                        className={`p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors ${
-                          isUnresolved
-                            ? "bg-yellow-50 dark:bg-yellow-900/10"
-                            : ""
-                        }`}
+                        sx={{
+                          p: 2,
+                          borderBottom:
+                            index < dayTransactions.length - 1 ? 1 : 0,
+                          borderColor: "divider",
+                          bgcolor: isUnresolved
+                            ? theme.palette.mode === "dark"
+                              ? "rgba(234, 179, 8, 0.1)"
+                              : "rgba(254, 252, 232, 1)"
+                            : "transparent",
+                          "&:hover": {
+                            bgcolor:
+                              theme.palette.mode === "dark"
+                                ? "rgba(255,255,255,0.05)"
+                                : "grey.50",
+                          },
+                        }}
                       >
                         {/* First line: Status, Note, Amount */}
-                        <div className="flex items-center justify-between gap-3 mb-2">
-                          <div className="flex items-center gap-2 flex-1 min-w-0">
-                            <div
-                              className="w-3 h-3 rounded-full flex-shrink-0"
-                              style={{ backgroundColor: categoryColor }}
+                        <Stack
+                          direction="row"
+                          justifyContent="space-between"
+                          alignItems="center"
+                          spacing={1.5}
+                          sx={{ mb: 1 }}
+                        >
+                          <Stack
+                            direction="row"
+                            alignItems="center"
+                            spacing={1}
+                            sx={{ flex: 1, minWidth: 0 }}
+                          >
+                            <Box
+                              sx={{
+                                width: 12,
+                                height: 12,
+                                borderRadius: "50%",
+                                bgcolor: categoryColor,
+                                flexShrink: 0,
+                              }}
                             />
                             {isUnresolved && (
-                              <AlertCircle className="w-4 h-4 text-yellow-600 dark:text-yellow-500 flex-shrink-0" />
+                              <AlertCircle
+                                size={16}
+                                color="currentColor"
+                                style={{
+                                  color: "var(--mui-palette-warning-main)",
+                                  flexShrink: 0,
+                                }}
+                              />
                             )}
-                            <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                            <Typography
+                              variant="body2"
+                              fontWeight={500}
+                              sx={{
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                              }}
+                            >
                               {tx.note || "Không có ghi chú"}
-                            </span>
+                            </Typography>
                             {tx.is_virtual && (
-                              <span className="text-xs px-1.5 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full whitespace-nowrap flex-shrink-0">
-                                Ảo
-                              </span>
+                              <Chip
+                                label="Ảo"
+                                size="small"
+                                sx={{
+                                  bgcolor:
+                                    theme.palette.mode === "dark"
+                                      ? "rgba(168, 85, 247, 0.2)"
+                                      : "rgba(243, 232, 255, 1)",
+                                  color:
+                                    theme.palette.mode === "dark"
+                                      ? "rgba(216, 180, 254, 1)"
+                                      : "rgba(126, 34, 206, 1)",
+                                  fontSize: "0.65rem",
+                                  height: 18,
+                                  flexShrink: 0,
+                                }}
+                              />
                             )}
-                          </div>
-                          <span
-                            className={`px-2 py-1 text-sm font-semibold rounded-full whitespace-nowrap ${
-                              transactionType === "income"
-                                ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
-                                : "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300"
-                            }`}
-                          >
-                            {formatCurrency(tx.amount)}
-                          </span>
-                        </div>
+                          </Stack>
+                          <Chip
+                            variant="outlined"
+                            label={formatCurrency(tx.amount)}
+                            color={
+                              transactionType === "income" ? "success" : "error"
+                            }
+                            sx={{
+                              fontWeight: 600,
+                              fontSize: "0.875rem",
+                              flexShrink: 0,
+                            }}
+                          />
+                        </Stack>
 
                         {/* Second line: Category + Type, Actions */}
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <span
-                              className={`text-xs px-2 py-1 rounded-full flex items-center gap-1 ${
+                        <Stack
+                          direction="row"
+                          justifyContent="space-between"
+                          alignItems="center"
+                        >
+                          <Stack
+                            direction="row"
+                            alignItems="center"
+                            spacing={1}
+                          >
+                            <Chip
+                              variant="outlined"
+                              icon={
+                                transactionType === "income" ? (
+                                  <TrendingUp size={12} />
+                                ) : (
+                                  <TrendingDown size={12} />
+                                )
+                              }
+                              label={
+                                transactionType === "income" ? "Thu" : "Chi"
+                              }
+                              size="small"
+                              color={
                                 transactionType === "income"
-                                  ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                                  : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
-                              }`}
+                                  ? "success"
+                                  : "error"
+                              }
+                              sx={{ fontSize: "0.7rem", height: 20 }}
+                            />
+                            <Typography
+                              variant="body2"
+                              color="text.secondary"
+                              sx={{
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                              }}
                             >
-                              {transactionType === "income" ? (
-                                <>
-                                  <TrendingUp size={10} />
-                                  Thu
-                                </>
-                              ) : (
-                                <>
-                                  <TrendingDown size={10} />
-                                  Chi
-                                </>
-                              )}
-                            </span>
-                            <span className="text-sm text-gray-600 dark:text-gray-300 line-clamp-1">
                               {categoryName}
-                            </span>
-                          </div>
+                            </Typography>
+                          </Stack>
 
-                          <div className="flex gap-1">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className={`h-8 w-8 p-0 transition-colors ${
-                                isResolved
-                                  ? "text-green-600 hover:bg-green-50 hover:text-green-700 dark:text-green-400 dark:hover:bg-green-900/20"
-                                  : "text-yellow-600 hover:bg-yellow-50 hover:text-yellow-700 dark:text-yellow-400 dark:hover:bg-yellow-900/20"
-                              }`}
+                          <Stack direction="row" spacing={0.5}>
+                            <IconButton
+                              size="small"
                               onClick={() => onToggleResolved(tx.id)}
                               disabled={isDeleting || isTogglingResolved}
                               title={
@@ -508,24 +801,32 @@ export default function TransactionList({
                                   ? "Đánh dấu cần xem xét lại"
                                   : "Đánh dấu đã xác nhận"
                               }
+                              sx={{
+                                color: isResolved
+                                  ? "success.main"
+                                  : "warning.main",
+                                "&:hover": {
+                                  bgcolor: isResolved
+                                    ? theme.palette.mode === "dark"
+                                      ? "rgba(34, 197, 94, 0.2)"
+                                      : "rgba(220, 252, 231, 1)"
+                                    : theme.palette.mode === "dark"
+                                    ? "rgba(234, 179, 8, 0.2)"
+                                    : "rgba(254, 252, 232, 1)",
+                                },
+                              }}
                             >
                               {isTogglingResolved && togglingId === tx.id ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
+                                <CircularProgress size={16} />
                               ) : isResolved ? (
-                                <CheckCircle className="h-4 w-4" />
+                                <CheckCircle size={16} />
                               ) : (
-                                <AlertCircle className="h-4 w-4" />
+                                <AlertCircle size={16} />
                               )}
-                            </Button>
+                            </IconButton>
                             {onToggleVirtual && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className={`h-8 w-8 p-0 transition-colors ${
-                                  tx.is_virtual
-                                    ? "text-purple-600 hover:bg-purple-50 hover:text-purple-700 dark:text-purple-400 dark:hover:bg-purple-900/20"
-                                    : "text-gray-400 hover:bg-gray-50 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-gray-800"
-                                }`}
+                              <IconButton
+                                size="small"
                                 onClick={() => onToggleVirtual(tx.id)}
                                 disabled={
                                   isDeleting ||
@@ -537,50 +838,78 @@ export default function TransactionList({
                                     ? "Chuyển thành giao dịch thực tế"
                                     : "Đánh dấu là giao dịch ảo"
                                 }
+                                sx={{
+                                  color: tx.is_virtual
+                                    ? "secondary.main"
+                                    : "text.disabled",
+                                  "&:hover": {
+                                    bgcolor: tx.is_virtual
+                                      ? theme.palette.mode === "dark"
+                                        ? "rgba(168, 85, 247, 0.2)"
+                                        : "rgba(243, 232, 255, 1)"
+                                      : theme.palette.mode === "dark"
+                                      ? "rgba(255,255,255,0.05)"
+                                      : "grey.100",
+                                  },
+                                }}
                               >
                                 {isTogglingVirtual &&
                                 togglingVirtualId === tx.id ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                  <CircularProgress size={16} />
                                 ) : tx.is_virtual ? (
-                                  <EyeOff className="h-4 w-4" />
+                                  <EyeOff size={16} />
                                 ) : (
-                                  <Eye className="h-4 w-4" />
+                                  <Eye size={16} />
                                 )}
-                              </Button>
+                              </IconButton>
                             )}
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0 text-blue-500 hover:bg-blue-50 hover:text-blue-600 dark:text-blue-400 dark:hover:bg-blue-900/20"
+                            <IconButton
+                              size="small"
                               onClick={() => onEdit(tx)}
                               disabled={isDeleting || isTogglingResolved}
+                              sx={{
+                                color: "info.main",
+                                "&:hover": {
+                                  bgcolor:
+                                    theme.palette.mode === "dark"
+                                      ? "rgba(59, 130, 246, 0.2)"
+                                      : "rgba(219, 234, 254, 1)",
+                                },
+                              }}
                             >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0 text-red-500 hover:bg-red-50 hover:text-red-600 dark:text-red-400 dark:hover:bg-red-900/20"
+                              <Edit size={16} />
+                            </IconButton>
+                            <IconButton
+                              size="small"
                               onClick={() => onDelete(tx.id)}
                               disabled={isDeleting || isTogglingResolved}
+                              sx={{
+                                color: "error.main",
+                                "&:hover": {
+                                  bgcolor:
+                                    theme.palette.mode === "dark"
+                                      ? "rgba(239, 68, 68, 0.2)"
+                                      : "rgba(254, 226, 226, 1)",
+                                },
+                              }}
                             >
                               {isDeleting && deletingId === tx.id ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
+                                <CircularProgress size={16} />
                               ) : (
-                                <Trash2 className="h-4 w-4" />
+                                <Trash2 size={16} />
                               )}
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
+                            </IconButton>
+                          </Stack>
+                        </Stack>
+                      </Box>
                     );
                   })}
-                </div>
-              </div>
-            </div>
-          </div>
+                </Box>
+              </Box>
+            </Paper>
+          </Box>
         );
       })}
-    </div>
+    </Stack>
   );
 }

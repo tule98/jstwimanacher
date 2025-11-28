@@ -1,6 +1,7 @@
 must follow:
 use react-query for data fetching and state management.
 use material ui for ui components and styling.
+use lucide icons for icons, don't use material ui icons.
 
 # Feature overview
 Change the layout to dashboard style layout.

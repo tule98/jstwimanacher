@@ -303,7 +303,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         )}
 
         {/* Page Content */}
-        <Box sx={{ p: { xs: 2, sm: 3, md: 4 } }}>{children}</Box>
+        <Box sx={{ p: { xs: 0, sm: 3, md: 4 } }}>{children}</Box>
       </Box>
     </Box>
   );
