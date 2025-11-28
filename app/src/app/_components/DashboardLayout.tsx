@@ -29,6 +29,7 @@ import {
   Menu,
   User,
 } from "lucide-react";
+import ThemeToggle from "./ThemeToggle";
 
 const DRAWER_WIDTH = 280;
 
@@ -160,6 +161,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
       {/* User Profile Section */}
       <Box sx={{ p: 2 }}>
+        {/* Theme Toggle */}
+        <Box sx={{ mb: 1, display: "flex", justifyContent: "center" }}>
+          <ThemeToggle />
+        </Box>
+
         <ListItemButton
           sx={{
             borderRadius: 2,

@@ -14,7 +14,7 @@ export const metadata = {
 };
 
 export const viewport = {
-  themeColor: "#388E3C", // Thêm màu chủ đạo xanh lá cây đậm
+  themeColor: "#1976d2", // Blue primary color
 };
 
 export default function RootLayout({
@@ -23,7 +23,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="vi" className="dark">
+    <html lang="vi">
       <head>
         <link
           href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap"
@@ -36,7 +36,7 @@ export default function RootLayout({
         {/* App logo favicon */}
         <link rel="icon" type="image/png" href="/jstwi-logo.png" />
       </head>
-      <body className="font-poppins min-h-screen dark:from-gray-900 transition-colors duration-300">
+      <body className="font-poppins min-h-screen transition-colors duration-300">
         <MuiProvider>
           <AppProvider>
             <AuthGuard>
