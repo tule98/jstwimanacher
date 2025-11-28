@@ -2,6 +2,41 @@ must follow:
 use react-query for data fetching and state management.
 use material ui for ui components and styling.
 
+# Feature overview
+Change the layout to dashboard style layout.
+
+The dashboard layout will have a sidebar on the left side with navigation links to different sections of the application.
+The main content area will be on the right side, displaying the selected section's content.
+
+# Changes
+## Layout
+Create a new layout component `DashboardLayout.tsx` that includes:
+- A sidebar with navigation links
+  - Sidebar will have sections: Logo, Navigation links, User profile at the bottom.
+- A main content area to display the selected section's content.
+
+# Scopes
+- Whole application will use the new dashboard layout.
+
+# Notes
+- Keep the current mobile layout structure with BottomNav
+
+<!--  -->
+
+# Feature Overview
+Use debounce when searching for transaction.
+
+When user type in the search input field, wait for 500ms after the last keystroke before sending the search request to the server.
+
+# Changes
+## Hooks
+Add a new hook `useDebounce`: to debounce a value.
+
+## Frontend routes
+/transactions
+
+<!--  -->
+
 # Feature
 
 Add module flash card to the Navigation bar.

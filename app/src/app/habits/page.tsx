@@ -21,7 +21,6 @@ import HabitLogInputWithTagInsertion, {
   type ParsedJournalData,
 } from "./_components/HabitLogInputWithTagInsertion";
 import HabitCard from "./_components/HabitCard";
-import AppNav from "@/app/_components/AppNav";
 import AppPageLayout from "@/app/_components/AppPageLayout";
 import AppPageNav from "../_components/AppPageNav";
 import { CheckSquare } from "lucide-react";
@@ -163,6 +162,8 @@ export default function HabitsPage() {
           {habits?.map((h) => (
             <Box key={h.id}>
               <HabitCard
+                onDeleteHabit={() => {}}
+                onUpdateHabit={() => {}}
                 habit={h}
                 onToggleStatus={toggleStatus}
                 onMarkToday={(habitId, date) =>

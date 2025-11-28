@@ -20,6 +20,7 @@ import TransactionFilterBox from "./_components/TransactionFilterBox";
 import BucketBalanceStatsBox from "./_components/BucketBalanceStatsBox";
 import HeatmapDialog from "./_components/HeatmapDialog";
 import { useTransactionQueries } from "./_hooks/useTransactionQueries";
+import { useDebounce } from "@/hooks/useDebounce";
 import {
   Transaction,
   TransactionCreateData,
@@ -46,6 +47,9 @@ export default function TransactionsPage() {
   // Use transaction queries hook for filter state management
   const { filters, setSearch, setCategoryId, setOnlyUnresolved, setBucketId } =
     useTransactionQueries();
+
+  // Debounce the search query - wait 500ms after user stops typing
+  const debouncedSearch = useDebounce(filters.search, 500);
 
   // Open create dialog when `?create=1` is present or when receiving a global event
   useEffect(() => {
@@ -91,7 +95,7 @@ export default function TransactionsPage() {
   } = useTransactions(PAGE_SIZE, {
     onlyUnresolved: filters.onlyUnresolved,
     onlyVirtual: filters.onlyVirtual,
-    search: filters.search || undefined,
+    search: debouncedSearch || undefined,
     categoryId: filters.categoryId !== "all" ? filters.categoryId : undefined,
     bucketId: filters.bucketId,
   });

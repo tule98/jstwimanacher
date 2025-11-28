@@ -3,10 +3,10 @@ import "./globals.css";
 import React from "react";
 import AppProvider from "./_components/AppProvider";
 import MuiProvider from "./_components/MuiProvider";
-import AppNav from "./_components/AppNav";
+import DashboardLayout from "./_components/DashboardLayout";
 import BottomNav from "./_components/BottomNav";
 import AuthGuard from "./_components/AuthGuard";
-import { Toaster } from "@/components/ui/sonner";
+import ClientToaster from "./_components/ClientToaster";
 
 export const metadata = {
   title: "💂 Doorkeeper",
@@ -40,22 +40,13 @@ export default function RootLayout({
         <MuiProvider>
           <AppProvider>
             <AuthGuard>
-              <header className="sticky top-0 z-50 w-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm shadow-md hidden md:block">
-                <div className="max-w-screen-lg mx-auto">
-                  <AppNav />
-                </div>
-              </header>
-              <div className="max-w-screen-lg mx-auto">
-                <main className="flex flex-col items-center justify-start p-0 md:p-6 gap-6 md:pb-20 md:pt-4">
-                  {children}
-                </main>
-              </div>
+              <DashboardLayout>{children}</DashboardLayout>
               {/* Mobile Bottom Navigation */}
               <div className="md:hidden">
                 <BottomNav />
               </div>
             </AuthGuard>
-            <Toaster richColors position="top-right" />
+            <ClientToaster />
           </AppProvider>
         </MuiProvider>
       </body>
