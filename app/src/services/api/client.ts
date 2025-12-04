@@ -90,12 +90,14 @@ export interface Transaction {
   is_resolved: boolean;
   is_virtual: boolean; // Mark virtual transaction
   category: Category; // Joined category data
+  buckets?: Bucket[]; // Associated buckets (optional)
 }
 
 export interface TransactionCreateData {
   amount: number;
   category_id: string;
   bucket_id?: string | null;
+  bucket_ids?: string[]; // New field for multiple buckets
   note?: string;
   is_virtual?: boolean; // Mark virtual transaction
   is_resolved?: boolean; // Mark transaction as resolved
@@ -108,6 +110,7 @@ export interface TransactionUpdateData {
   amount?: number;
   category_id?: string;
   bucket_id?: string | null;
+  bucket_ids?: string[]; // New field for multiple buckets
   note?: string;
   is_resolved?: boolean;
   is_virtual?: boolean; // Mark virtual transaction
@@ -258,7 +261,7 @@ export const TransactionsAPI = {
       onlyVirtual?: boolean;
       search?: string;
       categoryId?: string;
-      bucketId?: string;
+      bucketIds?: string[];
     }
   ): Promise<Transaction[]> {
     return httpClient.get<Transaction[]>("/api/transactions", {
@@ -268,7 +271,10 @@ export const TransactionsAPI = {
       ...(options?.onlyVirtual && { onlyVirtual: "true" }),
       ...(options?.search && { search: options.search }),
       ...(options?.categoryId && { categoryId: options.categoryId }),
-      ...(options?.bucketId && { bucketId: options.bucketId }),
+      ...(options?.bucketIds &&
+        options.bucketIds.length > 0 && {
+          bucketIds: options.bucketIds.join(","),
+        }),
     });
   },
 

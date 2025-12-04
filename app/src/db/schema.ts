@@ -135,6 +135,23 @@ export const habitJournalEntries = sqliteTable("habit_journal_entries", {
     .default(sql`datetime('now')`),
 });
 
+// Transaction Buckets table - Many-to-many relationship
+export const transactionBuckets = sqliteTable("transaction_buckets", {
+  id: text("id").primaryKey(),
+  transaction_id: text("transaction_id")
+    .notNull()
+    .references(() => transactions.id, { onDelete: "cascade" }),
+  bucket_id: text("bucket_id")
+    .notNull()
+    .references(() => buckets.id, { onDelete: "cascade" }),
+  created_at: text("created_at")
+    .notNull()
+    .default(sql`datetime('now')`),
+  updated_at: text("updated_at")
+    .notNull()
+    .default(sql`datetime('now')`),
+});
+
 // Flash Cards table
 export const flashCards = sqliteTable("flash_cards", {
   id: text("id").primaryKey(),
@@ -166,6 +183,8 @@ export type StorySession = typeof storySessions.$inferSelect;
 export type NewStorySession = typeof storySessions.$inferInsert;
 export type Bucket = typeof buckets.$inferSelect;
 export type NewBucket = typeof buckets.$inferInsert;
+export type TransactionBucket = typeof transactionBuckets.$inferSelect;
+export type NewTransactionBucket = typeof transactionBuckets.$inferInsert;
 export type Habit = typeof habits.$inferSelect;
 export type NewHabit = typeof habits.$inferInsert;
 export type HabitJournalEntry = typeof habitJournalEntries.$inferSelect;

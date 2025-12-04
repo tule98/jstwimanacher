@@ -3,6 +3,7 @@ import {
   categories,
   transactions,
   buckets,
+  transactionBuckets,
   assets,
   assetConversions,
   habits,
@@ -18,15 +19,21 @@ import {
   type NewBucket,
   type NewAsset,
   type NewAssetConversion,
+  type NewTransactionBucket,
   type Habit,
   type NewHabit,
   type HabitJournalEntry,
   type FlashCard,
   type NewFlashCard,
 } from "@/db/schema";
-import { eq, desc, and, gte, lt, lte, sql, like } from "drizzle-orm";
+import { eq, desc, and, gte, lt, lte, sql, like, inArray } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 import { nowUTC, getMonthBoundsUTC, toUTC, UTCString } from "@/lib/timezone";
+
+type TransactionWithCategoryAndBuckets = Transaction & {
+  category: Category;
+  buckets: Bucket[];
+};
 
 export class DatabaseService {
   // Categories methods
@@ -108,9 +115,9 @@ export class DatabaseService {
       onlyVirtual?: boolean;
       search?: string;
       categoryId?: string;
-      bucketId?: string;
+      bucketIds?: string[];
     }
-  ): Promise<(Transaction & { category: Category })[]> {
+  ): Promise<TransactionWithCategoryAndBuckets[]> {
     const conditions = [];
 
     // Add filter conditions
@@ -131,16 +138,27 @@ export class DatabaseService {
     if (options?.categoryId && options.categoryId !== "all") {
       conditions.push(eq(transactions.category_id, options.categoryId));
     }
-
-    // Add bucket filter
-    if (options?.bucketId && options.bucketId !== "all") {
-      conditions.push(eq(transactions.bucket_id, options.bucketId));
+    // New: filter by multiple bucket IDs via transaction_buckets join
+    const bucketIds = options?.bucketIds?.filter((id) => id);
+    const useBucketIds = Boolean(bucketIds && bucketIds.length > 0);
+    if (useBucketIds && bucketIds) {
+      conditions.push(inArray(transactionBuckets.bucket_id, bucketIds));
     }
 
     let query = db
-      .select()
+      .select({
+        transaction: transactions,
+        category: categories,
+        transactionBucket: transactionBuckets,
+        bucket: buckets,
+      })
       .from(transactions)
       .leftJoin(categories, eq(transactions.category_id, categories.id))
+      .leftJoin(
+        transactionBuckets,
+        eq(transactionBuckets.transaction_id, transactions.id)
+      )
+      .leftJoin(buckets, eq(transactionBuckets.bucket_id, buckets.id))
       .orderBy(desc(transactions.created_at))
       .$dynamic();
 
@@ -158,10 +176,36 @@ export class DatabaseService {
 
     const result = await query;
 
-    return result.map((row) => ({
-      ...row.transactions,
-      category: row.categories!,
-    }));
+    const transactionsMap = new Map<
+      string,
+      TransactionWithCategoryAndBuckets
+    >();
+
+    for (const row of result) {
+      const transaction = row.transaction;
+      if (!transaction) continue;
+
+      const category = row.category;
+
+      if (!category) continue;
+
+      let existing = transactionsMap.get(transaction.id);
+      if (!existing) {
+        existing = {
+          ...transaction,
+          category,
+          buckets: [],
+        };
+        transactionsMap.set(transaction.id, existing);
+      }
+
+      const bucket = row.bucket;
+      if (bucket && !existing.buckets.some((b) => b.id === bucket.id)) {
+        existing.buckets.push(bucket);
+      }
+    }
+
+    return Array.from(transactionsMap.values());
   }
 
   async getTransactionsByMonth(
@@ -192,22 +236,32 @@ export class DatabaseService {
     amount: number;
     category_id: string;
     bucket_id?: string | null;
+    bucket_ids?: string[]; // New field for multiple buckets
     note?: string;
     is_virtual?: boolean;
     is_resolved?: boolean;
     created_at?: string | UTCString;
   }): Promise<Transaction> {
     const now = nowUTC();
-    // If bucket_id not provided, try to assign default bucket
-    let assignedBucketId: string | undefined | null = data.bucket_id ?? null;
-    if (!assignedBucketId) {
+
+    // Determine which bucket IDs to use
+    let bucketIdsToAssign: string[] = [];
+
+    // If bucket_ids is provided (new way), use it
+    if (data.bucket_ids && data.bucket_ids.length > 0) {
+      bucketIdsToAssign = data.bucket_ids;
+    } else if (data.bucket_id) {
+      // If bucket_id is provided (old way), use it
+      bucketIdsToAssign = [data.bucket_id];
+    } else {
+      // If no bucket specified, try to use default bucket
       const defaultBucket = await db
         .select()
         .from(buckets)
         .where(eq(buckets.is_default, true))
         .limit(1);
       if (defaultBucket && defaultBucket.length > 0) {
-        assignedBucketId = defaultBucket[0].id;
+        bucketIdsToAssign = [defaultBucket[0].id];
       }
     }
 
@@ -215,7 +269,7 @@ export class DatabaseService {
       id: uuidv4(),
       amount: Math.round(data.amount),
       category_id: data.category_id,
-      bucket_id: assignedBucketId || undefined,
+      bucket_id: bucketIdsToAssign[0] || undefined, // Keep for backward compatibility
       note: data.note,
       created_at: data.created_at ? toUTC(data.created_at) : now,
       updated_at: now,
@@ -227,7 +281,23 @@ export class DatabaseService {
       .insert(transactions)
       .values(newTransaction)
       .returning();
-    return result[0];
+
+    const createdTransaction = result[0];
+
+    // Create transaction bucket associations
+    if (bucketIdsToAssign.length > 0) {
+      const transactionBucketRecords = bucketIdsToAssign.map((bucketId) => ({
+        id: uuidv4(),
+        transaction_id: createdTransaction.id,
+        bucket_id: bucketId,
+        created_at: now,
+        updated_at: now,
+      }));
+
+      await db.insert(transactionBuckets).values(transactionBucketRecords);
+    }
+
+    return createdTransaction;
   }
 
   async updateTransaction(
@@ -236,14 +306,16 @@ export class DatabaseService {
       amount: number;
       category_id: string;
       bucket_id: string | null;
+      bucket_ids?: string[]; // New field for multiple buckets
       note: string;
       is_resolved: boolean;
       is_virtual: boolean;
       created_at: string | UTCString;
     }>
   ): Promise<Transaction | null> {
+    const now = nowUTC();
     const updateData: Partial<NewTransaction> = {
-      updated_at: nowUTC(),
+      updated_at: now,
     };
 
     if (data.amount !== undefined) {
@@ -264,8 +336,47 @@ export class DatabaseService {
     if (data.created_at !== undefined) {
       updateData.created_at = toUTC(data.created_at);
     }
-    if (data.bucket_id !== undefined) {
+
+    // Handle bucket_ids - update transaction_buckets table
+    if (data.bucket_ids !== undefined) {
+      // Delete existing associations
+      await db
+        .delete(transactionBuckets)
+        .where(eq(transactionBuckets.transaction_id, id));
+
+      // Create new associations
+      if (data.bucket_ids.length > 0) {
+        const transactionBucketRecords = data.bucket_ids.map((bucketId) => ({
+          id: uuidv4(),
+          transaction_id: id,
+          bucket_id: bucketId,
+          created_at: now,
+          updated_at: now,
+        }));
+        await db.insert(transactionBuckets).values(transactionBucketRecords);
+      }
+
+      // Update bucket_id field with first bucket for backward compatibility
+      updateData.bucket_id =
+        data.bucket_ids.length > 0 ? data.bucket_ids[0] : null;
+    } else if (data.bucket_id !== undefined) {
+      // Old way - single bucket_id
       updateData.bucket_id = data.bucket_id;
+
+      // Also update transaction_buckets table
+      await db
+        .delete(transactionBuckets)
+        .where(eq(transactionBuckets.transaction_id, id));
+      if (data.bucket_id) {
+        const record: NewTransactionBucket = {
+          id: uuidv4(),
+          transaction_id: id,
+          bucket_id: data.bucket_id,
+          created_at: now,
+          updated_at: now,
+        };
+        await db.insert(transactionBuckets).values(record);
+      }
     }
 
     const result = await db
@@ -280,6 +391,45 @@ export class DatabaseService {
   async deleteTransaction(id: string): Promise<boolean> {
     const result = await db.delete(transactions).where(eq(transactions.id, id));
     return result.rowsAffected > 0;
+  }
+
+  // Transaction Buckets methods
+  async getTransactionBuckets(transactionId: string): Promise<Bucket[]> {
+    const result = await db
+      .select({
+        bucket: buckets,
+      })
+      .from(transactionBuckets)
+      .leftJoin(buckets, eq(transactionBuckets.bucket_id, buckets.id))
+      .where(eq(transactionBuckets.transaction_id, transactionId));
+
+    return result
+      .filter((row) => row.bucket !== null)
+      .map((row) => row.bucket!);
+  }
+
+  async setTransactionBuckets(
+    transactionId: string,
+    bucketIds: string[]
+  ): Promise<void> {
+    const now = nowUTC();
+
+    // Delete existing associations
+    await db
+      .delete(transactionBuckets)
+      .where(eq(transactionBuckets.transaction_id, transactionId));
+
+    // Create new associations
+    if (bucketIds.length > 0) {
+      const records = bucketIds.map((bucketId) => ({
+        id: uuidv4(),
+        transaction_id: transactionId,
+        bucket_id: bucketId,
+        created_at: now,
+        updated_at: now,
+      }));
+      await db.insert(transactionBuckets).values(records);
+    }
   }
 
   // Buckets methods
@@ -329,9 +479,13 @@ export class DatabaseService {
         type: categories.type,
         total: sql<number>`sum(${transactions.amount})`,
       })
-      .from(transactions)
+      .from(transactionBuckets)
+      .leftJoin(
+        transactions,
+        eq(transactionBuckets.transaction_id, transactions.id)
+      )
       .leftJoin(categories, eq(transactions.category_id, categories.id))
-      .where(eq(transactions.bucket_id, bucketId))
+      .where(eq(transactionBuckets.bucket_id, bucketId))
       .groupBy(categories.type);
 
     let income = 0;
@@ -935,6 +1089,54 @@ export class DatabaseService {
   async deleteFlashCard(id: string): Promise<boolean> {
     const result = await db.delete(flashCards).where(eq(flashCards.id, id));
     return result.rowsAffected > 0;
+  }
+
+  async migrateLegacyTransactionBuckets(options?: { dryRun?: boolean }) {
+    const dryRun = options?.dryRun ?? true;
+
+    const candidates = await db
+      .select({
+        transactionId: transactions.id,
+        bucketId: transactions.bucket_id,
+      })
+      .from(transactions)
+      .leftJoin(
+        transactionBuckets,
+        and(
+          eq(transactionBuckets.transaction_id, transactions.id),
+          eq(transactionBuckets.bucket_id, transactions.bucket_id)
+        )
+      )
+      .where(
+        sql`${transactions.bucket_id} IS NOT NULL AND ${transactionBuckets.id} IS NULL`
+      );
+
+    const rows = candidates
+      .filter((row) => Boolean(row.bucketId))
+      .map((row) => ({
+        transactionId: row.transactionId,
+        bucketId: row.bucketId as string,
+      }));
+
+    if (!dryRun && rows.length > 0) {
+      const now = nowUTC();
+      await db.insert(transactionBuckets).values(
+        rows.map((row) => ({
+          id: uuidv4(),
+          transaction_id: row.transactionId,
+          bucket_id: row.bucketId,
+          created_at: now,
+          updated_at: now,
+        }))
+      );
+    }
+
+    return {
+      dryRun,
+      candidates: rows.length,
+      inserted: dryRun ? 0 : rows.length,
+      records: rows,
+    };
   }
 }
 

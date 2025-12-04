@@ -2,38 +2,93 @@ must follow:
 use react-query for data fetching and state management.
 use material ui for ui components and styling.
 use lucide icons for icons, don't use material ui icons.
+pay attention on light and dark mode support.
+
+<!--  -->
+
+# Feature descriptions
+
+A transaction can be belong to multiple buckets.
+
+# Database changes
+
+Create a new table `transaction_buckets` to represent the many-to-many relationship between transactions and buckets.
+Table: transaction_buckets
+
+- id (primary key)
+- transaction_id (foreign key to transactions.id)
+- bucket_id (foreign key to buckets.id)
+- created_at (timestamp)
+- updated_at (timestamp)
+
+# Data migration
+
+1. Create the `transaction_buckets` table in the database.
+2. For each transaction in the `transactions` table, if it has a `bucket_id`, create a corresponding entry in the `transaction_buckets` table linking the transaction to the bucket.
+
+# API Implementation Changes
+
+## Update transaction creation and update endpoints to handle multiple buckets
+
+- POST `/api/transactions`
+  - Request Body: Add a new field `bucket_ids` (array of bucket IDs)
+- PUT `/api/transactions/:id`
+  - Request Body: Add a new field `bucket_ids` (array of bucket IDs)
+- GET `/api/stats/bucket/${bucketId}/balance`
+  - Update the logic to calculate the balance by summing amounts from the `transaction_buckets` table for the specified bucket ID.
+- GET `/api/transactions`
+  - Update payload to filter by multiple bucket IDs if provided.
+
+# UI Changes
+
+## Update transaction form to support multiple bucket selection
+
+- Update the transaction creation and update forms to allow selecting multiple buckets using a multi-select autocomplete component from Material UI.
+- Update the transaction list view to display all associated buckets for each transaction.
+
+<!--  -->
 
 # Feature overview
+
 Change the layout to dashboard style layout.
 
 The dashboard layout will have a sidebar on the left side with navigation links to different sections of the application.
 The main content area will be on the right side, displaying the selected section's content.
 
 # Changes
+
 ## Layout
+
 Create a new layout component `DashboardLayout.tsx` that includes:
+
 - A sidebar with navigation links
   - Sidebar will have sections: Logo, Navigation links, User profile at the bottom.
 - A main content area to display the selected section's content.
 
 # Scopes
+
 - Whole application will use the new dashboard layout.
 
 # Notes
+
 - Keep the current mobile layout structure with BottomNav
 
 <!--  -->
 
 # Feature Overview
+
 Use debounce when searching for transaction.
 
 When user type in the search input field, wait for 500ms after the last keystroke before sending the search request to the server.
 
 # Changes
+
 ## Hooks
+
 Add a new hook `useDebounce`: to debounce a value.
 
 ## Frontend routes
+
 /transactions
 
 <!--  -->

@@ -24,8 +24,8 @@ interface TransactionFilterBoxProps {
   onSearchChange: (value: string) => void;
   selectedCategoryId: string;
   onCategoryChange: (value: string) => void;
-  selectedBucketId?: string;
-  onBucketChange?: (value?: string) => void;
+  selectedBucketIds?: string[];
+  onBucketIdsChange?: (value?: string[]) => void;
   onlyUnresolved: boolean;
   onOnlyUnresolvedChange: (value: boolean) => void;
 }
@@ -35,8 +35,8 @@ export default function TransactionFilterBox({
   onSearchChange,
   selectedCategoryId,
   onCategoryChange,
-  selectedBucketId,
-  onBucketChange,
+  selectedBucketIds,
+  onBucketIdsChange,
   onlyUnresolved,
   onOnlyUnresolvedChange,
 }: TransactionFilterBoxProps) {
@@ -135,20 +135,28 @@ export default function TransactionFilterBox({
           ))}
         </TextField>
 
-        {/* Bucket Filter */}
+        {/* Buckets Filter (multi-select) */}
         <TextField
           select
           fullWidth
-          label="Bucket"
-          value={selectedBucketId || "all"}
+          label="Buckets"
+          SelectProps={{
+            multiple: true,
+            renderValue: (selected) => {
+              const labels = (selected as string[]).map(
+                (id) => buckets.find((b) => b.id === id)?.name || id
+              );
+              return labels.join(", ");
+            },
+          }}
+          value={selectedBucketIds || []}
           onChange={(e) => {
-            const value = e.target.value;
-            if (onBucketChange) {
-              onBucketChange(value === "all" ? undefined : value);
+            const value = e.target.value as unknown as string[];
+            if (onBucketIdsChange) {
+              onBucketIdsChange(value.length ? value : undefined);
             }
           }}
         >
-          <MenuItem value="all">All buckets</MenuItem>
           {buckets.map((bucket) => (
             <MenuItem key={bucket.id} value={bucket.id}>
               {bucket.name}

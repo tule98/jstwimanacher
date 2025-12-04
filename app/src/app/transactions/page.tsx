@@ -45,7 +45,7 @@ export default function TransactionsPage() {
   const [heatmapDialogOpen, setHeatmapDialogOpen] = useState(false);
 
   // Use transaction queries hook for filter state management
-  const { filters, setSearch, setCategoryId, setOnlyUnresolved, setBucketId } =
+  const { filters, setSearch, setCategoryId, setOnlyUnresolved, setBucketIds } =
     useTransactionQueries();
 
   // Debounce the search query - wait 500ms after user stops typing
@@ -97,7 +97,7 @@ export default function TransactionsPage() {
     onlyVirtual: filters.onlyVirtual,
     search: debouncedSearch || undefined,
     categoryId: filters.categoryId !== "all" ? filters.categoryId : undefined,
-    bucketId: filters.bucketId,
+    bucketIds: filters.bucketIds,
   });
 
   // Flatten all pages into a single array
@@ -261,16 +261,16 @@ export default function TransactionsPage() {
         onSearchChange={setSearch}
         selectedCategoryId={filters.categoryId}
         onCategoryChange={setCategoryId}
-        selectedBucketId={filters.bucketId}
-        onBucketChange={setBucketId}
+        selectedBucketIds={filters.bucketIds}
+        onBucketIdsChange={setBucketIds}
         onlyUnresolved={filters.onlyUnresolved}
         onOnlyUnresolvedChange={setOnlyUnresolved}
       />
 
       {/* Bucket Balance Stats */}
-      {filters.bucketId && (
+      {filters.bucketIds && filters.bucketIds.length === 1 && (
         <div className="mt-4">
-          <BucketBalanceStatsBox bucketId={filters.bucketId} />
+          <BucketBalanceStatsBox bucketId={filters.bucketIds[0]} />
         </div>
       )}
 

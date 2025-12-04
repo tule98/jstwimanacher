@@ -53,7 +53,7 @@ export function useTransactions(
     onlyVirtual?: boolean;
     search?: string;
     categoryId?: string;
-    bucketId?: string;
+    bucketIds?: string[];
   }
 ) {
   return useInfiniteQuery({

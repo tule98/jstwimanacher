@@ -5,6 +5,7 @@ import {
   validateMigration,
   backupData,
 } from "@/lib/migration";
+import { databaseService } from "@/services/database/databaseService";
 
 /**
  * API endpoint cho data migration to UTC
@@ -33,6 +34,15 @@ export async function GET(request: Request) {
           message: "Backup completed",
         });
 
+      case "transactionBuckets":
+        const dryRunParam = searchParams.get("dryRun");
+        const dryRun = dryRunParam === null ? true : dryRunParam !== "false";
+        const bucketReport =
+          await databaseService.migrateLegacyTransactionBuckets({
+            dryRun,
+          });
+        return NextResponse.json({ success: true, ...bucketReport });
+
       default:
         // Default: return assessment
         const defaultReport = await assessDataMigration();
@@ -49,17 +59,24 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const { action, executeForReal } = await request.json();
+    const { action, executeForReal, dryRun } = await request.json();
 
     if (action === "migrate") {
       const result = await runFullMigration(executeForReal === true);
       return NextResponse.json(result);
-    } else {
-      return NextResponse.json(
-        { error: "Invalid action. Use 'migrate'" },
-        { status: 400 }
-      );
     }
+
+    if (action === "transactionBuckets") {
+      const result = await databaseService.migrateLegacyTransactionBuckets({
+        dryRun: dryRun !== false,
+      });
+      return NextResponse.json({ success: true, ...result });
+    }
+
+    return NextResponse.json(
+      { error: "Invalid action. Use 'migrate' or 'transactionBuckets'" },
+      { status: 400 }
+    );
   } catch (error) {
     console.error("Migration execution error:", error);
     return NextResponse.json(

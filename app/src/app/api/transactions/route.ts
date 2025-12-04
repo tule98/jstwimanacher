@@ -13,7 +13,14 @@ export async function GET(request: Request) {
     const onlyVirtual = searchParams.get("onlyVirtual") === "true";
     const search = searchParams.get("search") || undefined;
     const categoryId = searchParams.get("categoryId") || undefined;
-    const bucketId = searchParams.get("bucketId") || undefined;
+    const bucketIdsParam =
+      searchParams.get("bucketIds") ?? searchParams.get("bucket_ids");
+    const bucketIds = bucketIdsParam
+      ? bucketIdsParam
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : undefined;
 
     if (month && year) {
       // Nếu có tham số month và year, lấy transactions theo tháng
@@ -34,7 +41,7 @@ export async function GET(request: Request) {
           onlyVirtual,
           search,
           categoryId,
-          bucketId,
+          bucketIds,
         }
       );
       return NextResponse.json(transactions);
@@ -57,6 +64,7 @@ export async function POST(request: Request) {
       is_resolved,
       created_at,
       bucket_id,
+      bucket_ids,
     } = await request.json();
 
     if (amount === undefined || !category_id) {
@@ -70,6 +78,8 @@ export async function POST(request: Request) {
       amount: parseFloat(amount),
       category_id,
       bucket_id,
+      bucket_ids:
+        bucket_ids && Array.isArray(bucket_ids) ? bucket_ids : undefined,
       note,
       is_virtual: is_virtual || false,
       is_resolved: is_resolved ?? true,
@@ -96,6 +106,7 @@ export async function PUT(request: Request) {
       is_virtual,
       created_at,
       bucket_id,
+      bucket_ids,
     } = await request.json();
 
     if (!id) {
@@ -110,6 +121,7 @@ export async function PUT(request: Request) {
       amount?: number;
       category_id?: string;
       bucket_id?: string | null;
+      bucket_ids?: string[];
       note?: string;
       is_resolved?: boolean;
       is_virtual?: boolean;
@@ -119,6 +131,8 @@ export async function PUT(request: Request) {
     if (amount !== undefined) updateData.amount = parseFloat(amount);
     if (category_id !== undefined) updateData.category_id = category_id;
     if (bucket_id !== undefined) updateData.bucket_id = bucket_id;
+    if (bucket_ids !== undefined && Array.isArray(bucket_ids))
+      updateData.bucket_ids = bucket_ids;
     if (note !== undefined) updateData.note = note;
     if (is_resolved !== undefined) updateData.is_resolved = is_resolved;
     if (is_virtual !== undefined) updateData.is_virtual = is_virtual;

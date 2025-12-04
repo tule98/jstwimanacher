@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { Autocomplete, TextField, Chip } from "@mui/material";
 import AppCurrencyInput from "@/components/ui/app-currency-input";
 import AppButton from "@/components/ui/app-button";
 import { Switch } from "@/components/ui/switch";
@@ -10,13 +11,6 @@ import { Plus, X, Save } from "lucide-react";
 import TransactionFormTabs from "./TransactionFormTabs";
 import TransactionFormCategorySection from "./TransactionFormCategorySection";
 import { useBuckets } from "@/services/react-query/queries";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select";
 import DateNavigator from "./DateNavigator";
 import { toast } from "sonner";
 import {
@@ -39,10 +33,10 @@ const transactionFormSchema = z.object({
   created_at: z.string().min(1, "Time is required"),
   is_virtual: z.boolean(),
   is_resolved: z.boolean(),
-  bucket_id: z.string().optional(),
+  bucket_ids: z.array(z.string()).default([]),
 });
 
-type TransactionFormData = z.infer<typeof transactionFormSchema>;
+type TransactionFormInput = z.input<typeof transactionFormSchema>;
 
 interface TransactionFormProps {
   onSubmit: (data: TransactionCreateData) => void;
@@ -85,7 +79,7 @@ export default function TransactionForm({
     reset,
     setFocus,
     formState: { isSubmitting },
-  } = useForm<TransactionFormData>({
+  } = useForm<TransactionFormInput>({
     resolver: zodResolver(transactionFormSchema),
     defaultValues: {
       amount: "",
@@ -94,12 +88,13 @@ export default function TransactionForm({
       created_at: format(new Date(), "yyyy-MM-dd"),
       is_virtual: false,
       is_resolved: true,
-      bucket_id: undefined,
+      bucket_ids: [],
     },
   });
 
   const watchedNote = watch("note");
   const watchedCategoryId = watch("category_id");
+  const watchedBucketIds = watch("bucket_ids") || [];
 
   // Get current categories based on active type
   const currentCategories =
@@ -120,12 +115,9 @@ export default function TransactionForm({
       );
       setValue("is_virtual", editTransaction.is_virtual || false);
       setValue("is_resolved", editTransaction.is_resolved ?? true);
-      // Transaction type may include bucket_id; safely access it
-      setValue(
-        "bucket_id",
-        (editTransaction as unknown as { bucket_id?: string | null })
-          .bucket_id || undefined
-      );
+      // Initialize bucket_ids from available buckets relations if present
+      const existingBucketIds = editTransaction.buckets?.map((b) => b.id) || [];
+      setValue("bucket_ids", existingBucketIds);
     } else if (currentCategories.length > 0 && !watchedCategoryId) {
       // For new transactions, set default category
       const defaultCategory =
@@ -145,9 +137,9 @@ export default function TransactionForm({
     if (!editTransaction && buckets && buckets.length > 0) {
       const def = buckets.find((b) => b.is_default);
       if (def) {
-        // Only set if user hasn't selected a bucket yet
-        const current = (watch("bucket_id") as string | undefined) || undefined;
-        if (!current) setValue("bucket_id", def.id);
+        const current = (watch("bucket_ids") as string[] | undefined) || [];
+        if (!current || current.length === 0)
+          setValue("bucket_ids", [def.id], { shouldDirty: false });
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -198,16 +190,17 @@ export default function TransactionForm({
       created_at: currentCreatedAt,
       is_virtual: false,
       is_resolved: true,
+      bucket_ids: defaultBucket ? [defaultBucket.id] : [],
     });
     setRawAmount("");
     userSelectedCategoryRef.current = false;
   };
 
-  const onFormSubmit = (data: TransactionFormData) => {
+  const onFormSubmit = (data: TransactionFormInput) => {
     const createData: TransactionCreateData = {
       amount: Number(rawAmount),
       category_id: data.category_id,
-      bucket_id: data.bucket_id,
+      bucket_ids: data.bucket_ids,
       note: data.note,
       created_at: data.created_at,
       is_virtual: data.is_virtual,
@@ -242,6 +235,7 @@ export default function TransactionForm({
         created_at: currentCreatedAt,
         is_virtual: false,
         is_resolved: true,
+        bucket_ids: defaultBucket ? [defaultBucket.id] : [],
       });
       setRawAmount("");
 
@@ -426,31 +420,42 @@ export default function TransactionForm({
           {/* Bucket selector */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Bucket
+              Buckets
             </label>
-            <Select
-              value={
-                watch("bucket_id") || (defaultBucket ? defaultBucket.id : "")
+            <Autocomplete
+              multiple
+              options={buckets || []}
+              disableCloseOnSelect
+              getOptionLabel={(option) => option.name}
+              value={(buckets || []).filter((b) =>
+                watchedBucketIds.includes(b.id)
+              )}
+              onChange={(_, value) =>
+                setValue(
+                  "bucket_ids",
+                  value.map((v) => v.id),
+                  { shouldDirty: true }
+                )
               }
-              onValueChange={(v) => setValue("bucket_id", v || undefined)}
-            >
-              <SelectTrigger>
-                <SelectValue
-                  placeholder={defaultBucket ? defaultBucket.name : "No bucket"}
+              renderValue={(selected, getValueProps) =>
+                selected.map((option, index) => (
+                  <Chip
+                    variant="outlined"
+                    label={option.name}
+                    {...getValueProps({ index })}
+                    key={option.id}
+                  />
+                ))
+              }
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  placeholder={
+                    defaultBucket ? defaultBucket.name : "Select buckets"
+                  }
                 />
-              </SelectTrigger>
-              <SelectContent>
-                {/* Render buckets; default bucket will be selected automatically for new transactions */}
-                {buckets?.map((b) => (
-                  <SelectItem key={b.id} value={b.id}>
-                    {b.name}
-                  </SelectItem>
-                ))}
-                {!buckets || buckets.length === 0 ? (
-                  <SelectItem value="No buckets">No buckets</SelectItem>
-                ) : null}
-              </SelectContent>
-            </Select>
+              )}
+            />
           </div>
 
           {/* Virtual Transaction Switch */}
@@ -497,31 +502,29 @@ export default function TransactionForm({
 
         {/* Sticky Submit and Cancel buttons */}
         <div className="sticky bottom-0 bg-white dark:bg-gray-950 border-t pt-4 -mx-6 px-6 -mb-4 pb-4">
-          <div className="flex gap-3">
-            {(editTransaction || onCancel) && (
+          <div className="flex items-center justify-end gap-3">
+            {onCancel && (
               <AppButton
                 type="button"
-                variant="outline"
-                size="md"
-                className="flex-1"
+                variant="secondary"
                 onClick={onCancel}
+                disabled={isSubmitting}
               >
-                <X className="mr-2 h-4 w-4" /> Cancel
+                <X className="mr-2 h-4 w-4" />
+                Cancel
               </AppButton>
             )}
-            <AppButton
-              type="submit"
-              loading={isSubmitting}
-              size="md"
-              className="flex-2"
-            >
+
+            <AppButton type="submit" loading={isSubmitting}>
               {editTransaction ? (
                 <>
-                  <Save className="mr-2 h-4 w-4" /> Update
+                  <Save className="mr-2 h-4 w-4" />
+                  Save Changes
                 </>
               ) : (
                 <>
-                  <Plus className="mr-2 h-4 w-4" /> Add New
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Transaction
                 </>
               )}
             </AppButton>

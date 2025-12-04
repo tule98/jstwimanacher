@@ -7,7 +7,7 @@ export interface TransactionFilters {
   categoryId: string;
   onlyUnresolved: boolean;
   onlyVirtual: boolean;
-  bucketId?: string | undefined;
+  bucketIds?: string[] | undefined;
 }
 
 export function useTransactionQueries() {
@@ -22,7 +22,13 @@ export function useTransactionQueries() {
       categoryId: searchParams.get("categoryId") || "all",
       onlyUnresolved: searchParams.get("onlyUnresolved") === "true",
       onlyVirtual: searchParams.get("onlyVirtual") === "true",
-      bucketId: searchParams.get("bucketId") || undefined,
+      bucketIds: (() => {
+        const raw = (searchParams.get("bucketIds") || "")
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean);
+        return raw.length > 0 ? raw : undefined;
+      })(),
     }),
     [searchParams]
   );
@@ -95,10 +101,17 @@ export function useTransactionQueries() {
     [updateFilter]
   );
 
-  const setBucketId = useCallback(
-    (value?: string) =>
-      updateFilter("bucketId" as keyof TransactionFilters, value ?? ""),
-    [updateFilter]
+  const setBucketIds = useCallback(
+    (value?: string[]) => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (!value || value.length === 0) {
+        params.delete("bucketIds");
+      } else {
+        params.set("bucketIds", value.join(","));
+      }
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    },
+    [searchParams, router, pathname]
   );
 
   const setOnlyUnresolved = useCallback(
@@ -116,7 +129,7 @@ export function useTransactionQueries() {
     () =>
       filters.search !== "" ||
       filters.categoryId !== "all" ||
-      (filters.bucketId !== undefined && filters.bucketId !== "all") ||
+      (filters.bucketIds !== undefined && filters.bucketIds.length > 0) ||
       filters.onlyUnresolved ||
       filters.onlyVirtual,
     [filters]
@@ -129,7 +142,7 @@ export function useTransactionQueries() {
     clearFilters,
     setSearch,
     setCategoryId,
-    setBucketId,
+    setBucketIds,
     setOnlyUnresolved,
     setOnlyVirtual,
     hasActiveFilters,
