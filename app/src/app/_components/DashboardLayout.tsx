@@ -12,7 +12,6 @@ import {
   ListItemText,
   Avatar,
   Typography,
-  IconButton,
   useTheme,
   useMediaQuery,
   Divider,
@@ -26,7 +25,6 @@ import {
   CheckSquare,
   Layers,
   FolderKanban,
-  Menu,
   User,
 } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
@@ -66,17 +64,12 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const pathname = usePathname();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
-  const [mobileOpen, setMobileOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
   // Fix hydration mismatch by only rendering after mount
   useEffect(() => {
     setIsMounted(true);
   }, []);
-
-  const handleDrawerToggle = () => {
-    setMobileOpen(!mobileOpen);
-  };
 
   const drawer = (
     <Box
@@ -124,7 +117,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               <ListItemButton
                 component={Link}
                 href={item.href}
-                onClick={() => isMobile && setMobileOpen(false)}
                 sx={{
                   borderRadius: 2,
                   py: 1.5,
@@ -239,26 +231,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         </Drawer>
       )}
 
-      {/* Mobile Drawer */}
-      {isMobile && (
-        <Drawer
-          variant="temporary"
-          open={mobileOpen}
-          onClose={handleDrawerToggle}
-          ModalProps={{
-            keepMounted: true, // Better mobile performance
-          }}
-          sx={{
-            "& .MuiDrawer-paper": {
-              width: DRAWER_WIDTH,
-              boxSizing: "border-box",
-            },
-          }}
-        >
-          {drawer}
-        </Drawer>
-      )}
-
       {/* Main Content Area */}
       <Box
         component="main"
@@ -271,39 +243,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           overflow: "auto",
         }}
       >
-        {/* Mobile Header with Menu Button */}
-        {isMobile && (
-          <Box
-            sx={{
-              position: "sticky",
-              top: 0,
-              zIndex: 1100,
-              bgcolor: "background.paper",
-              borderBottom: "1px solid",
-              borderColor: "divider",
-              px: 2,
-              py: 1.5,
-              display: "flex",
-              alignItems: "center",
-              gap: 2,
-            }}
-          >
-            <IconButton
-              color="inherit"
-              aria-label="open drawer"
-              edge="start"
-              onClick={handleDrawerToggle}
-            >
-              <Menu />
-            </IconButton>
-            <Typography variant="h6" sx={{ fontWeight: 600 }}>
-              💂 Doorkeeper
-            </Typography>
-          </Box>
-        )}
-
         {/* Page Content */}
-        <Box sx={{ p: { xs: 0, sm: 3, md: 4 } }}>{children}</Box>
+        <Box sx={{ p: { xs: 0, sm: 2, md: 3 } }}>{children}</Box>
       </Box>
     </Box>
   );

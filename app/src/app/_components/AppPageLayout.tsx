@@ -31,8 +31,8 @@ export default function AppPageLayout({
           {header}
         </Box>
       ) : null}
-      <Box sx={{ px: { xs: 2, md: 3 }, ...contentSx }}>{children}</Box>
-      {footer ? <Box sx={{ mt: 3 }}>{footer}</Box> : null}
+      <Box sx={{ px: { xs: 1.5, md: 2.5 }, ...contentSx }}>{children}</Box>
+      {footer ? <Box sx={{ mt: 2 }}>{footer}</Box> : null}
     </Box>
   );
 }
