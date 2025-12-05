@@ -4,6 +4,11 @@ use material ui for ui components and styling.
 use lucide icons for icons, don't use material ui icons.
 pay attention on light and dark mode support.
 
+# Feature Overview
+
+Change the dashboard layout to hide the topbar and drawernav when in mobile view.
+Mobile view only show bottom navigation bar for navigation.
+
 <!--  -->
 
 # Feature descriptions

@@ -38,10 +38,6 @@ Note: Dense ≠ clutter. Keep some breathing space to avoid overwhelming users.
 
 🟦 Shape & Components
 
-• Rounded shapes
-– Medium radius for most components
-– Stronger rounding for CTA buttons to feel friendly
-
 • Flat design
 – Avoid heavy shadows
 – Use subtle borders or soft contrast blocks
