@@ -92,9 +92,13 @@ export default function TransactionForm({
     },
   });
 
+  const watchedCreatedAt = watch("created_at");
   const watchedNote = watch("note");
   const watchedCategoryId = watch("category_id");
   const watchedBucketIds = watch("bucket_ids") || [];
+
+  const createdAtField = register("created_at");
+  const noteField = register("note");
 
   // Get current categories based on active type
   const currentCategories =
@@ -305,39 +309,43 @@ export default function TransactionForm({
         <div className="flex-1 space-y-3 pb-4">
           {/* Date Input - First Field */}
           <div className="flex flex-col gap-2">
-            <label
-              htmlFor="created_at"
-              className="text-sm font-medium text-gray-700 dark:text-gray-300"
-            >
-              Date
-            </label>
-            <input
+            <TextField
               id="created_at"
               type="date"
-              {...register("created_at")}
-              className="rounded-lg px-3 py-2 border focus:outline-none focus:ring-2 focus:ring-primary/50 shadow dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+              fullWidth
+              label="Date"
+              value={watchedCreatedAt || ""}
+              onChange={(event) => {
+                createdAtField.onChange(event);
+              }}
+              onBlur={(event) => {
+                createdAtField.onBlur(event);
+              }}
+              name={createdAtField.name}
+              inputRef={createdAtField.ref}
+              InputLabelProps={{ shrink: true }}
               required
             />
 
             {/* Date Navigator */}
             <DateNavigator
-              currentDate={watch("created_at")}
+              currentDate={watchedCreatedAt}
               onDateChange={(date) => setValue("created_at", date)}
             />
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="flex flex-col gap-2 relative">
-              <label
-                htmlFor="note"
-                className="text-sm font-medium text-gray-700 dark:text-gray-300"
-              >
-                Transaction Description
-              </label>
-              <input
+              <TextField
                 id="note"
-                type="text"
-                {...register("note")}
+                label="Transaction description"
+                fullWidth
+                value={watchedNote || ""}
+                name={noteField.name}
+                inputRef={noteField.ref}
+                onChange={(event) => {
+                  noteField.onChange(event);
+                }}
                 onFocus={() => {
                   if (!editTransaction) {
                     const yesterday = startOfDay(subDays(new Date(), 1));
@@ -364,7 +372,8 @@ export default function TransactionForm({
                     }
                   }
                 }}
-                onBlur={() => {
+                onBlur={(event) => {
+                  noteField.onBlur(event);
                   // Delay to allow suggestion click to register before hiding and auto-selecting
                   setTimeout(() => {
                     setShowSuggestions(false);
@@ -372,7 +381,6 @@ export default function TransactionForm({
                   }, 160);
                 }}
                 placeholder="Enter description"
-                className="rounded-lg px-3 py-2 border focus:outline-none focus:ring-2 focus:ring-primary/50 shadow dark:bg-gray-800 dark:border-gray-700 dark:text-white"
                 required
               />
 

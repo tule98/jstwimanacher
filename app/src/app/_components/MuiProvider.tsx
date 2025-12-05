@@ -257,6 +257,16 @@ export default function MuiProvider({
               },
             },
           },
+          MuiTextField: {
+            defaultProps: {
+              autoComplete: "off",
+              inputProps: {
+                autoCapitalize: "none",
+                autoCorrect: "off",
+                spellCheck: false,
+              },
+            },
+          },
           MuiInputBase: {
             styleOverrides: {
               root: {

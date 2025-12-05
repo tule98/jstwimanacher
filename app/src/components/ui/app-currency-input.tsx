@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import AppInput from "./app-input";
+import { TextField } from "@mui/material";
 
 interface AppCurrencyInputProps {
   value: string;
@@ -37,7 +37,7 @@ export default function AppCurrencyInput({
   };
 
   return (
-    <AppInput
+    <TextField
       id={id}
       type="text"
       value={value}
@@ -46,6 +46,8 @@ export default function AppCurrencyInput({
       disabled={disabled}
       required={required}
       className={className}
+      variant="outlined"
+      fullWidth
     />
   );
 }
