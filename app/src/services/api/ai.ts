@@ -53,9 +53,8 @@ export async function inferDueDateFromDescription(
     const trimmed = content.trim();
 
     if (trimmed && /^\d{4}-\d{2}-\d{2}T/.test(trimmed)) {
-      // Parse as GMT+7 local time and convert to UTC for storage
-      const parsedDate = new Date(trimmed);
-      return toUTC(parsedDate, VN_TIMEZONE);
+      // Treat the string as Asia/Ho_Chi_Minh local time, then convert to UTC
+      return toUTC(trimmed, VN_TIMEZONE);
     }
 
     // Fallback if response format is invalid - default to 06:00 AM

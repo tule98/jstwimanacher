@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { todos, NewTodo } from "@/db/schema";
 import { and, gte, lte } from "drizzle-orm";
 import { inferDueDateFromDescription } from "@/services/api/ai";
+import { parseUserDateToUTC } from "@/lib/timezone";
 
 // GET /api/todos?start=ISO&end=ISO
 export async function GET(req: NextRequest) {
@@ -30,28 +31,30 @@ export async function POST(req: NextRequest) {
     body.due_date ||
     (await inferDueDateFromDescription(body.description || ""));
 
-  const payload: NewTodo = {
-    id: body.id ?? crypto.randomUUID(),
-    description: body.description,
-    due_date: inferredDue, // Already in UTC from AI service
-    status: body.status ?? "not_completed",
-    created_at: undefined,
-    updated_at: undefined,
-  };
+  const dueDateUTC = inferredDue ? parseUserDateToUTC(inferredDue) : undefined;
 
   // Basic validation
-  if (!payload.description) {
+  if (!body.description) {
     return NextResponse.json(
       { error: "Description is required" },
       { status: 400 }
     );
   }
-  if (!payload.due_date) {
+  if (!dueDateUTC) {
     return NextResponse.json(
       { error: "Unable to infer due_date" },
       { status: 400 }
     );
   }
+
+  const payload: NewTodo = {
+    id: body.id ?? crypto.randomUUID(),
+    description: body.description,
+    due_date: dueDateUTC, // Always store UTC
+    status: body.status ?? "not_completed",
+    created_at: undefined,
+    updated_at: undefined,
+  };
 
   await db.insert(todos).values(payload);
   return NextResponse.json({ item: payload }, { status: 201 });

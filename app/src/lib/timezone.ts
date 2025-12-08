@@ -135,19 +135,30 @@ export function getTodayBoundsUTC(sourceTimezone: string = VN_TIMEZONE): {
  * @returns UTC ISO string
  */
 export function parseUserDateToUTC(dateInput: string | Date): UTCString {
-  // If input is already a valid UTC string, return as is
-  if (typeof dateInput === "string" && isValidUTCString(dateInput)) {
-    return dateInput as UTCString;
+  if (typeof dateInput === "string") {
+    // Already UTC -> return as-is
+    if (isValidUTCString(dateInput)) {
+      return dateInput as UTCString;
+    }
+
+    const parsed = parseISO(dateInput);
+    const hasOffset = /[zZ]|[+-]\d{2}:?\d{2}$/.test(dateInput);
+
+    // If the string carries an explicit offset, parseISO already produced UTC
+    if (hasOffset) {
+      return parsed.toISOString() as UTCString;
+    }
+
+    // No offset -> treat as Vietnam local time and convert to UTC
+    return fromZonedTime(parsed, VN_TIMEZONE).toISOString() as UTCString;
   }
 
-  // If input is a Date object already in UTC, return its ISO string
-  if (dateInput instanceof Date && isDateInUTC(dateInput)) {
+  // Date objects: convert based on Vietnam local time unless already UTC
+  if (isDateInUTC(dateInput)) {
     return dateInput.toISOString() as UTCString;
   }
 
-  const inputDate =
-    typeof dateInput === "string" ? parseISO(dateInput) : dateInput;
-  return toUTC(inputDate, VN_TIMEZONE);
+  return fromZonedTime(dateInput, VN_TIMEZONE).toISOString() as UTCString;
 }
 
 /**

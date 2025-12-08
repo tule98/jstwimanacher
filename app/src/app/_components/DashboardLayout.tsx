@@ -25,6 +25,7 @@ import {
   CheckSquare,
   Layers,
   FolderKanban,
+  ListTodo,
   User,
 } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
@@ -43,10 +44,11 @@ const navItems: NavItem[] = [
     label: "Transactions",
     icon: <CreditCard size={20} />,
   },
-  { href: "/stats", label: "Statistics", icon: <PieChart size={20} /> },
+  { href: "/habits", label: "Habits", icon: <CheckSquare size={20} /> },
+  { href: "/todos", label: "Todos", icon: <ListTodo size={20} /> },
+  { href: "/stats", label: "Stats", icon: <PieChart size={20} /> },
   { href: "/conversions", label: "Conversions", icon: <Link2 size={20} /> },
   { href: "/stories", label: "Stories", icon: <BookOpen size={20} /> },
-  { href: "/habits", label: "Habits", icon: <CheckSquare size={20} /> },
   { href: "/flash-cards", label: "Flash Cards", icon: <Layers size={20} /> },
   {
     href: "/categories",
@@ -111,7 +113,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Navigation Links */}
       <List sx={{ flex: 1, px: 2, py: 2 }}>
         {navItems.map((item) => {
-          const isActive = pathname === item.href;
+          const isActive = pathname?.startsWith(item.href);
           return (
             <ListItem key={item.href} disablePadding sx={{ mb: 0.5 }}>
               <ListItemButton
