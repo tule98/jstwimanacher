@@ -63,6 +63,7 @@ export default function TransactionForm({
   editTransaction = null,
   showTypeSelector = true,
   renderActions,
+  onFormReady,
 }: TransactionFormProps) {
   // Separate income and expense categories
   const { data: categories } = useCategories();
@@ -316,6 +317,11 @@ export default function TransactionForm({
       <Box
         component="form"
         onSubmit={handleSubmit(onFormSubmit)}
+        ref={(formElement) => {
+          if (formElement && onFormReady) {
+            onFormReady(formElement as HTMLFormElement);
+          }
+        }}
         sx={{ display: "flex", flexDirection: "column", flex: 1 }}
       >
         <Stack spacing={3} sx={{ flex: 1, pb: 2 }}>
