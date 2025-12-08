@@ -44,26 +44,31 @@ export default function MuiProvider({
         palette: {
           mode,
           primary: {
-            main: "#1976d2", // Material UI blue
-            light: "#42a5f5",
-            dark: "#1565c0",
+            main: "#1b42d8",
+            light: "#4d67e2",
+            dark: "#132f9a",
+          },
+          secondary: {
+            main: "#f2d0c9",
+            light: "#f6e0dc",
+            dark: "#e3b0a5",
           },
           ...(mode === "light"
             ? {
                 background: {
-                  default: "#f8fafc",
-                  paper: "#ffffff",
+                  default: "#fdfaf9",
+                  paper: "#fcf5f4",
                 },
               }
             : {
                 background: {
-                  default: "#0c111c",
-                  paper: "#161b27",
+                  default: "#020615",
+                  paper: "#050d2b",
                 },
               }),
         },
         shape: {
-          borderRadius: 12,
+          borderRadius: 0,
         },
         spacing: 6,
         typography: {
@@ -104,9 +109,7 @@ export default function MuiProvider({
               root: {
                 textTransform: "none",
                 boxShadow: "none",
-                borderRadius: 12,
-                borderTopRightRadius: 28,
-                borderBottomRightRadius: 18,
+                borderRadius: 0,
                 padding: "4px 14px",
                 "&:hover": {
                   boxShadow: "none",
@@ -145,9 +148,7 @@ export default function MuiProvider({
             },
             styleOverrides: {
               root: {
-                borderRadius: 10,
-                borderTopRightRadius: 24,
-                borderBottomRightRadius: 16,
+                borderRadius: 0,
                 fontSize: "0.75rem",
                 fontWeight: 600,
                 padding: "2px 6px",
@@ -157,7 +158,7 @@ export default function MuiProvider({
           MuiCard: {
             styleOverrides: {
               root: {
-                borderRadius: 16,
+                borderRadius: 0,
                 border: "1px solid",
                 borderColor: mode === "light" ? "#e2e8f0" : "#1f2933",
                 backgroundImage: "none",
