@@ -14,28 +14,28 @@ import {
   Layers,
   CheckSquare,
   ListTodo,
+  ChevronUp,
 } from "lucide-react";
 import {
   Box,
   Paper,
   Typography,
-  Dialog,
-  DialogTitle,
-  DialogContent,
+  Modal,
   ButtonBase,
   Stack,
   Fab,
   useTheme,
-  Grid,
 } from "@mui/material";
 
-type MoreItem = {
+type NavModule = {
   href: string;
   label: string;
-  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+  icon: React.ElementType;
+  onAdd?: () => void;
 };
 
-const MORE_ITEMS: MoreItem[] = [
+const NAV_MODULES: NavModule[] = [
+  { href: "/transactions", label: "Transactions", icon: CreditCard },
   { href: "/habits", label: "Habits", icon: CheckSquare },
   { href: "/todos", label: "Todos", icon: ListTodo },
   { href: "/stats", label: "Stats", icon: PieChart },
@@ -50,17 +50,66 @@ export default function BottomNav() {
   const pathname = usePathname();
   const router = useRouter();
   const theme = useTheme();
-  const [moreOpen, setMoreOpen] = React.useState(false);
+  const [navAnchorEl, setNavAnchorEl] =
+    React.useState<HTMLButtonElement | null>(null);
 
-  const isTransactions = pathname?.startsWith("/transactions");
+  // Get current active module
+  const getCurrentModule = (): NavModule | undefined => {
+    return NAV_MODULES.find((module) => pathname?.startsWith(module.href));
+  };
+
+  const currentModule = getCurrentModule();
+
+  const handleNavOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setNavAnchorEl(event.currentTarget);
+  };
+
+  const handleNavClose = () => {
+    setNavAnchorEl(null);
+  };
+
+  const handleModuleSelect = (href: string) => {
+    router.push(href);
+    handleNavClose();
+  };
 
   const handleAddClick = () => {
-    if (isTransactions) {
+    // Handle transactions module
+    if (pathname?.startsWith("/transactions")) {
       if (typeof window !== "undefined") {
         window.dispatchEvent(new CustomEvent("open-create-transaction"));
       }
-    } else {
-      router.push("/transactions?create=1");
+      return;
+    }
+
+    // Handle habits module
+    if (pathname?.startsWith("/habits")) {
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("open-create-habit"));
+      }
+      return;
+    }
+
+    // Handle todos module
+    if (pathname?.startsWith("/todos")) {
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("open-create-todo"));
+      }
+      return;
+    }
+
+    // Handle stories module
+    if (pathname?.startsWith("/stories")) {
+      router.push("/stories/new");
+      return;
+    }
+
+    // Handle flash-cards module
+    if (pathname?.startsWith("/flash-cards")) {
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("open-create-flash-card"));
+      }
+      return;
     }
   };
 
@@ -77,7 +126,14 @@ export default function BottomNav() {
           zIndex: 50,
         }}
       >
-        <Box sx={{ mx: "auto", width: "100%", maxWidth: "lg" }}>
+        <Box
+          sx={{
+            mx: "auto",
+            width: "100%",
+            maxWidth: "lg",
+            position: "relative",
+          }}
+        >
           <Paper
             elevation={8}
             sx={{
@@ -93,150 +149,141 @@ export default function BottomNav() {
               direction="row"
               alignItems="center"
               justifyContent="space-between"
-              sx={{ px: 3, py: 1.5 }}
+              sx={{ px: 2, py: 1.5 }}
             >
-              {/* Transactions */}
+              {/* Left Section: Navigation Module Selector */}
               <ButtonBase
-                component={Link}
-                href="/transactions"
+                onClick={handleNavOpen}
                 sx={{
                   display: "flex",
-                  flexDirection: "column",
                   alignItems: "center",
-                  gap: 0.5,
-                  py: 0.5,
-                  px: 1,
+                  gap: 1,
+                  py: 0.75,
+                  px: 1.5,
                   borderRadius: 1,
-                  color: isTransactions ? "primary.main" : "text.secondary",
+                  color: "text.primary",
                   transition: "all 0.2s",
+                  "&:hover": {
+                    bgcolor: "action.hover",
+                  },
                 }}
+                aria-haspopup="menu"
+                aria-expanded={Boolean(navAnchorEl)}
               >
-                <CreditCard size={24} />
-                <Typography variant="caption" fontWeight={500}>
-                  Transactions
-                </Typography>
+                {currentModule ? (
+                  <>
+                    <currentModule.icon size={24} />
+                    <Typography
+                      variant="body1"
+                      textTransform="uppercase"
+                      fontWeight={500}
+                      noWrap
+                    >
+                      {currentModule.label}
+                    </Typography>
+                    <ChevronUp size={16} />
+                  </>
+                ) : (
+                  <>
+                    <Ellipsis size={24} />
+                    <Typography variant="caption" fontWeight={500}>
+                      Menu
+                    </Typography>
+                  </>
+                )}
               </ButtonBase>
 
-              {/* Spacer for center button */}
-              <Box sx={{ width: 64 }} />
-
-              {/* More */}
-              <ButtonBase
-                onClick={() => setMoreOpen(true)}
-                sx={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  gap: 0.5,
-                  py: 0.5,
-                  px: 1,
-                  borderRadius: 1,
-                  color:
-                    pathname === "/more" ? "primary.main" : "text.secondary",
-                  transition: "all 0.2s",
-                }}
-                aria-haspopup="dialog"
-                aria-expanded={moreOpen}
-              >
-                <Ellipsis size={24} />
-                <Typography variant="caption" fontWeight={500}>
-                  More
-                </Typography>
-              </ButtonBase>
-            </Stack>
-
-            {/* Center Add Button (only on /transactions) */}
-            {isTransactions && (
-              <Box
+              {/* Right Section: Floating Action Button */}
+              <Fab
+                onClick={handleAddClick}
+                color="primary"
+                size="medium"
+                aria-label="Add"
                 sx={{
                   position: "absolute",
-                  top: -24,
-                  left: "50%",
-                  transform: "translateX(-50%)",
+                  right: 16,
+                  bottom: "50%",
+                  boxShadow: 4,
+                  "&:hover": {
+                    boxShadow: 6,
+                  },
+                  "&:active": {
+                    transform: "translateY(50%) scale(0.95)",
+                  },
                 }}
               >
-                <Fab
-                  color="primary"
-                  onClick={handleAddClick}
-                  aria-label="Add transaction"
-                  sx={{
-                    width: 56,
-                    height: 56,
-                    boxShadow: 4,
-                    border: 4,
-                    borderColor: "background.paper",
-                    "&:hover": {
-                      boxShadow: 6,
-                    },
-                    "&:active": {
-                      transform: "scale(0.95)",
-                    },
-                  }}
-                >
-                  <Plus size={24} />
-                </Fab>
-              </Box>
-            )}
+                <Plus size={24} />
+              </Fab>
+            </Stack>
           </Paper>
         </Box>
       </Box>
 
-      {/* More Dialog */}
-      <Dialog
-        open={moreOpen}
-        onClose={() => setMoreOpen(false)}
-        maxWidth="sm"
-        fullWidth
+      {/* Navigation Bottom Sheet */}
+      <Modal
+        open={Boolean(navAnchorEl)}
+        onClose={handleNavClose}
+        sx={{
+          display: { xs: "flex", md: "none" },
+          alignItems: "flex-end",
+          "& .MuiBackdrop-root": {
+            backgroundColor: "rgba(0, 0, 0, 0.4)",
+          },
+        }}
       >
-        <DialogTitle>More</DialogTitle>
-        <DialogContent>
-          <Grid container spacing={2}>
-            {MORE_ITEMS.map((item) => (
-              <Grid key={item.href}>
+        <Paper
+          sx={{
+            width: "100%",
+            borderRadius: "16px 16px 0 0",
+            borderTop: 1,
+            borderColor: "divider",
+            maxHeight: "80vh",
+            overflow: "auto",
+            bgcolor: "background.paper",
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <Stack sx={{ py: 2 }}>
+            {NAV_MODULES.map((module) => {
+              const isActive = pathname?.startsWith(module.href);
+              return (
                 <ButtonBase
+                  key={module.href}
                   component={Link}
-                  href={item.href}
-                  onClick={() => setMoreOpen(false)}
+                  href={module.href}
+                  onClick={() => handleModuleSelect(module.href)}
                   sx={{
-                    width: "100%",
                     display: "flex",
-                    flexDirection: "column",
                     alignItems: "center",
-                    justifyContent: "center",
-                    gap: 1,
-                    p: 2,
-                    borderRadius: 0,
-                    border: 1,
-                    borderColor: "divider",
+                    justifyContent: "flex-start",
+                    gap: 2,
+                    px: 3,
+                    py: 1.5,
+                    width: "100%",
+                    color: isActive ? "primary.main" : "text.primary",
+                    fontWeight: isActive ? 600 : 500,
                     transition: "all 0.2s",
+                    bgcolor: isActive ? "action.selected" : "transparent",
                     "&:hover": {
-                      bgcolor:
-                        theme.palette.mode === "dark"
-                          ? "rgba(27, 66, 216, 0.1)"
-                          : "rgba(27, 66, 216, 0.05)",
+                      bgcolor: "action.hover",
                     },
                   }}
                 >
-                  <item.icon
+                  <module.icon
+                    size={20}
                     style={{
-                      width: 24,
-                      height: 24,
-                      color: theme.palette.primary.main,
+                      color: isActive ? theme.palette.primary.main : undefined,
                     }}
                   />
-                  <Typography
-                    variant="caption"
-                    fontWeight={500}
-                    color="text.primary"
-                  >
-                    {item.label}
+                  <Typography variant="body2" fontWeight={isActive ? 600 : 500}>
+                    {module.label}
                   </Typography>
                 </ButtonBase>
-              </Grid>
-            ))}
-          </Grid>
-        </DialogContent>
-      </Dialog>
+              );
+            })}
+          </Stack>
+        </Paper>
+      </Modal>
     </>
   );
 }

@@ -33,6 +33,8 @@ import API, { Asset, AssetCreateData, Category } from "@/services/api/client";
 import { useCreateCategory } from "@/services/react-query/mutations";
 import CategoryCreateForm from "@/app/transactions/_components/CategoryCreateForm";
 import { toast } from "sonner";
+import { Stack, Typography, Divider, Box } from "@mui/material";
+import ThemeToggle from "../_components/ThemeToggle";
 
 export default function ConfigPage() {
   const queryClient = useQueryClient();
@@ -218,6 +220,16 @@ export default function ConfigPage() {
 
   return (
     <AppLayout className="p-4 sm:p-6">
+      {/* Theme Section - MUI only, zero border-radius, style guide */}
+      <Box sx={{ mb: 3, p: 2, bgcolor: "background.paper", borderRadius: 0 }}>
+        <Stack direction="row" spacing={2} alignItems="center">
+          <Typography variant="h6" sx={{ fontWeight: 600 }}>
+            Theme
+          </Typography>
+          <ThemeToggle />
+        </Stack>
+        <Divider sx={{ mt: 2 }} />
+      </Box>
       <AppCard
         title="Cấu hình hệ thống"
         description="Quản lý danh mục và tài sản"
