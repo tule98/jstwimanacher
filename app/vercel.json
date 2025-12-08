@@ -5,7 +5,7 @@
   "framework": "nextjs",
   "crons": [
     {
-      "path": "/api/scheduler/daily",
+      "path": "/api/cron/daily",
       "schedule": "0 23 * * *"
     }
   ]

@@ -16,6 +16,11 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Allow cron endpoints to pass through (Vercel Cron verification handled internally)
+  if (request.nextUrl.pathname.startsWith("/api/cron/")) {
+    return NextResponse.next();
+  }
+
   // Check if request is to API routes
   if (request.nextUrl.pathname.startsWith("/api/")) {
     const apiKeyFromCookie = request.cookies.get("api_key")?.value;
