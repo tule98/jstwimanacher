@@ -1,6 +1,6 @@
 import React from "react";
 import { addDays, subDays, format } from "date-fns";
-import AppButton from "@/components/ui/app-button";
+import { Stack, Button } from "@mui/material";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface DateNavigatorProps {
@@ -30,36 +30,51 @@ export default function DateNavigator({
   };
 
   return (
-    <div className="flex gap-2 mt-1">
-      <AppButton
+    <Stack direction="row" spacing={1}>
+      <Button
         type="button"
-        variant="ghost"
-        size="sm"
+        variant="outlined"
+        size="small"
         onClick={handlePreviousDay}
-        className="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300"
+        startIcon={<ChevronLeft size={14} />}
+        sx={{
+          fontSize: "0.75rem",
+          px: 1.5,
+          py: 0.5,
+          minHeight: 28,
+        }}
       >
-        <ChevronLeft className="h-3 w-3 mr-1" />
         Previous day
-      </AppButton>
-      <AppButton
+      </Button>
+      <Button
         type="button"
-        variant="ghost"
-        size="sm"
+        variant="outlined"
+        size="small"
         onClick={handleToday}
-        className="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300"
+        sx={{
+          fontSize: "0.75rem",
+          px: 1.5,
+          py: 0.5,
+          minHeight: 28,
+        }}
       >
         Today
-      </AppButton>
-      <AppButton
+      </Button>
+      <Button
         type="button"
-        variant="ghost"
-        size="sm"
+        variant="outlined"
+        size="small"
         onClick={handleNextDay}
-        className="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300"
+        endIcon={<ChevronRight size={14} />}
+        sx={{
+          fontSize: "0.75rem",
+          px: 1.5,
+          py: 0.5,
+          minHeight: 28,
+        }}
       >
         Next day
-        <ChevronRight className="h-3 w-3 ml-1" />
-      </AppButton>
-    </div>
+      </Button>
+    </Stack>
   );
 }

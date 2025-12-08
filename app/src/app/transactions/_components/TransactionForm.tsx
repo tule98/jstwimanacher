@@ -3,10 +3,17 @@ import React, { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Autocomplete, TextField, Chip } from "@mui/material";
+import {
+  Autocomplete,
+  TextField,
+  Chip,
+  Box,
+  Stack,
+  Button,
+  Switch,
+  Typography,
+} from "@mui/material";
 import AppCurrencyInput from "@/components/ui/app-currency-input";
-import AppButton from "@/components/ui/app-button";
-import { Switch } from "@/components/ui/switch";
 import { Plus, X, Save } from "lucide-react";
 import TransactionFormTabs from "./TransactionFormTabs";
 import TransactionFormCategorySection from "./TransactionFormCategorySection";
@@ -43,6 +50,11 @@ interface TransactionFormProps {
   onCancel?: () => void;
   editTransaction?: Transaction | null;
   showTypeSelector?: boolean;
+  renderActions?: (props: {
+    isSubmitting: boolean;
+    editTransaction: Transaction | null;
+  }) => React.ReactNode;
+  onFormReady?: (formElement: HTMLFormElement) => void;
 }
 
 export default function TransactionForm({
@@ -50,6 +62,7 @@ export default function TransactionForm({
   onCancel,
   editTransaction = null,
   showTypeSelector = true,
+  renderActions,
 }: TransactionFormProps) {
   // Separate income and expense categories
   const { data: categories } = useCategories();
@@ -292,8 +305,7 @@ export default function TransactionForm({
   };
 
   return (
-    <div className="flex flex-col h-full gap-3">
-      {/* Transaction Type Selector */}
+    <Stack spacing={3} sx={{ height: "100%" }}>
       {showTypeSelector && (
         <TransactionFormTabs
           activeType={activeType}
@@ -301,14 +313,13 @@ export default function TransactionForm({
           onFormReset={handleFormReset}
         />
       )}
-
-      <form
-        className="flex flex-col flex-1"
+      <Box
+        component="form"
         onSubmit={handleSubmit(onFormSubmit)}
+        sx={{ display: "flex", flexDirection: "column", flex: 1 }}
       >
-        <div className="flex-1 space-y-3 pb-4">
-          {/* Date Input - First Field */}
-          <div className="flex flex-col gap-2">
+        <Stack spacing={3} sx={{ flex: 1, pb: 2 }}>
+          <Box>
             <TextField
               id="created_at"
               type="date"
@@ -327,109 +338,104 @@ export default function TransactionForm({
               required
             />
 
-            {/* Date Navigator */}
-            <DateNavigator
-              currentDate={watchedCreatedAt}
-              onDateChange={(date) => setValue("created_at", date)}
-            />
-          </div>
+            <Box sx={{ mt: 1.5 }}>
+              <DateNavigator
+                currentDate={watchedCreatedAt}
+                onDateChange={(date) => setValue("created_at", date)}
+              />
+            </Box>
+          </Box>
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="flex flex-col gap-2 relative">
-              <TextField
-                id="note"
-                label="Transaction description"
-                fullWidth
-                value={watchedNote || ""}
-                name={noteField.name}
-                inputRef={noteField.ref}
-                onChange={(event) => {
-                  noteField.onChange(event);
-                }}
-                onFocus={() => {
-                  if (!editTransaction) {
-                    const yesterday = startOfDay(subDays(new Date(), 1));
-                    const yesterdayTransactions = transactions
-                      .filter((tx) => {
-                        const txDate = startOfDay(parseISO(tx.created_at));
-                        return (
-                          isEqual(txDate, yesterday) &&
-                          tx.note &&
-                          tx.note.trim() &&
-                          tx.category.type === activeType
-                        );
-                      })
-                      .sort((a, b) =>
-                        compareDesc(
-                          parseISO(a.created_at),
-                          parseISO(b.created_at)
+          <Box>
+            <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+              <Box sx={{ flex: 1, position: "relative" }}>
+                <TextField
+                  id="note"
+                  label="Transaction description"
+                  fullWidth
+                  value={watchedNote || ""}
+                  name={noteField.name}
+                  inputRef={noteField.ref}
+                  onChange={(event) => {
+                    noteField.onChange(event);
+                  }}
+                  onFocus={() => {
+                    if (!editTransaction) {
+                      const yesterday = startOfDay(subDays(new Date(), 1));
+                      const yesterdayTransactions = transactions
+                        .filter((tx) => {
+                          const txDate = startOfDay(parseISO(tx.created_at));
+                          return (
+                            isEqual(txDate, yesterday) &&
+                            tx.note &&
+                            tx.note.trim() &&
+                            tx.category.type === activeType
+                          );
+                        })
+                        .sort((a, b) =>
+                          compareDesc(
+                            parseISO(a.created_at),
+                            parseISO(b.created_at)
+                          )
                         )
-                      )
-                      .slice(0, 5);
+                        .slice(0, 5);
 
-                    if (yesterdayTransactions.length > 0) {
-                      setShowSuggestions(true);
+                      if (yesterdayTransactions.length > 0) {
+                        setShowSuggestions(true);
+                      }
                     }
-                  }
-                }}
-                onBlur={(event) => {
-                  noteField.onBlur(event);
-                  // Delay to allow suggestion click to register before hiding and auto-selecting
-                  setTimeout(() => {
-                    setShowSuggestions(false);
-                    autoSelectCategoryFromNote();
-                  }, 160);
-                }}
-                placeholder="Enter description"
-                required
-              />
+                  }}
+                  onBlur={(event) => {
+                    noteField.onBlur(event);
+                    setTimeout(() => {
+                      setShowSuggestions(false);
+                      autoSelectCategoryFromNote();
+                    }, 160);
+                  }}
+                  placeholder="Enter description"
+                  required
+                />
 
-              {/* Suggestions dropdown */}
-              {showSuggestions &&
-                suggestions.length > 0 &&
-                !editTransaction && (
-                  <TransactionFormDescriptionSuggestionPopover
-                    showSuggestions={showSuggestions}
-                    suggestions={suggestions}
-                    onSuggestionSelect={handleSuggestionSelect}
-                  />
-                )}
-            </div>
-            <div className="flex flex-col gap-2">
-              <label
-                htmlFor="amount"
-                className="text-sm font-medium text-gray-700 dark:text-gray-300"
-              >
-                Amount
-              </label>
-              <AppCurrencyInput
-                id="amount"
-                value={watch("amount")}
-                onChange={(formattedValue, rawValue) => {
-                  setRawAmount(rawValue);
-                  setValue("amount", formattedValue);
-                }}
-                placeholder="Enter amount"
-                required
-              />
-            </div>
-          </div>
+                {showSuggestions &&
+                  suggestions.length > 0 &&
+                  !editTransaction && (
+                    <TransactionFormDescriptionSuggestionPopover
+                      showSuggestions={showSuggestions}
+                      suggestions={suggestions}
+                      onSuggestionSelect={handleSuggestionSelect}
+                    />
+                  )}
+              </Box>
+
+              <Box sx={{ flex: 1 }}>
+                <AppCurrencyInput
+                  id="amount"
+                  value={watch("amount")}
+                  onChange={(formattedValue, rawValue) => {
+                    setRawAmount(rawValue);
+                    setValue("amount", formattedValue);
+                  }}
+                  placeholder="Enter amount"
+                  required
+                />
+              </Box>
+            </Stack>
+          </Box>
 
           <TransactionFormCategorySection
             categories={currentCategories}
             selectedCategoryId={watch("category_id")}
             transactionType={activeType}
             onCategorySelect={(categoryId) => {
-              userSelectedCategoryRef.current = true; // mark as manual selection
+              userSelectedCategoryRef.current = true;
               setValue("category_id", categoryId);
             }}
           />
 
-          {/* Bucket selector */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          <Box>
+            <Typography variant="subtitle2" sx={{ mb: 1 }}>
               Buckets
-            </label>
+            </Typography>
             <Autocomplete
               multiple
               options={buckets || []}
@@ -464,81 +470,105 @@ export default function TransactionForm({
                 />
               )}
             />
-          </div>
+          </Box>
 
-          {/* Virtual Transaction Switch */}
-          <div className="flex items-center justify-between gap-4 p-3 rounded-lg border border-gray-200 dark:border-gray-700">
-            <div className="flex-1">
-              <label
-                htmlFor="is_virtual"
-                className="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer"
-              >
-                Virtual Transaction
-              </label>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                Not counted in actual{" "}
-                {activeType === "income" ? "income" : "expenses"}
-              </p>
-            </div>
-            <Switch
-              id="is_virtual"
-              checked={watch("is_virtual")}
-              onCheckedChange={(checked) => setValue("is_virtual", checked)}
-            />
-          </div>
+          <Stack spacing={2}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 2,
+                p: 2,
+                borderRadius: 1,
+                border: 1,
+                borderColor: "divider",
+              }}
+            >
+              <Box>
+                <Typography variant="subtitle2">Virtual Transaction</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Not counted in actual{" "}
+                  {activeType === "income" ? "income" : "expenses"}
+                </Typography>
+              </Box>
+              <Switch
+                id="is_virtual"
+                checked={watch("is_virtual")}
+                onChange={(_, checked) => setValue("is_virtual", checked)}
+                inputProps={{ "aria-label": "Virtual transaction" }}
+              />
+            </Box>
 
-          {/* Resolved Transaction Switch */}
-          <div className="flex items-center justify-between gap-4 p-3 rounded-lg border border-gray-200 dark:border-gray-700">
-            <div className="flex-1">
-              <label
-                htmlFor="is_resolved"
-                className="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer"
-              >
-                Resolved
-              </label>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                Mark as resolved or settled
-              </p>
-            </div>
-            <Switch
-              id="is_resolved"
-              checked={watch("is_resolved")}
-              onCheckedChange={(checked) => setValue("is_resolved", checked)}
-            />
-          </div>
-        </div>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 2,
+                p: 2,
+                borderRadius: 1,
+                border: 1,
+                borderColor: "divider",
+              }}
+            >
+              <Box>
+                <Typography variant="subtitle2">Resolved</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Mark as resolved or settled
+                </Typography>
+              </Box>
+              <Switch
+                id="is_resolved"
+                checked={watch("is_resolved")}
+                onChange={(_, checked) => setValue("is_resolved", checked)}
+                inputProps={{ "aria-label": "Resolved transaction" }}
+              />
+            </Box>
+          </Stack>
+        </Stack>
 
-        {/* Sticky Submit and Cancel buttons */}
-        <div className="sticky bottom-0 bg-white dark:bg-gray-950 border-t pt-4 -mx-6 px-6 -mb-4 pb-4">
-          <div className="flex items-center justify-end gap-3">
-            {onCancel && (
-              <AppButton
-                type="button"
-                variant="secondary"
-                onClick={onCancel}
-                disabled={isSubmitting}
-              >
-                <X className="mr-2 h-4 w-4" />
-                Cancel
-              </AppButton>
-            )}
-
-            <AppButton type="submit" loading={isSubmitting}>
-              {editTransaction ? (
-                <>
-                  <Save className="mr-2 h-4 w-4" />
-                  Save Changes
-                </>
-              ) : (
-                <>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add Transaction
-                </>
+        {!renderActions && (
+          <Box
+            sx={{
+              position: "sticky",
+              bottom: 0,
+              left: 0,
+              right: 0,
+              bgcolor: "background.paper",
+              borderTop: 1,
+              borderColor: "divider",
+              pt: 2,
+            }}
+          >
+            <Stack direction="row" justifyContent="flex-end" spacing={1.5}>
+              {onCancel && (
+                <Button
+                  type="button"
+                  variant="outlined"
+                  color="inherit"
+                  onClick={onCancel}
+                  disabled={isSubmitting}
+                  startIcon={<X size={16} />}
+                >
+                  Cancel
+                </Button>
               )}
-            </AppButton>
-          </div>
-        </div>
-      </form>
-    </div>
+
+              <Button
+                type="submit"
+                variant="contained"
+                disabled={isSubmitting}
+                startIcon={
+                  editTransaction ? <Save size={16} /> : <Plus size={16} />
+                }
+              >
+                {editTransaction ? "Save Changes" : "Add Transaction"}
+              </Button>
+            </Stack>
+          </Box>
+        )}
+      </Box>
+    </Stack>
   );
 }

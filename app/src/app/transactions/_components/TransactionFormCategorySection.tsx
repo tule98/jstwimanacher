@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { Category } from "@/services/api/client";
-import AppButton from "@/components/ui/app-button";
+import { Box, Stack, Typography, Button, Chip } from "@mui/material";
 import { Plus } from "lucide-react";
 import CategoryCreateDialog from "./CategoryCreateDialog";
 
@@ -27,55 +27,66 @@ export default function TransactionFormCategorySection({
   };
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex items-center justify-between">
-        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+    <Stack spacing={1.5}>
+      <Stack direction="row" alignItems="center" justifyContent="space-between">
+        <Typography variant="subtitle2">
           {transactionType === "income" ? "Income" : "Expense"} Category
-        </label>
-        <AppButton
+        </Typography>
+        <Button
           type="button"
-          variant="ghost"
-          size="sm"
+          variant="text"
+          size="small"
           onClick={() => setIsDialogOpen(true)}
-          className="h-7 px-2 text-xs"
+          startIcon={<Plus size={14} />}
+          sx={{
+            fontSize: "0.75rem",
+            px: 1.5,
+            py: 0.5,
+            minHeight: 28,
+          }}
         >
-          <Plus className="h-3 w-3 mr-1" />
           New Category
-        </AppButton>
-      </div>
+        </Button>
+      </Stack>
 
       {categories.length === 0 ? (
-        <div className="text-sm text-gray-500 dark:text-gray-400 py-2">
+        <Typography variant="body2" color="text.secondary" sx={{ py: 1 }}>
           No {transactionType === "income" ? "income" : "expense"} categories
           yet. Click &quot;New Category&quot; above to create one.
-        </div>
+        </Typography>
       ) : (
-        <div className="flex flex-wrap gap-1.5">
+        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
           {categories.map((cat) => {
             const isSelected = selectedCategoryId === cat.id;
             return (
-              <AppButton
+              <Chip
                 key={cat.id}
-                type="button"
-                variant="ghost"
-                size="sm"
+                label={cat.name}
                 onClick={() => onCategorySelect(cat.id)}
-                className={`px-2.5 py-1 text-xs font-medium transition-all duration-200 whitespace-nowrap border-2 ${
-                  isSelected
-                    ? "border-transparent text-white"
-                    : "bg-white dark:bg-gray-800 hover:shadow-sm"
-                }`}
-                style={{
-                  backgroundColor: isSelected ? cat.color : undefined,
-                  borderColor: isSelected ? "transparent" : cat.color,
-                  color: isSelected ? "#ffffff" : cat.color,
+                variant={isSelected ? "filled" : "outlined"}
+                sx={{
+                  fontSize: "0.75rem",
+                  fontWeight: 500,
+                  borderWidth: 2,
+                  borderColor: cat.color,
+                  bgcolor: isSelected ? cat.color : "transparent",
+                  color: isSelected ? "#fff" : cat.color,
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                  "&:hover": {
+                    bgcolor: isSelected ? cat.color : "transparent",
+                    opacity: 0.9,
+                    boxShadow: 1,
+                  },
+                  "& .MuiChip-label": {
+                    px: 1.5,
+                    py: 0.5,
+                  },
                 }}
-              >
-                {cat.name}
-              </AppButton>
+              />
             );
           })}
-        </div>
+        </Box>
       )}
 
       <CategoryCreateDialog
@@ -84,6 +95,6 @@ export default function TransactionFormCategorySection({
         onCategoryCreated={handleCategoryCreated}
         defaultType={transactionType}
       />
-    </div>
+    </Stack>
   );
 }

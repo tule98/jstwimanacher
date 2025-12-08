@@ -11,8 +11,15 @@ import {
   useToggleVirtualTransaction,
 } from "@/services/react-query/mutations";
 import { queryKeys } from "@/services/react-query/query-keys";
-import { Button } from "@/components/ui/button";
-import { List, Plus, Loader2 } from "lucide-react";
+import {
+  Button,
+  Box,
+  Stack,
+  Typography,
+  CircularProgress,
+  Fab,
+} from "@mui/material";
+import { List, Plus } from "lucide-react";
 import { toast } from "sonner";
 import TransactionList from "./_components/TransactionList";
 import TransactionFormDialog from "./_components/TransactionFormDialog";
@@ -243,17 +250,21 @@ export default function TransactionsPage() {
   return (
     <AppPageLayout
       header={
-        <div className="flex items-center justify-between">
+        <Stack
+          direction="row"
+          justifyContent="space-between"
+          alignItems="center"
+        >
           <AppPageNav title="Transactions" icon={<List />} />
           <Button
-            variant="outline"
-            size="sm"
+            variant="outlined"
+            size="small"
             onClick={() => setHeatmapDialogOpen(true)}
-            className="hidden md:flex"
+            sx={{ display: { xs: "none", md: "flex" } }}
           >
             View Heatmap
           </Button>
-        </div>
+        </Stack>
       }
     >
       <TransactionFilterBox
@@ -269,20 +280,25 @@ export default function TransactionsPage() {
 
       {/* Bucket Balance Stats */}
       {filters.bucketIds && filters.bucketIds.length === 1 && (
-        <div className="mt-4">
+        <Box sx={{ mt: 4 }}>
           <BucketBalanceStatsBox bucketId={filters.bucketIds[0]} />
-        </div>
+        </Box>
       )}
 
       {isLoadingTransactions ? (
-        <div className="mt-6 text-center p-8">Loading transactions...</div>
+        <Box sx={{ mt: 6, textAlign: "center", p: 2 }}>
+          <CircularProgress />
+          <Typography sx={{ mt: 2 }}>Loading transactions...</Typography>
+        </Box>
       ) : isErrorTransactions ? (
-        <div className="mt-6 text-center p-8 text-red-500">
-          Error: {transactionsError?.message || "Unable to load data"}
-        </div>
+        <Box sx={{ mt: 6, textAlign: "center", p: 2 }}>
+          <Typography color="error">
+            Error: {transactionsError?.message || "Unable to load data"}
+          </Typography>
+        </Box>
       ) : (
         <>
-          <div className="mt-4">
+          <Box sx={{ mt: 4 }}>
             <TransactionList
               transactions={transactions}
               onEdit={handleEdit}
@@ -300,48 +316,59 @@ export default function TransactionsPage() {
                 toggleVirtualMutation.variables?.id as string | undefined
               }
             />
-          </div>
+          </Box>
 
           {/* Load More Button */}
           {hasNextPage && (
-            <div className="flex justify-center mt-6">
+            <Stack sx={{ justifyContent: "center", mt: 6 }}>
               <Button
                 onClick={loadMoreTransactions}
                 disabled={isFetchingNextPage}
-                variant="outline"
-                className="border-primary text-primary hover:bg-primary hover:text-white dark:border-green-400 dark:text-green-400 dark:hover:bg-green-400 dark:hover:text-gray-900"
+                variant="outlined"
+                color="primary"
+                startIcon={
+                  isFetchingNextPage ? (
+                    <CircularProgress size={20} />
+                  ) : (
+                    <Plus size={16} />
+                  )
+                }
               >
-                {isFetchingNextPage ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Loading...
-                  </>
-                ) : (
-                  <>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Load more transactions
-                  </>
-                )}
+                {isFetchingNextPage ? "Loading..." : "Load more transactions"}
               </Button>
-            </div>
+            </Stack>
           )}
 
           {!hasNextPage && transactions.length > 0 && (
-            <div className="text-center mt-6 text-sm text-gray-500 dark:text-gray-400">
+            <Typography
+              sx={{
+                textAlign: "center",
+                mt: 6,
+                color: "text.secondary",
+                fontSize: "0.875rem",
+              }}
+            >
               All transactions displayed
-            </div>
+            </Typography>
           )}
         </>
       )}
 
       {/* Floating Action Button */}
-      <button
-        onClick={() => setCreateDialogOpen(true)}
-        className="hidden md:flex fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full bg-emerald-600 text-white shadow-lg hover:bg-emerald-700 active:scale-95 transition-all duration-200 items-center justify-center group hover:shadow-xl"
+      <Fab
+        color="primary"
         aria-label="Add new transaction"
+        onClick={() => setCreateDialogOpen(true)}
+        sx={{
+          position: "fixed",
+          bottom: 24,
+          right: 24,
+          zIndex: 50,
+          display: { xs: "none", md: "flex" },
+        }}
       >
-        <Plus className="h-6 w-6 group-hover:scale-110 transition-transform" />
-      </button>
+        <Plus size={24} />
+      </Fab>
 
       {/* Create Dialog */}
       <TransactionFormDialog

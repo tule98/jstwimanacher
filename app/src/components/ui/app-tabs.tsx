@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext } from "react";
-import { cn } from "@/lib/utils";
+import { Box, Tabs, Tab } from "@mui/material";
 
 interface AppTabsContextType {
   value: string;
@@ -28,66 +28,90 @@ interface AppTabsTriggerProps {
   children: React.ReactNode;
 }
 
-export function AppTabs({
-  value,
-  onValueChange,
-  className,
-  children,
-}: AppTabsProps) {
+export function AppTabs({ value, onValueChange, children }: AppTabsProps) {
   return (
     <AppTabsContext.Provider value={{ value, onValueChange }}>
-      <div className={cn("w-full", className)}>{children}</div>
+      <Box sx={{ width: "100%" }}>{children}</Box>
     </AppTabsContext.Provider>
   );
 }
 
-export function AppTabsList({ className, children }: AppTabsListProps) {
-  return (
-    <div
-      className={cn(
-        "inline-flex h-10 items-center justify-center rounded-tl-lg rounded-tr-2xl rounded-bl-lg rounded-br-lg bg-emerald-50 p-1 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300",
-        "border border-emerald-200 dark:border-emerald-800",
-        className
-      )}
-    >
-      {children}
-    </div>
-  );
-}
-
-export function AppTabsTrigger({
-  value,
-  className,
-  children,
-}: AppTabsTriggerProps) {
+export function AppTabsList({ children }: AppTabsListProps) {
   const context = useContext(AppTabsContext);
   if (!context) {
-    throw new Error("AppTabsTrigger must be used within AppTabs");
+    throw new Error("AppTabsList must be used within AppTabs");
   }
 
-  const { value: activeValue, onValueChange } = context;
-  const isActive = activeValue === value;
+  const { value, onValueChange } = context;
+
+  // Extract tab values from children
+  const tabs = React.Children.toArray(children).filter(
+    (child): child is React.ReactElement<AppTabsTriggerProps> =>
+      React.isValidElement(child)
+  );
 
   return (
-    <button
-      className={cn(
-        "inline-flex items-center justify-center whitespace-nowrap rounded-tl-md rounded-tr-xl rounded-bl-md rounded-br-md px-3 py-1.5 text-sm font-medium",
-        "ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2",
-        "disabled:pointer-events-none disabled:opacity-50",
-        isActive
-          ? "bg-emerald-600 text-white shadow-sm hover:bg-emerald-700 dark:bg-emerald-500 dark:text-white dark:hover:bg-emerald-400"
-          : "text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800 dark:text-emerald-300 dark:hover:bg-emerald-900 dark:hover:text-emerald-200",
-        className
-      )}
-      onClick={() => onValueChange(value)}
+    <Tabs
+      value={value}
+      onChange={(_, newValue) => onValueChange(newValue)}
+      variant="fullWidth"
+      sx={{
+        minHeight: 40,
+        "& .MuiTabs-indicator": {
+          display: "none",
+        },
+        "& .MuiTabs-flexContainer": {
+          gap: 0.5,
+          p: 0.5,
+          borderRadius: 0,
+          bgcolor: (theme) =>
+            theme.palette.mode === "dark"
+              ? "rgba(27, 66, 216, 0.1)"
+              : "rgba(27, 66, 216, 0.05)",
+          border: 1,
+          borderColor: (theme) =>
+            theme.palette.mode === "dark"
+              ? "rgba(27, 66, 216, 0.3)"
+              : "rgba(27, 66, 216, 0.2)",
+        },
+      }}
     >
-      {children}
-    </button>
+      {tabs.map((tab) => (
+        <Tab
+          key={tab.props.value}
+          value={tab.props.value}
+          label={tab.props.children}
+          sx={{
+            minHeight: 36,
+            flex: 1,
+            px: 2,
+            py: 1,
+            fontSize: "0.875rem",
+            fontWeight: 500,
+            textTransform: "none",
+            borderRadius: 0,
+            color: "primary.main",
+            "&.Mui-selected": {
+              bgcolor: "primary.main",
+              color: "#fff",
+            },
+            "&:hover": {
+              bgcolor: (theme) =>
+                theme.palette.mode === "dark"
+                  ? "rgba(27, 66, 216, 0.2)"
+                  : "rgba(27, 66, 216, 0.1)",
+            },
+            "&.Mui-selected:hover": {
+              bgcolor: "primary.dark",
+            },
+          }}
+        />
+      ))}
+    </Tabs>
   );
 }
 
 // Compound component pattern
 AppTabs.List = AppTabsList;
-AppTabs.Trigger = AppTabsTrigger;
 
 export default AppTabs;

@@ -16,11 +16,18 @@ import {
   ListTodo,
 } from "lucide-react";
 import {
+  Box,
+  Paper,
+  Typography,
   Dialog,
-  DialogContent,
-  DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+  DialogContent,
+  ButtonBase,
+  Stack,
+  Fab,
+  useTheme,
+  Grid,
+} from "@mui/material";
 
 type MoreItem = {
   href: string;
@@ -42,6 +49,7 @@ const MORE_ITEMS: MoreItem[] = [
 export default function BottomNav() {
   const pathname = usePathname();
   const router = useRouter();
+  const theme = useTheme();
   const [moreOpen, setMoreOpen] = React.useState(false);
 
   const isTransactions = pathname?.startsWith("/transactions");
@@ -58,81 +66,175 @@ export default function BottomNav() {
 
   return (
     <>
-      <nav className="md:hidden fixed bottom-0 inset-x-0 z-50">
-        <div className="mx-auto w-full max-w-screen-lg">
-          <div className="relative rounded-tl-xl rounded-tr-3xl rounded-bl-xl rounded-br-xl border-t border-emerald-100 bg-white/90 backdrop-blur dark:bg-gray-900/90 shadow-2xl">
-            <div className="flex items-center justify-between px-6 py-3">
+      <Box
+        component="nav"
+        sx={{
+          display: { xs: "block", md: "none" },
+          position: "fixed",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          zIndex: 50,
+        }}
+      >
+        <Box sx={{ mx: "auto", width: "100%", maxWidth: "lg" }}>
+          <Paper
+            elevation={8}
+            sx={{
+              position: "relative",
+              borderRadius: 0,
+              borderTop: 1,
+              borderColor: "primary.light",
+              bgcolor: "background.paper",
+              backdropFilter: "blur(8px)",
+            }}
+          >
+            <Stack
+              direction="row"
+              alignItems="center"
+              justifyContent="space-between"
+              sx={{ px: 3, py: 1.5 }}
+            >
               {/* Transactions */}
-              <Link
+              <ButtonBase
+                component={Link}
                 href="/transactions"
-                className={`flex flex-col items-center gap-1 py-1 px-2 rounded-md transition-colors ${
-                  isTransactions
-                    ? "text-emerald-700 dark:text-emerald-400"
-                    : "text-gray-600 dark:text-gray-300"
-                }`}
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: 0.5,
+                  py: 0.5,
+                  px: 1,
+                  borderRadius: 1,
+                  color: isTransactions ? "primary.main" : "text.secondary",
+                  transition: "all 0.2s",
+                }}
               >
-                <CreditCard className="h-6 w-6" />
-                <span className="text-xs font-medium">Transactions</span>
-              </Link>
+                <CreditCard size={24} />
+                <Typography variant="caption" fontWeight={500}>
+                  Transactions
+                </Typography>
+              </ButtonBase>
 
               {/* Spacer for center button */}
-              <div className="w-16" />
+              <Box sx={{ width: 64 }} />
 
               {/* More */}
-              <button
-                type="button"
+              <ButtonBase
                 onClick={() => setMoreOpen(true)}
-                className={`flex flex-col items-center gap-1 py-1 px-2 rounded-md transition-colors ${
-                  pathname === "/more"
-                    ? "text-emerald-700 dark:text-emerald-400"
-                    : "text-gray-600 dark:text-gray-300"
-                }`}
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: 0.5,
+                  py: 0.5,
+                  px: 1,
+                  borderRadius: 1,
+                  color:
+                    pathname === "/more" ? "primary.main" : "text.secondary",
+                  transition: "all 0.2s",
+                }}
                 aria-haspopup="dialog"
                 aria-expanded={moreOpen}
               >
-                <Ellipsis className="h-6 w-6" />
-                <span className="text-xs font-medium">More</span>
-              </button>
-            </div>
+                <Ellipsis size={24} />
+                <Typography variant="caption" fontWeight={500}>
+                  More
+                </Typography>
+              </ButtonBase>
+            </Stack>
 
             {/* Center Add Button (only on /transactions) */}
             {isTransactions && (
-              <div className="absolute -top-6 left-1/2 -translate-x-1/2">
-                <button
-                  type="button"
+              <Box
+                sx={{
+                  position: "absolute",
+                  top: -24,
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                }}
+              >
+                <Fab
+                  color="primary"
                   onClick={handleAddClick}
-                  className="h-14 w-14 rounded-full bg-emerald-600 text-white shadow-lg hover:bg-emerald-700 active:scale-95 transition-all duration-200 flex items-center justify-center border-4 border-white dark:border-gray-900"
                   aria-label="Add transaction"
+                  sx={{
+                    width: 56,
+                    height: 56,
+                    boxShadow: 4,
+                    border: 4,
+                    borderColor: "background.paper",
+                    "&:hover": {
+                      boxShadow: 6,
+                    },
+                    "&:active": {
+                      transform: "scale(0.95)",
+                    },
+                  }}
                 >
-                  <Plus className="h-6 w-6" />
-                </button>
-              </div>
+                  <Plus size={24} />
+                </Fab>
+              </Box>
             )}
-          </div>
-        </div>
-      </nav>
+          </Paper>
+        </Box>
+      </Box>
 
       {/* More Dialog */}
-      <Dialog open={moreOpen} onOpenChange={setMoreOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>More</DialogTitle>
-          </DialogHeader>
-          <div className="grid grid-cols-3 gap-4">
+      <Dialog
+        open={moreOpen}
+        onClose={() => setMoreOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>More</DialogTitle>
+        <DialogContent>
+          <Grid container spacing={2}>
             {MORE_ITEMS.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setMoreOpen(false)}
-                className="flex flex-col items-center justify-center gap-2 rounded-xl border p-4 hover:bg-emerald-50 dark:hover:bg-gray-800 transition-colors"
-              >
-                <item.icon className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
-                <span className="text-xs font-medium text-gray-700 dark:text-gray-200">
-                  {item.label}
-                </span>
-              </Link>
+              <Grid key={item.href}>
+                <ButtonBase
+                  component={Link}
+                  href={item.href}
+                  onClick={() => setMoreOpen(false)}
+                  sx={{
+                    width: "100%",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 1,
+                    p: 2,
+                    borderRadius: 0,
+                    border: 1,
+                    borderColor: "divider",
+                    transition: "all 0.2s",
+                    "&:hover": {
+                      bgcolor:
+                        theme.palette.mode === "dark"
+                          ? "rgba(27, 66, 216, 0.1)"
+                          : "rgba(27, 66, 216, 0.05)",
+                    },
+                  }}
+                >
+                  <item.icon
+                    style={{
+                      width: 24,
+                      height: 24,
+                      color: theme.palette.primary.main,
+                    }}
+                  />
+                  <Typography
+                    variant="caption"
+                    fontWeight={500}
+                    color="text.primary"
+                  >
+                    {item.label}
+                  </Typography>
+                </ButtonBase>
+              </Grid>
             ))}
-          </div>
+          </Grid>
         </DialogContent>
       </Dialog>
     </>

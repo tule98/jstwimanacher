@@ -1,5 +1,7 @@
 "use client";
 import React from "react";
+import { Button } from "@mui/material";
+import { Plus, X, Save } from "lucide-react";
 import AppDialog from "@/components/ui/app-dialog";
 import TransactionForm from "./TransactionForm";
 import {
@@ -27,6 +29,8 @@ export default function TransactionFormDialog(
   props: TransactionFormDialogProps
 ) {
   const { mode, open, onOpenChange } = props;
+  const [formRef, setFormRef] = React.useState<HTMLFormElement | null>(null);
+  const [isSubmitting] = React.useState(false);
 
   const handleSubmit = (data: TransactionCreateData) => {
     if (mode === "create") {
@@ -56,13 +60,38 @@ export default function TransactionFormDialog(
       onOpenChange={onOpenChange}
       title={title}
       description={description}
-      maxWidth={mode === "create" ? "2xl" : "lg"}
+      actions={
+        <>
+          <Button
+            type="button"
+            variant="outlined"
+            color="inherit"
+            onClick={handleCancel}
+            disabled={isSubmitting}
+            startIcon={<X size={16} />}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            variant="contained"
+            disabled={isSubmitting}
+            onClick={() => formRef?.requestSubmit()}
+            startIcon={
+              mode === "edit" ? <Save size={16} /> : <Plus size={16} />
+            }
+          >
+            {mode === "edit" ? "Save Changes" : "Add Transaction"}
+          </Button>
+        </>
+      }
     >
       <TransactionForm
         onSubmit={handleSubmit}
-        onCancel={handleCancel}
         editTransaction={mode === "edit" ? props.transaction : undefined}
         showTypeSelector={mode === "create"}
+        renderActions={() => null}
+        onFormReady={setFormRef}
       />
     </AppDialog>
   );

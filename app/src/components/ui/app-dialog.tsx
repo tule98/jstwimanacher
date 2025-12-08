@@ -3,12 +3,14 @@
 import React from "react";
 import {
   Dialog,
-  DialogContent,
-  DialogHeader,
   DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
-import { cn } from "@/lib/utils";
+  DialogContent,
+  DialogActions,
+  Box,
+  Typography,
+  useMediaQuery,
+  useTheme,
+} from "@mui/material";
 
 interface AppDialogProps {
   open: boolean;
@@ -16,45 +18,90 @@ interface AppDialogProps {
   title: string;
   description?: string;
   children: React.ReactNode;
-  maxWidth?: "sm" | "md" | "lg" | "xl" | "2xl" | "3xl" | "4xl";
+  actions?: React.ReactNode;
+  maxWidth?: "sm" | "md" | "lg" | "xl" | false;
   className?: string;
 }
 
+/**
+ * @deprecated Use Dialog from MUI directly instead.
+ * @param param0
+ * @returns
+ */
 export function AppDialog({
   open,
   onOpenChange,
   title,
   description,
   children,
-  maxWidth = "2xl",
-  className,
+  actions,
+  maxWidth = "md",
 }: AppDialogProps) {
-  const maxWidthClasses = {
-    sm: "max-w-sm",
-    md: "max-w-md",
-    lg: "max-w-lg",
-    xl: "max-w-xl",
-    "2xl": "max-w-2xl",
-    "3xl": "max-w-3xl",
-    "4xl": "max-w-4xl",
-  };
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        className={cn(
-          maxWidthClasses[maxWidth],
-          "max-h-[100dvh] p-0 flex flex-col overflow-hidden gap-0",
-          className
-        )}
-        onOpenAutoFocus={(e) => e.preventDefault()}
+    <Dialog
+      open={open}
+      onClose={() => onOpenChange(false)}
+      maxWidth={maxWidth}
+      fullWidth
+      fullScreen={isMobile}
+      PaperProps={{
+        sx: {
+          maxHeight: isMobile ? "100vh" : "90vh",
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+        },
+      }}
+    >
+      <Box
+        sx={{
+          position: "sticky",
+          top: 0,
+          zIndex: 10,
+          bgcolor: "background.paper",
+          borderBottom: 1,
+          borderColor: "divider",
+        }}
       >
-        <DialogHeader className="sticky top-0 z-10 bg-white dark:bg-gray-950 border-b px-6 py-4">
-          <DialogTitle>{title}</DialogTitle>
-          {description && <DialogDescription>{description}</DialogDescription>}
-        </DialogHeader>
-        <div className="overflow-y-auto flex-1 px-6 py-0">{children}</div>
+        <DialogTitle sx={{ pb: description ? 1 : 2 }}>{title}</DialogTitle>
+        {description && (
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ px: 3, pb: 2 }}
+          >
+            {description}
+          </Typography>
+        )}
+      </Box>
+      <DialogContent
+        sx={{
+          flex: 1,
+          overflow: "auto",
+          pt: 3,
+        }}
+      >
+        {children}
       </DialogContent>
+      {actions && (
+        <DialogActions
+          sx={{
+            position: "sticky",
+            bottom: 0,
+            bgcolor: "background.paper",
+            borderTop: 1,
+            borderColor: "divider",
+            px: 3,
+            py: 2,
+            gap: 1.5,
+          }}
+        >
+          {actions}
+        </DialogActions>
+      )}
     </Dialog>
   );
 }
