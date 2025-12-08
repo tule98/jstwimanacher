@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { GoogleGenAI } from "@google/genai";
+import { geminiService } from "@/services/gemini/GeminiService";
 
-const genAI = new GoogleGenAI({
-  apiKey: process.env.GEMINI_API_KEY || "",
-});
+interface TranslationResult {
+  phonetic: string;
+  meaning: string;
+  example: string;
+}
 
 export async function POST(request: NextRequest) {
   let word = "unknown";
@@ -30,21 +32,7 @@ export async function POST(request: NextRequest) {
 Return ONLY a valid JSON object with this exact structure:
 {"phonetic": "/pronunciation/", "meaning": "translation", "example": "Example sentence."}`;
 
-    const response = await genAI.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: prompt,
-    });
-
-    const text = response.text || "";
-    console.log("🚀 ~ POST ~ text:", text);
-
-    // Remove markdown code blocks if present
-    const cleanedText = text
-      .replace(/```json\n?/g, "")
-      .replace(/```\n?/g, "")
-      .trim();
-
-    const parsed = JSON.parse(cleanedText);
+    const parsed = await geminiService.generateJSON<TranslationResult>(prompt);
     return NextResponse.json(parsed);
   } catch (error) {
     console.error("Translation error:", error);

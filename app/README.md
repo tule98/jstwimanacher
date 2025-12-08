@@ -34,3 +34,14 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Environment & Scheduler Notes
+
+- `SLACK_BOT_TOKEN`: Bot token for posting daily todo summaries.
+- `SLACK_CHANNEL_ID`: Channel where the summary will be sent.
+- (Optional) `AI_API_KEY`: If you replace the stub at `src/services/api/ai.ts` with a real provider, keep the key here.
+
+### Daily cron (06:00 GMT+7)
+
+- Expose `GET /api/scheduler/daily` to your scheduler. On Vercel Cron (UTC), use `0 23 * * *` to trigger 06:00 GMT+7.
+- Endpoint skips sending if env vars are missing. TODO: Add monitoring/logging if needed.

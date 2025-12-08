@@ -3,6 +3,57 @@ use react-query for data fetching and state management.
 use material ui for ui components and styling.
 use lucide icons for icons, don't use material ui icons.
 pay attention on light and dark mode support.
+put todo in some places where you are not sure about the implementation details, so I can fill in later.
+
+# Feature Overview
+
+I want to create a todo list module inside the application.
+The todo list will use AI to determine the time for the task based on the task description.
+
+# User Interface
+
+A page at `/todos` that displays a list of todo items.
+Each todo item displays the following information:
+
+- Task description
+- Due date and time (determined by AI)
+- Status (completed or not completed)
+
+A horizontal timeline view at the top of the page showing the tasks scheduled for the day.
+
+A vertical line indicating the current time on the timeline.
+
+# Component Implementation Details
+
+- TodoListInput
+- TodoListTimelineView
+
+# API Implementation Details
+
+POST `/api/todos`
+GET `/api/todos`: get in a time range
+PUT `/api/todos/:id`
+DELETE `/api/todos/:id`
+
+# Database table
+
+todos table:
+
+- id (primary key)
+- description (string)
+- due_date (datetime)
+- status (enum: completed, not completed)
+
+# Scheduler
+
+Run a background job every day at 06:00 AM GMT+7 to fetch all todo items and send slack notification to the user about the tasks scheduled for the day.
+
+# Slack Notification
+
+Setup a SlackNotificationService to send messages to a Slack channel using Slack Web API.
+For environment variables, you can predefine, I will fill in the actual values later.
+
+<!--  -->
 
 # Feature Overview
 

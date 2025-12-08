@@ -97,22 +97,7 @@ export default function TransactionList({
     const category = categories.find((cat) => cat.id === categoryId);
     return category?.name || "Unknown";
   };
-
-  const renderBuckets = (tx: Transaction) => {
-    const buckets =
-      (tx as unknown as { buckets?: { id: string; name: string }[] }).buckets ||
-      [];
-    if (!buckets.length) {
-      return null;
-    }
-    return (
-      <Stack direction="row" spacing={0.5} sx={{ mt: 0.5, flexWrap: "wrap" }}>
-        {buckets.map((b) => (
-          <Chip key={b.id} size="small" label={b.name} variant="outlined" />
-        ))}
-      </Stack>
-    );
-  };
+  // TODO: Render bucket chips alongside transactions when bucket data is included in API payloads.
 
   const getCategoryType = (categoryId: string): "income" | "expense" => {
     const category = categories.find((cat) => cat.id === categoryId);

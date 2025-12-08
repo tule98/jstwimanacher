@@ -168,6 +168,20 @@ export const flashCards = sqliteTable("flash_cards", {
     .default(sql`datetime('now')`),
 });
 
+// To-dos table
+export const todos = sqliteTable("todos", {
+  id: text("id").primaryKey(),
+  description: text("description").notNull(),
+  due_date: text("due_date").notNull(), // ISO datetime string
+  status: text("status").notNull().default("not_completed"), // 'completed' | 'not_completed'
+  created_at: text("created_at")
+    .notNull()
+    .default(sql`datetime('now')`),
+  updated_at: text("updated_at")
+    .notNull()
+    .default(sql`datetime('now')`),
+});
+
 // Types cho TypeScript
 export type Category = typeof categories.$inferSelect;
 export type NewCategory = typeof categories.$inferInsert;
@@ -191,3 +205,5 @@ export type HabitJournalEntry = typeof habitJournalEntries.$inferSelect;
 export type NewHabitJournalEntry = typeof habitJournalEntries.$inferInsert;
 export type FlashCard = typeof flashCards.$inferSelect;
 export type NewFlashCard = typeof flashCards.$inferInsert;
+export type Todo = typeof todos.$inferSelect;
+export type NewTodo = typeof todos.$inferInsert;
