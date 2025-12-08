@@ -1,5 +1,5 @@
 import { httpClient } from "@/lib/http-client";
-import type { Todo, NewTodo } from "@/db/schema";
+import type { Todo } from "@/db/schema";
 
 const base = "/api/todos" as const;
 

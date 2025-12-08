@@ -6,9 +6,9 @@ import { eq } from "drizzle-orm";
 // PUT /api/todos/:id
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const id = params.id;
+  const { id } = await params;
   const body = await req.json();
   const update: Partial<typeof todos.$inferInsert> = {
     description: body.description,
@@ -24,9 +24,9 @@ export async function PUT(
 // DELETE /api/todos/:id
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const id = params.id;
+  const { id } = await params;
   await db.delete(todos).where(eq(todos.id, id));
   return NextResponse.json({ id });
 }
