@@ -1,11 +1,13 @@
 # Vercel Cron Configuration for Daily Todos Scheduler
 
 ## Overview
+
 The todos module includes a daily scheduler that sends Slack notifications with today's scheduled tasks every morning at **06:00 GMT+7 (Asia/Ho_Chi_Minh timezone)**.
 
 ## How It Works
 
 ### Cron Schedule
+
 - **Schedule**: `0 23 * * *` (UTC time)
 - **Frequency**: Every day at 23:00 UTC
 - **Converts to**: 06:00 GMT+7 the next day
@@ -13,6 +15,7 @@ The todos module includes a daily scheduler that sends Slack notifications with 
 ### Configuration Files
 
 #### 1. `vercel.json`
+
 ```json
 {
   "crons": [
@@ -25,6 +28,7 @@ The todos module includes a daily scheduler that sends Slack notifications with 
 ```
 
 #### 2. `/api/scheduler/daily/route.ts`
+
 - Triggered by Vercel Cron at 23:00 UTC daily
 - Queries today's todos in GMT+7 timezone
 - Sends formatted Slack message with task list
@@ -35,6 +39,7 @@ The todos module includes a daily scheduler that sends Slack notifications with 
 For the cron to work, ensure these are set in your Vercel environment:
 
 ### Required
+
 - `SLACK_BOT_TOKEN` - Slack bot authentication token
 - `SLACK_CHANNEL_ID` - Target Slack channel ID
 - `CRON_SECRET` - Secret token to verify cron requests from Vercel
@@ -42,11 +47,13 @@ For the cron to work, ensure these are set in your Vercel environment:
 - `TURSO_AUTH_TOKEN` - Database authentication
 
 ### Optional
+
 - `GEMINI_API_KEY` - For AI features (if enabled)
 
 ## Setting Up Cron on Vercel
 
 ### Step 1: Add CRON_SECRET to Vercel
+
 1. Go to your Vercel project settings
 2. Navigate to **Environment Variables**
 3. Add a new variable:
@@ -55,18 +62,22 @@ For the cron to work, ensure these are set in your Vercel environment:
    - Add to: Production, Preview, Development
 
 ### Step 2: Verify Configuration
+
 1. Ensure `vercel.json` has the cron configuration
 2. Deploy to Vercel: `git push`
 3. Check Vercel deployment logs to confirm the cron is registered
 
 ### Step 3: Test the Cron
+
 You can manually test the endpoint:
+
 ```bash
 curl -H "Authorization: Bearer YOUR_CRON_SECRET" \
   https://your-domain.vercel.app/api/scheduler/daily
 ```
 
 Expected response:
+
 ```json
 {
   "success": true,
@@ -79,6 +90,7 @@ Expected response:
 ## Slack Notification Format
 
 The notification will look like:
+
 ```
 🎯 *Today's Tasks (GMT+7)*:
 • Buy groceries — 09:00
@@ -87,6 +99,7 @@ The notification will look like:
 ```
 
 Or if no tasks:
+
 ```
 ✅ No tasks scheduled for today.
 ```
@@ -94,17 +107,20 @@ Or if no tasks:
 ## Troubleshooting
 
 ### Cron not triggering
+
 - Check Vercel deployment logs: `vercel logs`
 - Ensure `vercel.json` is in the root directory
 - Verify the route file exists at `/api/scheduler/daily`
 - Deploy again after making changes
 
 ### Slack notifications not sending
+
 - Verify `SLACK_BOT_TOKEN` and `SLACK_CHANNEL_ID` are correctly set
 - Check Slack bot has permission to post in the target channel
 - Review application logs for error messages
 
 ### Timezone issues
+
 - The cron uses GMT+7 (Asia/Ho_Chi_Minh) timezone for date calculations
 - All todos in database are stored in UTC
 - Time conversion happens at query time
