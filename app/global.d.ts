@@ -9,6 +9,7 @@ declare global {
       // Required environment variables
       PROTECTION_KEY: string;
       API_KEY: string;
+      CRON_SECRET: string;
       GEMINI_API_KEY: string;
       TURSO_DATABASE_URL: string;
       TURSO_AUTH_TOKEN: string;

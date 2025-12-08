@@ -39,6 +39,12 @@ const REQUIRED_ENV_VARS: EnvironmentVariable[] = [
     required: true,
     env: "server",
   },
+  {
+    key: "CRON_SECRET",
+    description: "Secret token for Vercel Cron job authorization",
+    required: true,
+    env: "server",
+  },
 
   // AI Services
   {

@@ -9,6 +9,7 @@ import {
   BookOpen,
   CheckSquare,
   Layers,
+  ListTodo,
 } from "lucide-react";
 
 export default function AppNav() {
@@ -75,6 +76,16 @@ export default function AppNav() {
       >
         <CheckSquare size={18} />
         <span className="text-xs sm:text-sm">Habits</span>
+      </Link>
+
+      <Link
+        href="/todos"
+        className={`font-semibold hover:text-green-200 dark:hover:text-green-300 transition-colors flex flex-col sm:flex-row items-center gap-1 px-2 py-1 rounded-md ${
+          pathname === "/todos" ? "bg-green-600/30 dark:bg-green-900/30" : ""
+        }`}
+      >
+        <ListTodo size={18} />
+        <span className="text-xs sm:text-sm">Todos</span>
       </Link>
 
       <Link
