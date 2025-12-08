@@ -13,6 +13,7 @@ import {
   FolderKanban,
   Layers,
   CheckSquare,
+  ListTodo,
 } from "lucide-react";
 import {
   Dialog,
@@ -28,13 +29,14 @@ type MoreItem = {
 };
 
 const MORE_ITEMS: MoreItem[] = [
+  { href: "/habits", label: "Habits", icon: CheckSquare },
+  { href: "/todos", label: "Todos", icon: ListTodo },
   { href: "/stats", label: "Stats", icon: PieChart },
   { href: "/conversions", label: "Conversions", icon: Link2 },
-  { href: "/config", label: "Settings", icon: Settings },
   { href: "/stories", label: "Stories", icon: BookOpen },
-  { href: "/categories", label: "Categories", icon: FolderKanban },
-  { href: "/habits", label: "Habits", icon: CheckSquare },
   { href: "/flash-cards", label: "Flash Cards", icon: Layers },
+  { href: "/categories", label: "Categories", icon: FolderKanban },
+  { href: "/config", label: "Settings", icon: Settings },
 ];
 
 export default function BottomNav() {
