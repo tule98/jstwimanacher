@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { databaseService } from "@/services/database/databaseService";
 
 // GET /api/habits/archived - Get all archived habits

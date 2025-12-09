@@ -4,10 +4,11 @@ import { databaseService } from "@/services/database/databaseService";
 // POST /api/habits/[id]/archive - Archive a habit
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const habit = await databaseService.archiveHabit(params.id);
+    const { id } = await params;
+    const habit = await databaseService.archiveHabit(id);
     if (!habit) {
       return NextResponse.json({ error: "Habit not found" }, { status: 404 });
     }
@@ -23,10 +24,11 @@ export async function POST(
 // DELETE /api/habits/[id]/archive - Unarchive a habit
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const habit = await databaseService.unarchiveHabit(params.id);
+    const { id } = await params;
+    const habit = await databaseService.unarchiveHabit(id);
     if (!habit) {
       return NextResponse.json({ error: "Habit not found" }, { status: 404 });
     }
