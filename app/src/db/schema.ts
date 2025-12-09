@@ -111,6 +111,15 @@ export const habits = sqliteTable("habits", {
   name: text("name").notNull(),
   description: text("description"),
   status: text("status").notNull().default("active"), // 'active' | 'inactive'
+  frequency_type: text("frequency_type").notNull().default("daily"), // 'daily' | 'custom'
+  frequency_days: text("frequency_days"), // JSON array of day numbers [0-6] for custom (0=Sunday)
+  start_date: text("start_date")
+    .notNull()
+    .default(sql`date('now')`), // YYYY-MM-DD
+  is_archived: integer("is_archived", { mode: "boolean" })
+    .notNull()
+    .default(false),
+  order: integer("order").notNull().default(0), // For drag-to-reorder functionality
   created_at: text("created_at")
     .notNull()
     .default(sql`datetime('now')`),
@@ -182,6 +191,56 @@ export const todos = sqliteTable("todos", {
     .default(sql`datetime('now')`),
 });
 
+// Habit Completions table
+export const habitCompletions = sqliteTable("habit_completions", {
+  id: text("id").primaryKey(),
+  habit_id: text("habit_id")
+    .notNull()
+    .references(() => habits.id, { onDelete: "cascade" }),
+  completion_date: text("completion_date").notNull(), // YYYY-MM-DD
+  mood_emoji: text("mood_emoji"), // Optional emoji
+  completed_at: text("completed_at")
+    .notNull()
+    .default(sql`datetime('now')`),
+  created_at: text("created_at")
+    .notNull()
+    .default(sql`datetime('now')`),
+  updated_at: text("updated_at")
+    .notNull()
+    .default(sql`datetime('now')`),
+});
+
+// Streak Freeze Tokens table
+export const streakFreezeTokens = sqliteTable("streak_freeze_tokens", {
+  id: text("id").primaryKey(),
+  user_id: text("user_id").notNull().default("default_user"),
+  total_tokens: integer("total_tokens").notNull().default(2),
+  used_tokens: integer("used_tokens").notNull().default(0),
+  month: integer("month").notNull(), // 1-12
+  year: integer("year").notNull(),
+  created_at: text("created_at")
+    .notNull()
+    .default(sql`datetime('now')`),
+  updated_at: text("updated_at")
+    .notNull()
+    .default(sql`datetime('now')`),
+});
+
+// Token Usage Log table
+export const tokenUsageLog = sqliteTable("token_usage_log", {
+  id: text("id").primaryKey(),
+  habit_id: text("habit_id")
+    .notNull()
+    .references(() => habits.id, { onDelete: "cascade" }),
+  freeze_date: text("freeze_date").notNull(), // YYYY-MM-DD
+  used_at: text("used_at")
+    .notNull()
+    .default(sql`datetime('now')`),
+  token_record_id: text("token_record_id")
+    .notNull()
+    .references(() => streakFreezeTokens.id),
+});
+
 // Types cho TypeScript
 export type Category = typeof categories.$inferSelect;
 export type NewCategory = typeof categories.$inferInsert;
@@ -207,3 +266,9 @@ export type FlashCard = typeof flashCards.$inferSelect;
 export type NewFlashCard = typeof flashCards.$inferInsert;
 export type Todo = typeof todos.$inferSelect;
 export type NewTodo = typeof todos.$inferInsert;
+export type HabitCompletion = typeof habitCompletions.$inferSelect;
+export type NewHabitCompletion = typeof habitCompletions.$inferInsert;
+export type StreakFreezeToken = typeof streakFreezeTokens.$inferSelect;
+export type NewStreakFreezeToken = typeof streakFreezeTokens.$inferInsert;
+export type TokenUsageLog = typeof tokenUsageLog.$inferSelect;
+export type NewTokenUsageLog = typeof tokenUsageLog.$inferInsert;

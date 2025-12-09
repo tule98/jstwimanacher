@@ -5,10 +5,10 @@ use lucide icons for icons, don't use material ui icons.
 pay attention on light and dark mode support.
 put todo in some places where you are not sure about the implementation details, so I can fill in later.
 
-# Feature Overview
-
+<feature-overview>
 I want to create a todo list module inside the application.
 The todo list will use AI to determine the time for the task based on the task description.
+</feature-overview>
 
 # User Interface
 

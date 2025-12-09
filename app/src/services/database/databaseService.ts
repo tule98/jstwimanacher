@@ -8,6 +8,9 @@ import {
   assetConversions,
   habits,
   habitJournalEntries,
+  habitCompletions,
+  streakFreezeTokens,
+  tokenUsageLog,
   flashCards,
   type Category,
   type Transaction,
@@ -23,10 +26,27 @@ import {
   type Habit,
   type NewHabit,
   type HabitJournalEntry,
+  type HabitCompletion,
+  type NewHabitCompletion,
+  type StreakFreezeToken,
+  type NewStreakFreezeToken,
+  type TokenUsageLog,
+  type NewTokenUsageLog,
   type FlashCard,
   type NewFlashCard,
 } from "@/db/schema";
-import { eq, desc, and, gte, lt, lte, sql, like, inArray } from "drizzle-orm";
+import {
+  eq,
+  desc,
+  asc,
+  and,
+  gte,
+  lt,
+  lte,
+  sql,
+  like,
+  inArray,
+} from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 import { nowUTC, getMonthBoundsUTC, toUTC, UTCString } from "@/lib/timezone";
 
@@ -936,8 +956,8 @@ export class DatabaseService {
     const result = await db
       .select()
       .from(habits)
-      .where(eq(habits.status, "active"))
-      .orderBy(desc(habits.created_at));
+      .where(and(eq(habits.status, "active"), eq(habits.is_archived, false)))
+      .orderBy(asc(habits.order), desc(habits.created_at));
     if (!includeEntries) return result;
 
     // Calculate date range for journal entries
@@ -978,12 +998,21 @@ export class DatabaseService {
   async createHabit(data: {
     name: string;
     description?: string;
+    frequency_type?: "daily" | "custom";
+    frequency_days?: number[]; // 0-6 for days of week
+    start_date?: string;
   }): Promise<Habit> {
     const newHabit: NewHabit = {
       id: uuidv4(),
       name: data.name,
       description: data.description,
       status: "active",
+      frequency_type: data.frequency_type || "daily",
+      frequency_days: data.frequency_days
+        ? JSON.stringify(data.frequency_days)
+        : null,
+      start_date: data.start_date || new Date().toISOString().slice(0, 10),
+      is_archived: false,
       created_at: nowUTC(),
       updated_at: nowUTC(),
     };
@@ -993,7 +1022,13 @@ export class DatabaseService {
 
   async updateHabit(
     id: string,
-    data: Partial<{ name: string; description: string; status: string }>
+    data: Partial<{
+      name: string;
+      description: string;
+      status: string;
+      frequency_type: "daily" | "custom";
+      frequency_days: number[];
+    }>
   ): Promise<Habit | null> {
     const updateData: Partial<NewHabit> = {
       updated_at: nowUTC(),
@@ -1002,7 +1037,11 @@ export class DatabaseService {
     if (data.description !== undefined)
       updateData.description = data.description;
     if (data.status !== undefined)
-      updateData.status = data.status as Habit["status"]; // trust input
+      updateData.status = data.status as Habit["status"];
+    if (data.frequency_type !== undefined)
+      updateData.frequency_type = data.frequency_type;
+    if (data.frequency_days !== undefined)
+      updateData.frequency_days = JSON.stringify(data.frequency_days);
 
     const result = await db
       .update(habits)
@@ -1019,6 +1058,249 @@ export class DatabaseService {
       .where(eq(habitJournalEntries.habit_id, id));
     const result = await db.delete(habits).where(eq(habits.id, id));
     return result.rowsAffected > 0;
+  }
+
+  async updateHabitOrder(id: string, order: number): Promise<Habit | null> {
+    const result = await db
+      .update(habits)
+      .set({ order })
+      .where(eq(habits.id, id))
+      .returning();
+    return result[0] || null;
+  }
+
+  async archiveHabit(id: string): Promise<Habit | null> {
+    const result = await db
+      .update(habits)
+      .set({ is_archived: true, updated_at: nowUTC() })
+      .where(eq(habits.id, id))
+      .returning();
+    return result[0] || null;
+  }
+
+  async unarchiveHabit(id: string): Promise<Habit | null> {
+    const result = await db
+      .update(habits)
+      .set({ is_archived: false, updated_at: nowUTC() })
+      .where(eq(habits.id, id))
+      .returning();
+    return result[0] || null;
+  }
+
+  async getArchivedHabits(): Promise<Habit[]> {
+    return await db
+      .select()
+      .from(habits)
+      .where(eq(habits.is_archived, true))
+      .orderBy(desc(habits.updated_at));
+  }
+
+  // Habit Completions methods
+  async completeHabit(
+    habitId: string,
+    completionDate: string,
+    moodEmoji?: string
+  ): Promise<HabitCompletion> {
+    const existing = await db
+      .select()
+      .from(habitCompletions)
+      .where(
+        and(
+          eq(habitCompletions.habit_id, habitId),
+          eq(habitCompletions.completion_date, completionDate)
+        )
+      )
+      .limit(1);
+
+    if (existing.length > 0) {
+      // Update existing completion
+      const result = await db
+        .update(habitCompletions)
+        .set({ mood_emoji: moodEmoji, updated_at: nowUTC() })
+        .where(eq(habitCompletions.id, existing[0].id))
+        .returning();
+      return result[0];
+    }
+
+    // Create new completion
+    const newCompletion: NewHabitCompletion = {
+      id: uuidv4(),
+      habit_id: habitId,
+      completion_date: completionDate,
+      mood_emoji: moodEmoji,
+      completed_at: nowUTC(),
+      created_at: nowUTC(),
+      updated_at: nowUTC(),
+    };
+    const result = await db
+      .insert(habitCompletions)
+      .values(newCompletion)
+      .returning();
+    return result[0];
+  }
+
+  async uncompleteHabit(
+    habitId: string,
+    completionDate: string
+  ): Promise<boolean> {
+    const result = await db
+      .delete(habitCompletions)
+      .where(
+        and(
+          eq(habitCompletions.habit_id, habitId),
+          eq(habitCompletions.completion_date, completionDate)
+        )
+      );
+    return result.rowsAffected > 0;
+  }
+
+  async getHabitCompletions(
+    habitId: string,
+    startDate?: string,
+    endDate?: string
+  ): Promise<HabitCompletion[]> {
+    const conditions = [eq(habitCompletions.habit_id, habitId)];
+
+    if (startDate && endDate) {
+      conditions.push(
+        gte(habitCompletions.completion_date, startDate),
+        lte(habitCompletions.completion_date, endDate)
+      );
+    }
+
+    return await db
+      .select()
+      .from(habitCompletions)
+      .where(and(...conditions))
+      .orderBy(desc(habitCompletions.completion_date));
+  }
+
+  async getAllCompletionsInRange(
+    startDate: string,
+    endDate: string
+  ): Promise<HabitCompletion[]> {
+    return await db
+      .select()
+      .from(habitCompletions)
+      .where(
+        and(
+          gte(habitCompletions.completion_date, startDate),
+          lte(habitCompletions.completion_date, endDate)
+        )
+      )
+      .orderBy(desc(habitCompletions.completion_date));
+  }
+
+  // Streak Freeze Token methods
+  async getOrCreateMonthlyTokens(
+    month: number,
+    year: number,
+    userId: string = "default_user"
+  ): Promise<StreakFreezeToken> {
+    const existing = await db
+      .select()
+      .from(streakFreezeTokens)
+      .where(
+        and(
+          eq(streakFreezeTokens.user_id, userId),
+          eq(streakFreezeTokens.month, month),
+          eq(streakFreezeTokens.year, year)
+        )
+      )
+      .limit(1);
+
+    if (existing.length > 0) {
+      return existing[0];
+    }
+
+    // Create new token record for the month
+    const newTokens: NewStreakFreezeToken = {
+      id: uuidv4(),
+      user_id: userId,
+      total_tokens: 2,
+      used_tokens: 0,
+      month,
+      year,
+      created_at: nowUTC(),
+      updated_at: nowUTC(),
+    };
+    const result = await db
+      .insert(streakFreezeTokens)
+      .values(newTokens)
+      .returning();
+    return result[0];
+  }
+
+  async useStreakFreezeToken(
+    habitId: string,
+    freezeDate: string,
+    userId: string = "default_user"
+  ): Promise<{ success: boolean; message: string }> {
+    const date = new Date(freezeDate);
+    const month = date.getMonth() + 1;
+    const year = date.getFullYear();
+
+    const tokens = await this.getOrCreateMonthlyTokens(month, year, userId);
+
+    if (tokens.used_tokens >= tokens.total_tokens) {
+      return { success: false, message: "No tokens available for this month" };
+    }
+
+    // Check if token already used for this habit on this date
+    const existingUsage = await db
+      .select()
+      .from(tokenUsageLog)
+      .where(
+        and(
+          eq(tokenUsageLog.habit_id, habitId),
+          eq(tokenUsageLog.freeze_date, freezeDate)
+        )
+      )
+      .limit(1);
+
+    if (existingUsage.length > 0) {
+      return {
+        success: false,
+        message: "Token already used for this habit on this date",
+      };
+    }
+
+    // Log the token usage
+    const newUsage: NewTokenUsageLog = {
+      id: uuidv4(),
+      habit_id: habitId,
+      freeze_date: freezeDate,
+      used_at: nowUTC(),
+      token_record_id: tokens.id,
+    };
+    await db.insert(tokenUsageLog).values(newUsage);
+
+    // Increment used tokens
+    await db
+      .update(streakFreezeTokens)
+      .set({ used_tokens: tokens.used_tokens + 1, updated_at: nowUTC() })
+      .where(eq(streakFreezeTokens.id, tokens.id));
+
+    return { success: true, message: "Streak freeze token used successfully" };
+  }
+
+  async getTokenUsageForHabit(habitId: string): Promise<TokenUsageLog[]> {
+    return await db
+      .select()
+      .from(tokenUsageLog)
+      .where(eq(tokenUsageLog.habit_id, habitId))
+      .orderBy(desc(tokenUsageLog.freeze_date));
+  }
+
+  async getCurrentMonthTokens(
+    userId: string = "default_user"
+  ): Promise<StreakFreezeToken> {
+    const now = new Date();
+    return await this.getOrCreateMonthlyTokens(
+      now.getMonth() + 1,
+      now.getFullYear(),
+      userId
+    );
   }
 
   // Flash Cards methods

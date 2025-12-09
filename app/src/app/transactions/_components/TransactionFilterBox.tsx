@@ -247,7 +247,7 @@ export default function TransactionFilterBox({
           variant="outlined"
           startIcon={<Filter size={16} />}
           onClick={() => setDrawerOpen(true)}
-          sx={{ justifyContent: "flex-start" }}
+          sx={{ justifyContent: "flex-start", mt: 1 }}
         >
           Filter options
         </Button>

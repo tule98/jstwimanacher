@@ -5,7 +5,6 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   CreditCard,
   Ellipsis,
-  Plus,
   PieChart,
   Link2,
   Settings,
@@ -23,7 +22,6 @@ import {
   Modal,
   ButtonBase,
   Stack,
-  Fab,
   useTheme,
 } from "@mui/material";
 
@@ -50,6 +48,7 @@ export default function BottomNav() {
   const pathname = usePathname();
   const router = useRouter();
   const theme = useTheme();
+  const isDark = theme.palette.mode === "dark";
   const [navAnchorEl, setNavAnchorEl] =
     React.useState<HTMLButtonElement | null>(null);
 
@@ -71,46 +70,6 @@ export default function BottomNav() {
   const handleModuleSelect = (href: string) => {
     router.push(href);
     handleNavClose();
-  };
-
-  const handleAddClick = () => {
-    // Handle transactions module
-    if (pathname?.startsWith("/transactions")) {
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(new CustomEvent("open-create-transaction"));
-      }
-      return;
-    }
-
-    // Handle habits module
-    if (pathname?.startsWith("/habits")) {
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(new CustomEvent("open-create-habit"));
-      }
-      return;
-    }
-
-    // Handle todos module
-    if (pathname?.startsWith("/todos")) {
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(new CustomEvent("open-create-todo"));
-      }
-      return;
-    }
-
-    // Handle stories module
-    if (pathname?.startsWith("/stories")) {
-      router.push("/stories/new");
-      return;
-    }
-
-    // Handle flash-cards module
-    if (pathname?.startsWith("/flash-cards")) {
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(new CustomEvent("open-create-flash-card"));
-      }
-      return;
-    }
   };
 
   return (
@@ -135,13 +94,13 @@ export default function BottomNav() {
           }}
         >
           <Paper
-            elevation={8}
+            elevation={0}
             sx={{
               position: "relative",
               borderRadius: 0,
               borderTop: 1,
-              borderColor: "primary.light",
-              bgcolor: "background.paper",
+              borderColor: isDark ? "rgba(255, 255, 255, 0.1)" : "#E5E7EB",
+              backgroundColor: isDark ? "#1E293B" : "#FFFFFF",
               backdropFilter: "blur(8px)",
             }}
           >
@@ -149,7 +108,7 @@ export default function BottomNav() {
               direction="row"
               alignItems="center"
               justifyContent="space-between"
-              sx={{ px: 2, py: 1.5 }}
+              sx={{ px: 2, py: 1.5, minHeight: 64 }}
             >
               {/* Left Section: Navigation Module Selector */}
               <ButtonBase
@@ -159,12 +118,17 @@ export default function BottomNav() {
                   alignItems: "center",
                   gap: 1,
                   py: 0.75,
-                  px: 1.5,
-                  borderRadius: 1,
+                  px: 2,
+                  borderRadius: 2,
                   color: "text.primary",
-                  transition: "all 0.2s",
+                  transition: "all 0.2s ease-out",
                   "&:hover": {
-                    bgcolor: "action.hover",
+                    backgroundColor: isDark
+                      ? "rgba(255, 255, 255, 0.05)"
+                      : "rgba(65, 88, 208, 0.05)",
+                  },
+                  "&:active": {
+                    transform: "scale(0.98)",
                   },
                 }}
                 aria-haspopup="menu"
@@ -172,48 +136,49 @@ export default function BottomNav() {
               >
                 {currentModule ? (
                   <>
-                    <currentModule.icon size={24} />
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        color: "#4158D0",
+                      }}
+                    >
+                      <currentModule.icon size={24} />
+                    </Box>
                     <Typography
-                      variant="body1"
-                      textTransform="uppercase"
-                      fontWeight={500}
-                      noWrap
+                      variant="button"
+                      sx={{
+                        fontSize: "0.875rem",
+                        fontWeight: 600,
+                        color: theme.palette.text.primary,
+                        textTransform: "capitalize",
+                        letterSpacing: "0.5px",
+                      }}
                     >
                       {currentModule.label}
                     </Typography>
-                    <ChevronUp size={16} />
+                    <ChevronUp
+                      size={16}
+                      style={{ color: theme.palette.text.secondary }}
+                    />
                   </>
                 ) : (
                   <>
                     <Ellipsis size={24} />
-                    <Typography variant="caption" fontWeight={500}>
+                    <Typography
+                      sx={{
+                        fontSize: "0.75rem",
+                        fontWeight: 600,
+                        color: theme.palette.text.secondary,
+                      }}
+                    >
                       Menu
                     </Typography>
                   </>
                 )}
               </ButtonBase>
 
-              {/* Right Section: Floating Action Button */}
-              <Fab
-                onClick={handleAddClick}
-                color="primary"
-                size="medium"
-                aria-label="Add"
-                sx={{
-                  position: "absolute",
-                  right: 16,
-                  bottom: "50%",
-                  boxShadow: 4,
-                  "&:hover": {
-                    boxShadow: 6,
-                  },
-                  "&:active": {
-                    transform: "translateY(50%) scale(0.95)",
-                  },
-                }}
-              >
-                <Plus size={24} />
-              </Fab>
+              {/* Right Section: Empty */}
             </Stack>
           </Paper>
         </Box>
@@ -227,7 +192,7 @@ export default function BottomNav() {
           display: { xs: "flex", md: "none" },
           alignItems: "flex-end",
           "& .MuiBackdrop-root": {
-            backgroundColor: "rgba(0, 0, 0, 0.4)",
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
           },
         }}
       >
@@ -236,14 +201,15 @@ export default function BottomNav() {
             width: "100%",
             borderRadius: "16px 16px 0 0",
             borderTop: 1,
-            borderColor: "divider",
+            borderColor: isDark ? "rgba(255, 255, 255, 0.1)" : "#E5E7EB",
             maxHeight: "80vh",
             overflow: "auto",
-            bgcolor: "background.paper",
+            backgroundColor: isDark ? "#1E293B" : "#FFFFFF",
+            backgroundImage: "none",
           }}
           onClick={(e) => e.stopPropagation()}
         >
-          <Stack sx={{ py: 2 }}>
+          <Stack sx={{ py: 2, px: 1 }}>
             {NAV_MODULES.map((module) => {
               const isActive = pathname?.startsWith(module.href);
               return (
@@ -257,25 +223,49 @@ export default function BottomNav() {
                     alignItems: "center",
                     justifyContent: "flex-start",
                     gap: 2,
-                    px: 3,
+                    px: 2,
                     py: 1.5,
-                    width: "100%",
-                    color: isActive ? "primary.main" : "text.primary",
+                    mx: 1,
+                    mb: 0.5,
+                    width: "calc(100% - 32px)",
+                    borderRadius: 2,
+                    color: isActive ? "#4158D0" : theme.palette.text.primary,
                     fontWeight: isActive ? 600 : 500,
-                    transition: "all 0.2s",
-                    bgcolor: isActive ? "action.selected" : "transparent",
+                    transition: "all 0.2s ease-out",
+                    backgroundColor: isActive
+                      ? isDark
+                        ? "rgba(91, 122, 255, 0.1)"
+                        : "rgba(65, 88, 208, 0.05)"
+                      : "transparent",
                     "&:hover": {
-                      bgcolor: "action.hover",
+                      backgroundColor: isDark
+                        ? "rgba(255, 255, 255, 0.05)"
+                        : "rgba(65, 88, 208, 0.05)",
+                    },
+                    "&:active": {
+                      transform: "scale(0.98)",
                     },
                   }}
                 >
-                  <module.icon
-                    size={20}
-                    style={{
-                      color: isActive ? theme.palette.primary.main : undefined,
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      color: isActive
+                        ? "#4158D0"
+                        : theme.palette.text.secondary,
                     }}
-                  />
-                  <Typography variant="body2" fontWeight={isActive ? 600 : 500}>
+                  >
+                    <module.icon size={24} />
+                  </Box>
+                  <Typography
+                    sx={{
+                      fontSize: "1rem",
+                      fontWeight: isActive ? 600 : 500,
+                      color: isActive ? "#4158D0" : theme.palette.text.primary,
+                      letterSpacing: "0.3px",
+                    }}
+                  >
                     {module.label}
                   </Typography>
                 </ButtonBase>

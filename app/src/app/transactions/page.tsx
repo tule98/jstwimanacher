@@ -18,6 +18,7 @@ import {
   Typography,
   CircularProgress,
   Fab,
+  useTheme,
 } from "@mui/material";
 import { List, Plus } from "lucide-react";
 import { toast } from "sonner";
@@ -39,6 +40,8 @@ import AppPageNav from "../_components/AppPageNav";
 export default function TransactionsPage() {
   const queryClient = useQueryClient();
   const searchParams = useSearchParams();
+  const theme = useTheme();
+  const isDark = theme.palette.mode === "dark";
 
   // Get current month/year for balance
   const currentDate = new Date();
@@ -356,18 +359,37 @@ export default function TransactionsPage() {
 
       {/* Floating Action Button */}
       <Fab
-        color="primary"
         aria-label="Add new transaction"
         onClick={() => setCreateDialogOpen(true)}
         sx={{
           position: "fixed",
-          bottom: 24,
-          right: 24,
+          bottom: { xs: 80, md: 24 },
+          right: 16,
+          width: 56,
+          height: 56,
+          backgroundColor: "#FFB01D",
+          color: "#FFFFFF",
+          boxShadow: isDark
+            ? "0px 4px 12px rgba(0, 0, 0, 0.3)"
+            : "0px 4px 12px rgba(255, 176, 29, 0.3)",
+          transition: "all 0.2s ease-out",
           zIndex: 50,
-          display: { xs: "none", md: "flex" },
+          "&:hover": {
+            backgroundColor: "#FFC247",
+            boxShadow: isDark
+              ? "0px 8px 16px rgba(0, 0, 0, 0.4)"
+              : "0px 8px 16px rgba(255, 176, 29, 0.4)",
+            transform: "scale(1.08)",
+          },
+          "&:active": {
+            transform: "scale(0.96)",
+          },
+          "& svg": {
+            fontSize: 28,
+          },
         }}
       >
-        <Plus size={24} />
+        <Plus size={28} />
       </Fab>
 
       {/* Create Dialog */}
