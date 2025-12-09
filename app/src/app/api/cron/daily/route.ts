@@ -2,7 +2,9 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { todos } from "@/db/schema";
 import { SlackNotificationService } from "@/services/slack/SlackNotificationService";
-import { VN_TIMEZONE } from "@/lib/timezone";
+import { VN_TIMEZONE, getTodayBoundsUTC } from "@/lib/timezone";
+import { formatInTimeZone } from "date-fns-tz";
+import { parseISO } from "date-fns";
 
 /**
  * Daily cron endpoint to list all tasks for the next 2 weeks
@@ -18,33 +20,28 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Get date range for next 2 weeks in GMT+7
-  const now = new Date();
-  const vietnamTime = new Date(
-    now.toLocaleString("en-US", { timeZone: VN_TIMEZONE })
-  );
-
-  const start = new Date(vietnamTime);
-  start.setHours(0, 0, 0, 0);
-
-  const end = new Date(vietnamTime);
-  end.setDate(end.getDate() + 14); // 2 weeks ahead
-  end.setHours(23, 59, 59, 999);
+  // Get date range for next 2 weeks in GMT+7 (UTC equivalent)
+  const { start: todayUTC } = getTodayBoundsUTC(VN_TIMEZONE);
+  const twoWeeksLaterUTC = new Date(parseISO(todayUTC));
+  twoWeeksLaterUTC.setDate(twoWeeksLaterUTC.getDate() + 14);
+  const endUTC = twoWeeksLaterUTC.toISOString();
 
   try {
     const rows = await db.select().from(todos);
 
-    // Filter tasks within the 2-week range
+    // Filter tasks within the 2-week range (both times are UTC)
     const upcomingTasks = rows.filter((r) => {
-      const d = new Date(r.due_date);
-      return d >= start && d <= end;
+      return r.due_date >= todayUTC && r.due_date <= endUTC;
     });
 
-    // Group tasks by day
+    // Group tasks by day (in Vietnam timezone)
     const tasksByDay = new Map<string, typeof upcomingTasks>();
     upcomingTasks.forEach((task) => {
-      const d = new Date(task.due_date);
-      const dayKey = d.toLocaleDateString("en-CA"); // YYYY-MM-DD
+      const dayKey = formatInTimeZone(
+        parseISO(task.due_date),
+        VN_TIMEZONE,
+        "yyyy-MM-dd"
+      );
       if (!tasksByDay.has(dayKey)) {
         tasksByDay.set(dayKey, []);
       }
@@ -59,21 +56,18 @@ export async function GET(req: Request) {
 
     sortedDays.forEach((dayKey) => {
       const tasks = tasksByDay.get(dayKey) || [];
-      const dayDate = new Date(dayKey);
-      const dayLabel = dayDate.toLocaleDateString("en-US", {
-        weekday: "short",
-        month: "short",
-        day: "numeric",
-      });
+      const dayDate = parseISO(dayKey);
+      const dayLabel = formatInTimeZone(dayDate, VN_TIMEZONE, "EEE, MMM d");
 
       taskLines.push(`*${dayLabel}*`);
       tasks.forEach((t) => {
-        const time = new Date(t.due_date).toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        });
+        const localTime = formatInTimeZone(
+          parseISO(t.due_date),
+          VN_TIMEZONE,
+          "HH:mm"
+        );
         const statusEmoji = t.status === "completed" ? "✅" : "📌";
-        taskLines.push(`  ${statusEmoji} ${t.description} — ${time}`);
+        taskLines.push(`  ${statusEmoji} ${t.description} — ${localTime}`);
       });
       taskLines.push("");
     });

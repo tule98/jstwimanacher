@@ -28,12 +28,7 @@ interface AppTabsTriggerProps {
   children: React.ReactNode;
 }
 
-export function AppTabs({
-  value,
-  onValueChange,
-  className,
-  children,
-}: AppTabsProps) {
+export function AppTabs({ value, onValueChange, children }: AppTabsProps) {
   return (
     <AppTabsContext.Provider value={{ value, onValueChange }}>
       <Box sx={{ width: "100%" }}>{children}</Box>
@@ -41,7 +36,7 @@ export function AppTabs({
   );
 }
 
-export function AppTabsList({ className, children }: AppTabsListProps) {
+export function AppTabsList({ children }: AppTabsListProps) {
   const context = useContext(AppTabsContext);
   if (!context) {
     throw new Error("AppTabsList must be used within AppTabs");
@@ -116,11 +111,7 @@ export function AppTabsList({ className, children }: AppTabsListProps) {
   );
 }
 
-export function AppTabsTrigger({
-  value,
-  className,
-  children,
-}: AppTabsTriggerProps) {
+export function AppTabsTrigger({}: AppTabsTriggerProps) {
   // This component now just passes props to AppTabsList
   // It's kept for API compatibility
   return null;
