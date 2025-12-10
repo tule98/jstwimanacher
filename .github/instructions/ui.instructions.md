@@ -112,92 +112,92 @@ Legible - Excellent readability at small sizes (crucial for pricing, ingredients
 Modern - Contemporary geometric proportions
 Friendly - Slightly rounded terminals creating approachable feel
 
-Type Scale System (8pt Base Grid)
+Type Scale System (6pt Base Grid)
 Display/Hero
 
-Size: 32pt (2rem)
+Size: 24pt (1.5rem)
 Weight: Bold (700)
-Line Height: 40pt (125%)
+Line Height: 32pt (133%)
 Usage: Welcome screens, empty states, major section headers
 
 H1 (Large Title)
 
-Size: 28pt (1.75rem)
+Size: 20pt (1.25rem)
 Weight: Semibold (600)
-Line Height: 36pt (130%)
+Line Height: 28pt (140%)
 Usage: Page titles, dish names on detail screens
 
 H2 (Title)
 
-Size: 24pt (1.5rem)
+Size: 18pt (1.125rem)
 Weight: Semibold (600)
-Line Height: 32pt (133%)
+Line Height: 26pt (144%)
 Usage: Section headers, category titles
 
 H3 (Subtitle)
 
-Size: 20pt (1.25rem)
+Size: 16pt (1rem)
 Weight: Medium (500)
-Line Height: 28pt (140%)
+Line Height: 24pt (150%)
 Usage: Card titles, list item headers
 
 Body (Regular)
 
-Size: 16pt (1rem)
+Size: 14pt (0.875rem)
 Weight: Regular (400)
-Line Height: 24pt (150%)
+Line Height: 21pt (150%)
 Usage: Descriptions, ingredients, general content
 
 Body (Small)
 
-Size: 14pt (0.875rem)
+Size: 12pt (0.75rem)
 Weight: Regular (400)
-Line Height: 20pt (143%)
+Line Height: 18pt (150%)
 Usage: Secondary information, metadata
 
 Caption/Label
 
-Size: 12pt (0.75rem)
+Size: 10pt (0.625rem)
 Weight: Medium (500)
-Line Height: 16pt (133%)
+Line Height: 14pt (140%)
 Usage: Tags, timestamps, helper text, input labels
 
 Button Text
 
-Size: 16pt (1rem)
+Size: 14pt (0.875rem)
 Weight: Semibold (600)
-Letter Spacing: 0.5px
+Letter Spacing: 0.3px
 Usage: All CTA and action buttons
 
 c. 🧱 Key UI Element Mood and Structure
 Iconography System
-Style: Rounded line-art with 2px stroke weight
+Style: Rounded line-art with 1.5px stroke weight
 
 Library Recommendation: Lucide Icons or Phosphor Icons
 Characteristics:
 
-Consistent 24x24px base grid
+Consistent 20x20px base grid
 Rounded terminals matching overall softness
 Mix of outline (navigation) and filled (active states)
 
 Usage Pattern: Outline for inactive states, filled/colored for active selection
 
 Spacing & Layout Grid
-Foundation: Strict 8pt grid system
+Foundation: Strict 6pt grid system
 
-Base Unit: 8px
-Micro Spacing: 4px (0.5x), 8px (1x), 12px (1.5x)
-Component Spacing: 16px (2x), 24px (3x), 32px (4x)
-Section Spacing: 40px (5x), 48px (6x), 64px (8x)
-Screen Margins: 16px (2x) horizontal padding
+Base Unit: 6px
+Micro Spacing: 3px (0.5x), 6px (1x), 9px (1.5x)
+Component Spacing: 12px (2x), 18px (3x), 24px (4x)
+Section Spacing: 30px (5x), 36px (6x), 48px (8x)
+Screen Margins: 12px (2x) horizontal padding
 
 Border Radius (Roundness Scale)
 System: Progressive rounding based on component hierarchy
 
-Small Elements: 8px (tags, chips, small buttons)
-Medium Elements: 12px (input fields, small cards)
-Cards/Containers: 16px (primary content cards)
-Large Components: 24px (feature cards, bottom sheets)
+Small Elements: 6px (tags, chips, small buttons)
+Medium Elements: 10px (input fields, small cards)
+Cards/Containers: 12px (primary content cards)
+Large Components: 18px (feature cards, bottom sheets)
 Pills/Full Round: 999px (pill buttons, avatars)
 
 Shadow/Elevation System (Material-Inspired)
@@ -211,17 +211,17 @@ Usage: Background elements, text
 
 Level 1 (Raised):
 
-Shadow: 0px 1px 3px rgba(0, 0, 0, 0.1)
+Shadow: 0px 1px 2px rgba(0, 0, 0, 0.08)
 Usage: Cards in scrolling lists, input fields
 
 Level 2 (Floating):
 
-Shadow: 0px 4px 12px rgba(0, 0, 0, 0.15)
+Shadow: 0px 2px 8px rgba(0, 0, 0, 0.12)
 Usage: Floating action buttons, active/pressed states
 
 Level 3 (Modal):
 
-Shadow: 0px 12px 24px rgba(0, 0, 0, 0.2)
+Shadow: 0px 8px 16px rgba(0, 0, 0, 0.15)
 Button System
 
 Light Mode
@@ -229,55 +229,61 @@ Primary Button (High Emphasis):
 
 Background: Primary Blue (#4158D0)
 Text: White (#FFFFFF)
-Height: 48px (6x grid)
-Border Radius: 24px (full pill)
+Height: 36px (6x grid)
+Border Radius: 18px (full pill)
 Shadow: Level 1
+Padding: 0 20px
 
 Secondary Button (Medium Emphasis):
 
 Background: Orange (#FFB01D)
 Text: White (#FFFFFF)
-Height: 48px
-Border Radius: 24px
+Height: 36px
+Border Radius: 18px
+Padding: 0 20px
 
 Tertiary Button (Low Emphasis):
 
 Background: Transparent
 Text: Primary Blue (#4158D0)
 Border: 1px solid #E5E7EB
-Height: 44px
-Border Radius: 12px
+Height: 32px
+Border Radius: 10px
+Padding: 0 16px
 
 Icon Button:
 
-Size: 44x44px (touch target)
+Size: 36x36px (touch target)
 Background: White with shadow or transparent
-Icon Size: 24x24px
+Icon Size: 20x20px
 
 Dark Mode
 Primary Button (High Emphasis):
 
 Background: Primary Blue (#5B7AFF)
 Text: White (#FFFFFF)
-Height: 48px (6x grid)
-Border Radius: 24px (full pill)
+Height: 36px (6x grid)
+Border Radius: 18px (full pill)
 Shadow: Level 1
 Border: 1px solid rgba(255, 255, 255, 0.1)
+Padding: 0 20px
 
 Secondary Button (Medium Emphasis):
 
 Background: Orange (#FFC247)
 Text: Slate 900 (#0F172A)
-Height: 48px
-Border Radius: 24px
+Height: 36px
+Border Radius: 18px
+Padding: 0 20px
 
 Tertiary Button (Low Emphasis):
 
 Background: Transparent
 Text: Primary Blue (#5B7AFF)
 Border: 1px solid #334155
-Height: 44px
-Border Radius: 12px
+Height: 32px
+Border Radius: 10px
+Padding: 0 16px
 
 Icon Button:
 Card Components
@@ -287,27 +293,27 @@ Standard Card:
 
 Background: White (#FFFFFF)
 Border: None
-Border Radius: 16px
+Border Radius: 12px
 Shadow: Level 1
-Padding: 16px
-Min Height: 80px
+Padding: 12px
+Min Height: 60px
 
 Image Card (Food Item):
 
 Image: Top-aligned, 16:9 or 1:1 ratio
-Border Radius: 16px (entire card)
+Border Radius: 12px (entire card)
 Overlay: Gradient or solid for text legibility
-Content Padding: 12px
+Content Padding: 9px
 
 Input Fields:
 
-Height: 48px
-Border Radius: 12px
+Height: 36px
+Border Radius: 10px
 Border: 1px solid #E5E7EB (default)
 Border (Focus): 2px solid #4158D0
 Background: #F9FAFB
-Padding: 12px 16px
-Icon Position: Left or right, 16px from edge
+Padding: 8px 12px
+Icon Position: Left or right, 12px from edge
 Text: #111827
 Placeholder: #6B7280
 
@@ -316,11 +322,40 @@ Standard Card:
 
 Background: Slate 800 (#1E293B)
 Border: 1px solid rgba(255, 255, 255, 0.05)
-Border Radius: 16px
+Border Radius: 12px
+Shadow: Level 1
+Padding: 12px
+Min Height: 60px
+
+Image Card (Food Item):
+
+Image: Top-aligned, 16:9 or 1:1 ratio
+Border Radius: 12px (entire card)
+Overlay: Darker gradient for better contrast (rgba(15, 23, 42, 0.6) to rgba(15, 23, 42, 0.9))
+Content Padding: 9px
+
+Input Fields:
+
+Height: 36px
+Border Radius: 10px
+Border: 1px solid #334155 (default)
+Border (Focus): 2px solid #5B7AFF
+Background: #0F172A
+Padding: 8px 12px
+Icon Position: Left or right, 12px from edge
+Text: #F1F5F9
+Placeholder: #94A3B8
+
+Icon Button:
+
+Size: 36x36px (touch target)
+Background: Slate 700 with shadow or transparent
+Icon Size: 20x20px
+
 Accessibility Commitments
 
 WCAG AA Compliance: All text contrasts meet 4.5:1 minimum in both light and dark modes
-Touch Targets: Minimum 44x44px for all interactive elements
+Touch Targets: Minimum 36x36px for all interactive elements (maintained for comfortable interaction)
 Focus States: Clear 2px outlines for keyboard navigation (adjusted per theme)
 Motion: Respects prefers-reduced-motion for animations
 Color Independence: Information never conveyed by color alone
@@ -354,62 +389,10 @@ Icon Colors: Icons should use theme.palette.text.primary or specific theme color
 
 Borders in Dark Mode: Add subtle borders to cards and elevated surfaces for definition.
 
-Hover States: Adjust hover backgrounds to be lighter in dark mode (e.g., rgba(255, 255, 255, 0.05)).
+Hover States: Adjust hover backgrounds to be lighter in dark mode (e.g., rgba(255, 255, 255, 0.03)).
 
 Shadow Enhancement: Use stronger shadows and subtle borders in dark mode for depth perception.
 Border: 1px solid rgba(255, 255, 255, 0.08)
-
-Image Card (Food Item):
-
-Image: Top-aligned, 16:9 or 1:1 ratio
-Border Radius: 16px (entire card)
-Overlay: Darker gradient for better contrast (rgba(15, 23, 42, 0.6) to rgba(15, 23, 42, 0.9))
-Content Padding: 12px
-
-Input Fields:
-
-Height: 48px
-Border Radius: 12px
-Border: 1px solid #334155 (default)
-Border (Focus): 2px solid #5B7AFF
-Background: #0F172A
-Padding: 12px 16px
-Icon Position: Left or right, 16px from edge
-Text: #F1F5F9
-Placeholder: #94A3B8
-
-Icon Button:
-
-Size: 44x44px (touch target)
-Background: White with shadow or transparent
-Icon Size: 24x24px
-
-Card Components
-Standard Card:
-
-Background: White
-Border: None
-Border Radius: 16px
-Shadow: Level 1
-Padding: 16px
-Min Height: 80px
-
-Image Card (Food Item):
-
-Image: Top-aligned, 16:9 or 1:1 ratio
-Border Radius: 16px (entire card)
-Overlay: Gradient or solid for text legibility
-Content Padding: 12px
-
-Input Fields
-
-Height: 48px
-Border Radius: 12px
-Border: 1px solid #E5E7EB (default)
-Border (Focus): 2px solid #4158D0
-Background: #F9FAFB
-Padding: 12px 16px
-Icon Position: Left or right, 16px from edge
 
 Overall Aesthetic Summary
 "Modern Food Commerce with Joyful Efficiency"

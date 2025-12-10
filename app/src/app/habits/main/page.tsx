@@ -12,7 +12,7 @@ const navigationCards = [
     description: "Track your daily habits",
     icon: Flame,
     color: "#FFB01D",
-    path: "/habits/today",
+    path: "/habits",
   },
   {
     title: "Stats",

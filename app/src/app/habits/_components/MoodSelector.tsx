@@ -86,10 +86,11 @@ export default function MoodSelector({
 
           <Box
             sx={{
-              display: "grid",
-              gridTemplateColumns: "repeat(4, 1fr)",
-              gap: "16px",
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "12px",
               marginBottom: "24px",
+              justifyContent: "center",
             }}
           >
             {MOOD_EMOJIS.map(({ emoji, label }) => (
@@ -101,6 +102,8 @@ export default function MoodSelector({
                   flexDirection: "column",
                   alignItems: "center",
                   gap: "8px",
+                  flex: "0 1 calc(25% - 12px)",
+                  maxWidth: "calc(25% - 12px)",
                   cursor: "pointer",
                   padding: "12px",
                   borderRadius: "12px",
@@ -118,7 +121,7 @@ export default function MoodSelector({
               >
                 <Typography
                   sx={{
-                    fontSize: "48px",
+                    fontSize: "32px",
                     lineHeight: 1,
                   }}
                 >
