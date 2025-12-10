@@ -4,6 +4,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Box } from "@mui/material";
 import HabitCardNew from "./HabitCardNew";
+import { HabitCompletion } from "@/services/api/habits";
 
 interface SortableHabitCardProps {
   id: string;
@@ -16,15 +17,21 @@ interface SortableHabitCardProps {
     completed: boolean;
     mood?: string;
   };
+  completions?: HabitCompletion[];
   onComplete: () => void;
   onUncomplete: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
 }
 
 export default function SortableHabitCard({
   id,
   habit,
+  completions,
   onComplete,
   onUncomplete,
+  onEdit,
+  onDelete,
 }: SortableHabitCardProps) {
   const {
     attributes,
@@ -59,8 +66,11 @@ export default function SortableHabitCard({
         moodEmoji={habit.mood}
         frequencyType={habit.frequency_type}
         frequencyDays={habit.frequencyDays}
+        completions={completions}
         onComplete={onComplete}
         onUncomplete={onUncomplete}
+        onEdit={onEdit}
+        onDelete={onDelete}
         isDragging={isDragging}
       />
     </Box>

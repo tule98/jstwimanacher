@@ -19,8 +19,12 @@ import {
   useCreateHabit,
   useAllCompletions,
   useStreakTokens,
+  useUpdateHabit,
+  useDeleteHabit,
 } from "@/services/react-query/hooks/habits";
+import { Habit } from "@/services/api/habits";
 import {
+  formatDate,
   getTodayString,
   isCompletedToday,
   isHabitScheduledForDate,
@@ -39,9 +43,18 @@ export default function HabitsTodayPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [moodSelectorOpen, setMoodSelectorOpen] = useState(false);
   const [selectedHabitId, setSelectedHabitId] = useState<string | null>(null);
+  const [editModal, setEditModal] = useState<{
+    id: string;
+    data: HabitFormData;
+  } | null>(null);
 
   const today = getTodayString();
   const todayDate = useMemo(() => new Date(), []);
+  const startRange = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 27);
+    return formatDate(d);
+  }, []);
 
   // Fetch data
   const { data: habits = [], isLoading: habitsLoading } = useHabits({
@@ -49,7 +62,7 @@ export default function HabitsTodayPage() {
   });
 
   const { data: completions = [], isLoading: completionsLoading } =
-    useAllCompletions(today, today);
+    useAllCompletions(startRange, today);
 
   const { data: tokens } = useStreakTokens();
 
@@ -57,6 +70,8 @@ export default function HabitsTodayPage() {
   const completeHabit = useCompleteHabit();
   const uncompleteHabit = useUncompleteHabit();
   const createHabit = useCreateHabit();
+  const updateHabit = useUpdateHabit();
+  const deleteHabit = useDeleteHabit();
 
   // Filter habits scheduled for today
   const todayHabits = useMemo(() => {
@@ -115,6 +130,31 @@ export default function HabitsTodayPage() {
 
   const handleCreateHabit = async (data: HabitFormData) => {
     await createHabit.mutateAsync(data);
+  };
+
+  const handleEditHabit = (habit: Habit) => {
+    const frequencyDays = habit.frequency_days
+      ? JSON.parse(habit.frequency_days)
+      : undefined;
+
+    setEditModal({
+      id: habit.id,
+      data: {
+        name: habit.name,
+        description: habit.description ?? "",
+        frequency_type: habit.frequency_type,
+        frequency_days: frequencyDays,
+        start_date: habit.start_date,
+      },
+    });
+  };
+
+  const handleDeleteHabit = async (habitId: string, name: string) => {
+    const confirmed = window.confirm(
+      `Delete habit “${name}”? This cannot be undone.`
+    );
+    if (!confirmed) return;
+    await deleteHabit.mutateAsync(habitId);
   };
 
   const handleReorderHabits = async (habitIds: string[]) => {
@@ -269,6 +309,8 @@ export default function HabitsTodayPage() {
               onReorder={handleReorderHabits}
               onComplete={handleComplete}
               onUncomplete={handleUncomplete}
+              onEdit={handleEditHabit}
+              onDelete={handleDeleteHabit}
             />
           </Suspense>
         )}
@@ -322,6 +364,26 @@ export default function HabitsTodayPage() {
         open={formOpen}
         onClose={() => setFormOpen(false)}
         onSubmit={handleCreateHabit}
+      />
+
+      <HabitForm
+        open={!!editModal}
+        onClose={() => setEditModal(null)}
+        onSubmit={async (data) => {
+          if (!editModal) return;
+          await updateHabit.mutateAsync({
+            id: editModal.id,
+            data: {
+              name: data.name,
+              description: data.description,
+              frequency_type: data.frequency_type,
+              frequency_days: data.frequency_days,
+            },
+          });
+          setEditModal(null);
+        }}
+        initialData={editModal?.data}
+        isEdit
       />
     </AppPageLayout>
   );

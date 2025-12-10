@@ -32,6 +32,8 @@ interface HabitsListProps {
   onReorder: (habitIds: string[]) => Promise<void>;
   onComplete: (habitId: string) => void;
   onUncomplete: (habitId: string) => void;
+  onEdit?: (habit: Habit) => void;
+  onDelete?: (habitId: string, name: string) => void;
 }
 
 export default function HabitsList({
@@ -40,6 +42,8 @@ export default function HabitsList({
   onReorder,
   onComplete,
   onUncomplete,
+  onEdit,
+  onDelete,
 }: HabitsListProps) {
   const today = getTodayString();
 
@@ -129,8 +133,13 @@ export default function HabitsList({
                   mood,
                   frequencyDays,
                 }}
+                completions={habitCompletions}
                 onComplete={() => onComplete(habit.id)}
                 onUncomplete={() => onUncomplete(habit.id)}
+                onEdit={onEdit ? () => onEdit(habit) : undefined}
+                onDelete={
+                  onDelete ? () => onDelete(habit.id, habit.name) : undefined
+                }
               />
             );
           })}
