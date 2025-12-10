@@ -4,6 +4,24 @@ use material ui for ui components and styling.
 use lucide icons for icons, don't use material ui icons.
 pay attention on light and dark mode support.
 put todo in some places where you are not sure about the implementation details, so I can fill in later.
+time must be saved in GMT+0 timezone in the database, when displaying to user, convert to user's view timezone.
+
+<feature-overview>
+Flip habit card to show the contribution graph on the back side of the card.
+</feature-overview>
+
+<criteria>
+When user click on the barchart icon button, the card flips to show the back side with the contribution graph.
+The height of the card should be kept the same on both sides to avoid layout shift.
+When user click on the back icon button the card, the card flips back to the front side.
+</criteria>
+
+<implementation-details>
+Use hooks to get the habit log data for the contribution graph in the back side of the card.
+Split the habit card into two components: HabitCardFront and HabitCardBack.
+</implementation-details>
+
+<!--  -->
 
 <feature-overview>
 I want to create a todo list module inside the application.

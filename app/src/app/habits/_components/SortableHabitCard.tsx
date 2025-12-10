@@ -27,7 +27,6 @@ interface SortableHabitCardProps {
 export default function SortableHabitCard({
   id,
   habit,
-  completions,
   onComplete,
   onUncomplete,
   onEdit,
@@ -45,19 +44,10 @@ export default function SortableHabitCard({
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.5 : 1,
   };
 
   return (
-    <Box
-      ref={setNodeRef}
-      style={style}
-      {...attributes}
-      {...listeners}
-      sx={{
-        cursor: isDragging ? "grabbing" : "grab",
-      }}
-    >
+    <Box ref={setNodeRef} style={style} {...attributes}>
       <HabitCardNew
         id={habit.id}
         name={habit.name}
@@ -66,12 +56,12 @@ export default function SortableHabitCard({
         moodEmoji={habit.mood}
         frequencyType={habit.frequency_type}
         frequencyDays={habit.frequencyDays}
-        completions={completions}
         onComplete={onComplete}
         onUncomplete={onUncomplete}
         onEdit={onEdit}
         onDelete={onDelete}
         isDragging={isDragging}
+        dragHandleProps={listeners}
       />
     </Box>
   );

@@ -10,7 +10,7 @@ export function calculateStreak(
 ): number {
   const startDate = new Date(habit.start_date);
   const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  today.setHours(23, 59, 59, 999); // End of today
 
   const frequencyDays = habit.frequency_days
     ? JSON.parse(habit.frequency_days)
