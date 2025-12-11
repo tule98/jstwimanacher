@@ -120,6 +120,7 @@ export const habits = sqliteTable("habits", {
     .notNull()
     .default(false),
   order: integer("order").notNull().default(0), // For drag-to-reorder functionality
+  current_streak: integer("current_streak").notNull().default(0), // Current streak count
   created_at: text("created_at")
     .notNull()
     .default(sql`datetime('now')`),

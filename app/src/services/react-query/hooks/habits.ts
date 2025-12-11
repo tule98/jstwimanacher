@@ -48,6 +48,7 @@ export function useCreateHabit() {
       start_date?: string;
     }) => HabitsAPI.create(payload),
     onSuccess: () => {
+      // Invalidate all habit queries including lists with different options
       qc.invalidateQueries({ queryKey: habitQueryKeys.all });
     },
   });
@@ -67,6 +68,7 @@ export function useUpdateHabit() {
       }>;
     }) => HabitsAPI.update(args.id, args.data),
     onSuccess: () => {
+      // Invalidate all habit queries including lists with different options
       qc.invalidateQueries({ queryKey: habitQueryKeys.all });
     },
   });
@@ -77,6 +79,7 @@ export function useDeleteHabit() {
   return useMutation({
     mutationFn: (id: string) => HabitsAPI.remove(id),
     onSuccess: () => {
+      // Invalidate all habit queries including lists with different options
       qc.invalidateQueries({ queryKey: habitQueryKeys.all });
     },
   });
@@ -115,8 +118,8 @@ export function useCompleteHabit() {
       moodEmoji?: string;
     }) => HabitsAPI.completeHabit(payload),
     onSuccess: () => {
+      // Invalidate all habit-related queries to refresh streak and completion data
       qc.invalidateQueries({ queryKey: habitQueryKeys.all });
-      qc.invalidateQueries({ queryKey: habitQueryKeys.completions() });
     },
   });
 }
@@ -127,8 +130,8 @@ export function useUncompleteHabit() {
     mutationFn: (args: { habitId: string; completionDate: string }) =>
       HabitsAPI.uncompleteHabit(args.habitId, args.completionDate),
     onSuccess: () => {
+      // Invalidate all habit-related queries to refresh streak and completion data
       qc.invalidateQueries({ queryKey: habitQueryKeys.all });
-      qc.invalidateQueries({ queryKey: habitQueryKeys.completions() });
     },
   });
 }

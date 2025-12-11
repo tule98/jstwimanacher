@@ -15,7 +15,7 @@ import {
   useHabits,
   useAllCompletions,
 } from "@/services/react-query/hooks/habits";
-import { calculateStreak, formatDate } from "@/lib/habit-utils";
+import { formatDate } from "@/lib/habit-utils";
 
 type TimeRange = "week" | "month" | "year";
 
@@ -73,10 +73,8 @@ export default function HabitsStatsPage() {
     // Find longest streak
     let longestStreak = 0;
     habits.forEach((habit) => {
-      const habitCompletions = completions.filter(
-        (c) => c.habit_id === habit.id
-      );
-      const streak = calculateStreak(habit, habitCompletions);
+      // Use the stored streak from the habit object
+      const streak = habit.current_streak ?? 0;
       if (streak > longestStreak) longestStreak = streak;
     });
 
@@ -106,7 +104,8 @@ export default function HabitsStatsPage() {
       const habitCompletions = completions.filter(
         (c) => c.habit_id === habit.id
       );
-      const streak = calculateStreak(habit, habitCompletions);
+      // Use the stored streak from the habit object
+      const streak = habit.current_streak ?? 0;
       const completionCount = habitCompletions.length;
 
       // Calculate expected completions for this habit

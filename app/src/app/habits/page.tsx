@@ -1,16 +1,8 @@
 "use client";
-import React, { useState, useMemo, lazy, Suspense } from "react";
+import React, { useState, useMemo, lazy, Suspense, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import {
-  Box,
-  Typography,
-  Fab,
-  CircularProgress,
-  useTheme,
-} from "@mui/material";
-import { Plus, Flame, Shield } from "lucide-react";
-import AppPageLayout from "@/app/_components/AppPageLayout";
-import AppPageNav from "@/app/_components/AppPageNav";
+import { Box, Typography, CircularProgress, useTheme } from "@mui/material";
+import { Shield } from "lucide-react";
 
 import {
   useHabits,
@@ -31,6 +23,7 @@ import {
 } from "@/lib/habit-utils";
 import HabitForm, { HabitFormData } from "./_components/HabitForm";
 import MoodSelector from "./_components/MoodSelector";
+import { useMobileBottomActions } from "../_components/MobileBottomLayout";
 
 // Dynamic import for drag and drop list
 const HabitsList = lazy(() => import("./_components/HabitsList"));
@@ -39,6 +32,7 @@ export default function HabitsTodayPage() {
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
   const queryClient = useQueryClient();
+  const { setPlusAction } = useMobileBottomActions();
 
   const [formOpen, setFormOpen] = useState(false);
   const [moodSelectorOpen, setMoodSelectorOpen] = useState(false);
@@ -132,6 +126,11 @@ export default function HabitsTodayPage() {
     await createHabit.mutateAsync(data);
   };
 
+  useEffect(() => {
+    setPlusAction({ label: "New habit", onClick: () => setFormOpen(true) });
+    return () => setPlusAction(null);
+  }, [setPlusAction]);
+
   const handleEditHabit = (habit: Habit) => {
     const frequencyDays = habit.frequency_days
       ? JSON.parse(habit.frequency_days)
@@ -173,26 +172,15 @@ export default function HabitsTodayPage() {
   const isLoading = habitsLoading || completionsLoading;
 
   return (
-    <AppPageLayout
-      header={
-        <AppPageNav
-          title="Today"
-          icon={
-            <Box sx={{ position: "relative" }}>
-              <Flame size={24} color="#FFB01D" fill="#FFB01D" />
-            </Box>
-          }
-        />
-      }
-    >
-      <Box sx={{ padding: "16px", paddingBottom: "80px" }}>
+    <Box sx={{ width: 1 }}>
+      <Box sx={{ px: { xs: 1.5, md: 2.5 }, pt: 2 }}>
         {/* Header Stats */}
         <Box
           sx={{
             backgroundColor: isDark ? "#5B7AFF" : "#4158D0",
-            borderRadius: "16px",
-            padding: "24px",
-            marginBottom: "24px",
+            borderRadius: (theme) => theme.spacing(2),
+            padding: (theme) => theme.spacing(2.5),
+            marginBottom: (theme) => theme.spacing(3),
             color: "#FFFFFF",
             border: isDark ? "1px solid rgba(255, 255, 255, 0.1)" : "none",
           }}
@@ -316,39 +304,6 @@ export default function HabitsTodayPage() {
         )}
       </Box>
 
-      {/* FAB */}
-      <Fab
-        onClick={() => setFormOpen(true)}
-        sx={{
-          position: "fixed",
-          bottom: 80,
-          right: 16,
-          width: 56,
-          height: 56,
-          backgroundColor: "#FFB01D",
-          color: "#FFFFFF",
-          boxShadow: isDark
-            ? "0px 4px 12px rgba(0, 0, 0, 0.3)"
-            : "0px 4px 12px rgba(255, 176, 29, 0.3)",
-          transition: "all 0.2s ease-out",
-          "&:hover": {
-            backgroundColor: "#FFC247",
-            boxShadow: isDark
-              ? "0px 8px 16px rgba(0, 0, 0, 0.4)"
-              : "0px 8px 16px rgba(255, 176, 29, 0.4)",
-            transform: "scale(1.08)",
-          },
-          "&:active": {
-            transform: "scale(0.96)",
-          },
-          "& svg": {
-            fontSize: 28,
-          },
-        }}
-      >
-        <Plus size={28} />
-      </Fab>
-
       {/* Modals */}
       <MoodSelector
         open={moodSelectorOpen}
@@ -385,6 +340,6 @@ export default function HabitsTodayPage() {
         initialData={editModal?.data}
         isEdit
       />
-    </AppPageLayout>
+    </Box>
   );
 }

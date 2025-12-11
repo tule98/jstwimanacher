@@ -11,6 +11,7 @@ interface SortableHabitCardProps {
   habit: {
     id: string;
     name: string;
+    description?: string;
     frequency_type: "daily" | "custom";
     frequencyDays?: number[];
     streak: number;
@@ -27,6 +28,7 @@ interface SortableHabitCardProps {
 export default function SortableHabitCard({
   id,
   habit,
+  completions,
   onComplete,
   onUncomplete,
   onEdit,
@@ -51,11 +53,13 @@ export default function SortableHabitCard({
       <HabitCardNew
         id={habit.id}
         name={habit.name}
+        description={habit.description}
         currentStreak={habit.streak}
         isCompleted={habit.completed}
         moodEmoji={habit.mood}
         frequencyType={habit.frequency_type}
         frequencyDays={habit.frequencyDays}
+        completions={completions}
         onComplete={onComplete}
         onUncomplete={onUncomplete}
         onEdit={onEdit}

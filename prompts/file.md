@@ -6,6 +6,14 @@ pay attention on light and dark mode support.
 put todo in some places where you are not sure about the implementation details, so I can fill in later.
 time must be saved in GMT+0 timezone in the database, when displaying to user, convert to user's view timezone.
 
+<steps>
+1. Show description of the habit on the front side of the habit card.
+2. Decrease the spacing of habits card in the habits list.
+3. Remove the back side of the habit card, show the contribution graph on the front side of the card.
+</steps>
+
+<!--  -->
+
 <feature-overview>
 Flip habit card to show the contribution graph on the back side of the card.
 </feature-overview>

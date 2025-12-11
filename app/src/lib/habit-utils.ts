@@ -2,6 +2,12 @@ import { Habit, HabitCompletion } from "@/services/api/habits";
 
 /**
  * Calculate the current streak for a habit
+ *
+ * @deprecated This function is deprecated. The streak is now stored in the `current_streak`
+ * field of the Habit object and is automatically updated when completions are added/removed
+ * or when streak freeze tokens are used. Use `habit.current_streak` instead.
+ *
+ * This function is kept for backward compatibility and migration purposes only.
  */
 export function calculateStreak(
   habit: Habit,

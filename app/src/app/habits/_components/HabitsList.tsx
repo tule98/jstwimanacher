@@ -19,7 +19,6 @@ import {
 } from "@dnd-kit/sortable";
 import SortableHabitCard from "./SortableHabitCard";
 import {
-  calculateStreak,
   getTodayString,
   isCompletedToday,
   getTodayMood,
@@ -110,12 +109,13 @@ export default function HabitsList({
       onDragEnd={handleDragEnd}
     >
       <SortableContext items={habitIds} strategy={verticalListSortingStrategy}>
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
           {displayHabits.map((habit) => {
             const habitCompletions = completions.filter(
               (c) => c.habit_id === habit.id
             );
-            const streak = calculateStreak(habit, habitCompletions);
+            // Use the stored streak from the habit object
+            const streak = habit.current_streak ?? 0;
             const completed = isCompletedToday(habitCompletions, today);
             const mood = getTodayMood(habitCompletions, today);
             const frequencyDays = habit.frequency_days
@@ -128,6 +128,7 @@ export default function HabitsList({
                 id={habit.id}
                 habit={{
                   ...habit,
+                  description: habit.description ?? undefined,
                   streak,
                   completed,
                   mood,

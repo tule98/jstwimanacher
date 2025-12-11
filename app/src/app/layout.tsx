@@ -4,7 +4,7 @@ import React from "react";
 import AppProvider from "./_components/AppProvider";
 import MuiProvider from "./_components/MuiProvider";
 import DashboardLayout from "./_components/DashboardLayout";
-import BottomNav from "./_components/BottomNav";
+import MobileBottomLayout from "./_components/MobileBottomLayout";
 import AuthGuard from "./_components/AuthGuard";
 import ClientToaster from "./_components/ClientToaster";
 
@@ -40,11 +40,9 @@ export default function RootLayout({
         <MuiProvider>
           <AppProvider>
             <AuthGuard>
-              <DashboardLayout>{children}</DashboardLayout>
-              {/* Mobile Bottom Navigation */}
-              <div className="md:hidden">
-                <BottomNav />
-              </div>
+              <MobileBottomLayout>
+                <DashboardLayout>{children}</DashboardLayout>
+              </MobileBottomLayout>
             </AuthGuard>
             <ClientToaster />
           </AppProvider>

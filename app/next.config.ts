@@ -9,6 +9,7 @@ const nextConfig: NextConfig = {
     PROTECTION_KEY: process.env.PROTECTION_KEY,
     API_KEY: process.env.API_KEY,
   },
+  devIndicators: false,
 };
 
 export default nextConfig;

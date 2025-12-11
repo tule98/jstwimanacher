@@ -11,6 +11,7 @@ export interface Habit {
   is_archived: boolean;
   created_at: string;
   updated_at: string;
+  current_streak: number; // Current streak count
 }
 
 export interface HabitJournalEntry {

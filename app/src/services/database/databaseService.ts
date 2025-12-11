@@ -1095,6 +1095,98 @@ export class DatabaseService {
       .orderBy(desc(habits.updated_at));
   }
 
+  // Helper method to calculate and update streak for a habit
+  private async updateHabitStreak(habitId: string): Promise<void> {
+    // Get the habit
+    const habit = await db
+      .select()
+      .from(habits)
+      .where(eq(habits.id, habitId))
+      .limit(1);
+
+    if (habit.length === 0) return;
+
+    const habitData = habit[0];
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+    const startDate = new Date(habitData.start_date);
+
+    // Get all completions for this habit
+    const completions = await db
+      .select()
+      .from(habitCompletions)
+      .where(eq(habitCompletions.habit_id, habitId))
+      .orderBy(desc(habitCompletions.completion_date));
+
+    // Get token usage dates
+    const tokenUsages = await db
+      .select()
+      .from(tokenUsageLog)
+      .where(eq(tokenUsageLog.habit_id, habitId));
+
+    const tokenUsedDates = tokenUsages.map((t) => t.freeze_date);
+
+    const frequencyDays = habitData.frequency_days
+      ? JSON.parse(habitData.frequency_days)
+      : null;
+
+    let streak = 0;
+    const currentDate = new Date(today);
+
+    // Helper function to check if habit is scheduled for a date
+    const isScheduledForDate = (date: Date): boolean => {
+      if (habitData.frequency_type === "daily") return true;
+      if (!frequencyDays || frequencyDays.length === 0) return false;
+      const dayOfWeek = date.getDay();
+      return frequencyDays.includes(dayOfWeek);
+    };
+
+    // Helper function to format date as YYYY-MM-DD
+    const formatDate = (date: Date): string => {
+      return date.toISOString().slice(0, 10);
+    };
+
+    // Check if today is scheduled and completed
+    if (isScheduledForDate(currentDate)) {
+      const todayCompletion = completions.find(
+        (c) => c.completion_date === formatDate(currentDate)
+      );
+      if (todayCompletion) {
+        streak++;
+      }
+    }
+
+    // Go back day by day to count streak
+    currentDate.setDate(currentDate.getDate() - 1);
+
+    while (currentDate >= startDate) {
+      const dateStr = formatDate(currentDate);
+
+      if (!isScheduledForDate(currentDate)) {
+        currentDate.setDate(currentDate.getDate() - 1);
+        continue;
+      }
+
+      const hasCompletion = completions.some(
+        (c) => c.completion_date === dateStr
+      );
+      const hasToken = tokenUsedDates.includes(dateStr);
+
+      if (hasCompletion || hasToken) {
+        streak++;
+        currentDate.setDate(currentDate.getDate() - 1);
+      } else {
+        break;
+      }
+    }
+
+    // Update the habit's streak
+    await db
+      .update(habits)
+      .set({ current_streak: streak, updated_at: nowUTC() })
+      .where(eq(habits.id, habitId));
+  }
+
   // Habit Completions methods
   async completeHabit(
     habitId: string,
@@ -1119,6 +1211,10 @@ export class DatabaseService {
         .set({ mood_emoji: moodEmoji, updated_at: nowUTC() })
         .where(eq(habitCompletions.id, existing[0].id))
         .returning();
+
+      // Update streak after completion
+      await this.updateHabitStreak(habitId);
+
       return result[0];
     }
 
@@ -1136,6 +1232,10 @@ export class DatabaseService {
       .insert(habitCompletions)
       .values(newCompletion)
       .returning();
+
+    // Update streak after completion
+    await this.updateHabitStreak(habitId);
+
     return result[0];
   }
 
@@ -1151,6 +1251,12 @@ export class DatabaseService {
           eq(habitCompletions.completion_date, completionDate)
         )
       );
+
+    // Update streak after uncompletion
+    if (result.rowsAffected > 0) {
+      await this.updateHabitStreak(habitId);
+    }
+
     return result.rowsAffected > 0;
   }
 
@@ -1280,6 +1386,9 @@ export class DatabaseService {
       .update(streakFreezeTokens)
       .set({ used_tokens: tokens.used_tokens + 1, updated_at: nowUTC() })
       .where(eq(streakFreezeTokens.id, tokens.id));
+
+    // Update streak after using token (token protects the streak)
+    await this.updateHabitStreak(habitId);
 
     return { success: true, message: "Streak freeze token used successfully" };
   }
