@@ -1,5 +1,13 @@
 "use client";
-import { Box, Stack, Typography, useTheme, Chip } from "@mui/material";
+import { Box, Typography, useTheme } from "@mui/material";
+import {
+  Timeline,
+  TimelineItem,
+  TimelineSeparator,
+  TimelineConnector,
+  TimelineContent,
+  TimelineDot,
+} from "@mui/lab";
 import {
   useTodosList,
   useUpdateTodo,
@@ -105,18 +113,18 @@ export default function TodoListTimelineView({
   }
 
   return (
-    <Box
-      sx={{
-        p: 2,
-        borderRadius: 2,
-        border: `1px solid ${theme.palette.divider}`,
-        bgcolor: theme.palette.background.paper,
-      }}
-    >
-      <Typography variant="subtitle2" sx={{ mb: 2 }}>
-        2-Month Timeline
-      </Typography>
-      <Stack spacing={3}>
+    <Box>
+      <Timeline
+        sx={{
+          padding: 0,
+          margin: 0,
+          "& .MuiTimelineItem-root": {
+            "&:before": {
+              display: "none", // Remove default left spacing
+            },
+          },
+        }}
+      >
         {days
           .map((dayDate) => {
             const { dayKey, dayTasks, isToday } =
@@ -136,46 +144,84 @@ export default function TodoListTimelineView({
             };
           })
           .filter((day) => day.dayTasks.length > 0) // Hide days without todos
-          .map((day) => (
-            <Box key={day.dayKey}>
-              <Typography
-                variant="caption"
-                sx={{
-                  fontWeight: 600,
-                  mb: 1,
-                  display: "block",
-                  color: day.isToday ? theme.palette.primary.main : "inherit",
-                }}
-              >
-                {day.dayLabel}{" "}
-                {day.isToday && (
-                  <Chip
-                    label="Today"
-                    size="small"
-                    variant="outlined"
-                    sx={{ ml: 1 }}
+          .map((day, index, array) => (
+            <TimelineItem key={day.dayKey}>
+              <TimelineSeparator>
+                <TimelineDot
+                  sx={{
+                    bgcolor: day.isToday
+                      ? theme.palette.mode === "dark"
+                        ? "#5B7AFF"
+                        : "#4158D0"
+                      : theme.palette.mode === "dark"
+                      ? "#334155"
+                      : "#E5E7EB",
+                    boxShadow: "none",
+                    border: day.isToday
+                      ? `2px solid ${
+                          theme.palette.mode === "dark" ? "#5B7AFF" : "#4158D0"
+                        }`
+                      : "none",
+                    width: 12,
+                    height: 12,
+                    margin: "6px 0",
+                  }}
+                />
+                {index < array.length - 1 && (
+                  <TimelineConnector
+                    sx={{
+                      bgcolor:
+                        theme.palette.mode === "dark" ? "#334155" : "#E5E7EB",
+                      width: "2px",
+                    }}
                   />
                 )}
-              </Typography>
-              <Stack spacing={1}>
-                {day.dayTasks.map((t) => (
-                  <TodoCard
-                    key={t.id}
-                    id={t.id}
-                    description={t.description}
-                    time={t.time.toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                    status={t.status as "completed" | "not_completed"}
-                    onToggleStatus={handleToggleStatus}
-                    onDelete={handleDelete}
-                  />
-                ))}
-              </Stack>
-            </Box>
+              </TimelineSeparator>
+              <TimelineContent sx={{ paddingRight: 0 }}>
+                <Typography
+                  sx={{
+                    fontSize: "12px",
+                    fontWeight: 600,
+                    mb: 1,
+                    color: day.isToday
+                      ? theme.palette.mode === "dark"
+                        ? "#5B7AFF"
+                        : "#4158D0"
+                      : theme.palette.text.secondary,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.5px",
+                  }}
+                >
+                  {day.dayLabel}
+                  {day.isToday && " • TODAY"}
+                </Typography>
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 1,
+                    mb: 2,
+                  }}
+                >
+                  {day.dayTasks.map((t) => (
+                    <TodoCard
+                      key={t.id}
+                      id={t.id}
+                      description={t.description}
+                      time={t.time.toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                      status={t.status as "completed" | "not_completed"}
+                      onToggleStatus={handleToggleStatus}
+                      onDelete={handleDelete}
+                    />
+                  ))}
+                </Box>
+              </TimelineContent>
+            </TimelineItem>
           ))}
-      </Stack>
+      </Timeline>
     </Box>
   );
 }
