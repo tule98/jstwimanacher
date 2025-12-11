@@ -12,12 +12,14 @@ interface AppCurrencyInputProps {
   required?: boolean;
   disabled?: boolean;
   locale?: string;
+  label?: string;
 }
 
 export default function AppCurrencyInput({
   value,
   onChange,
   placeholder = "Nhập số tiền",
+  label,
   className,
   id,
   required = false,
@@ -48,6 +50,7 @@ export default function AppCurrencyInput({
       className={className}
       variant="outlined"
       fullWidth
+      label={label}
     />
   );
 }

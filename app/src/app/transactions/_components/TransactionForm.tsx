@@ -324,7 +324,7 @@ export default function TransactionForm({
         }}
         sx={{ display: "flex", flexDirection: "column", flex: 1 }}
       >
-        <Stack spacing={3} sx={{ flex: 1, pb: 2 }}>
+        <Stack spacing={2} sx={{ flex: 1, pb: 2 }}>
           <Box>
             <TextField
               id="created_at"
@@ -344,7 +344,7 @@ export default function TransactionForm({
               required
             />
 
-            <Box sx={{ mt: 1.5 }}>
+            <Box sx={{ mt: 1 }}>
               <DateNavigator
                 currentDate={watchedCreatedAt}
                 onDateChange={(date) => setValue("created_at", date)}
@@ -357,7 +357,6 @@ export default function TransactionForm({
               <Box sx={{ flex: 1, position: "relative" }}>
                 <TextField
                   id="note"
-                  label="Transaction description"
                   fullWidth
                   value={watchedNote || ""}
                   name={noteField.name}
@@ -399,6 +398,7 @@ export default function TransactionForm({
                     }, 160);
                   }}
                   placeholder="Enter description"
+                  label="Description"
                   required
                 />
 
@@ -423,6 +423,7 @@ export default function TransactionForm({
                   }}
                   placeholder="Enter amount"
                   required
+                  label="Amount"
                 />
               </Box>
             </Stack>

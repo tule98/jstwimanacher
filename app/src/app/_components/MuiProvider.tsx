@@ -167,12 +167,12 @@ export default function MuiProvider({
           },
           // Caption/Label
           body1: {
-            fontSize: "0.875rem",
+            fontSize: "1rem",
             fontWeight: 400,
             lineHeight: 1.5,
           },
           body2: {
-            fontSize: "0.75rem",
+            fontSize: "0.875rem",
             fontWeight: 400,
             lineHeight: 1.5,
           },
@@ -281,7 +281,6 @@ export default function MuiProvider({
             styleOverrides: {
               root: (props) => ({
                 "& .MuiOutlinedInput-root": {
-                  height: 36,
                   borderRadius: 10,
                   backgroundColor:
                     props.theme.palette.mode === "light"
@@ -313,9 +312,7 @@ export default function MuiProvider({
               root: {
                 fontSize: "0.875rem",
               },
-              input: {
-                padding: "8px 12px",
-              },
+              input: {},
             },
           },
           // Dialog/Modal
@@ -323,7 +320,7 @@ export default function MuiProvider({
             styleOverrides: {
               paper: (props) => ({
                 borderRadius: 12,
-                padding: 6,
+                padding: 12,
                 backgroundColor:
                   props.theme.palette.mode === "light" ? "#FFFFFF" : "#1E293B",
               }),

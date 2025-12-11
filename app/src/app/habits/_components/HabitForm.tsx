@@ -4,13 +4,13 @@ import {
   Typography,
   TextField,
   Button,
-  Modal,
   IconButton,
   ToggleButtonGroup,
   ToggleButton,
   useTheme,
 } from "@mui/material";
 import { X } from "lucide-react";
+import ResponsiveDialog from "@/components/ui/ResponsiveDialog";
 
 export interface HabitFormData {
   name: string;
@@ -94,35 +94,18 @@ export default function HabitForm({
     (frequencyType === "daily" || selectedDays.length > 0);
 
   return (
-    <Modal
+    <ResponsiveDialog
       open={open}
       onClose={onClose}
-      sx={{
-        display: "flex",
-        alignItems: "flex-end",
-        justifyContent: "center",
+      contentProps={{
+        sx: {
+          padding: "24px",
+        },
       }}
     >
       <Box
         sx={{
           width: "100%",
-          maxWidth: "600px",
-          backgroundColor: (theme) =>
-            theme.palette.mode === "dark" ? "#1E293B" : "#FFFFFF",
-          borderTopLeftRadius: "24px",
-          borderTopRightRadius: "24px",
-          padding: "24px",
-          maxHeight: "90vh",
-          overflowY: "auto",
-          border: (theme) =>
-            theme.palette.mode === "dark"
-              ? "1px solid rgba(255, 255, 255, 0.08)"
-              : "none",
-          animation: "slideUp 0.25s ease-out",
-          "@keyframes slideUp": {
-            from: { transform: "translateY(100%)" },
-            to: { transform: "translateY(0)" },
-          },
         }}
       >
         {/* Header */}
@@ -462,6 +445,6 @@ export default function HabitForm({
           </Box>
         )}
       </Box>
-    </Modal>
+    </ResponsiveDialog>
   );
 }
