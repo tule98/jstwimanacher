@@ -1,74 +1,111 @@
 "use client";
-import React, { useEffect, useState, useCallback } from "react";
-import {
-  Typography,
-  Card,
-  CardContent,
-  Button,
-  Stack,
-  Divider,
-} from "@mui/material";
+
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Box, CircularProgress, Container } from "@mui/material";
 import { createBrowserClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
+import { WordsFeed } from "./_components/WordsFeed";
+import { WordmasterLayout } from "./_components/WordmasterLayout";
+import { ContentInputModal } from "./_components/ContentInputModal";
 
+/**
+ * Wordmaster vocabulary learning page
+ * Features: Interactive flashcard feed, word extraction, memory tracking
+ */
 export default function WordmasterPage() {
-  const [email, setEmail] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const [userId, setUserId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [showAddModal, setShowAddModal] = useState(false);
 
+  const handleLogout = async () => {
+    try {
+      const supabase = createBrowserClient();
+      await supabase.auth.signOut();
+      router.push("/sign-in");
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
+
+  // Get authenticated user
   useEffect(() => {
-    const supabase = createBrowserClient();
-    supabase.auth
-      .getUser()
-      .then(({ data }) => {
-        return setEmail(data.user?.email ?? null);
-      })
-      .catch(() => setEmail(null));
-  }, []);
+    const getUser = async () => {
+      try {
+        const supabase = createBrowserClient();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
 
-  const handleSignOut = useCallback(async () => {
-    setLoading(true);
-    const supabase = createBrowserClient();
-    await supabase.auth.signOut();
-    router.replace("/sign-in");
-  }, [router]);
+        if (!user) {
+          router.push("/sign-in");
+          return;
+        }
+
+        setUserId(user.id);
+
+        // Check if modal should be open from URL
+        const openModal = searchParams.get("addWords") === "true";
+        if (openModal) {
+          setShowAddModal(true);
+        }
+      } catch (error) {
+        console.error("Failed to get user:", error);
+        router.push("/sign-in");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    getUser();
+  }, [router, searchParams]);
+
+  if (isLoading) {
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          minHeight: "100vh",
+        }}
+      >
+        <CircularProgress sx={{ color: "rgba(67, 24, 255, 0.6)" }} />
+      </Box>
+    );
+  }
+
+  if (!userId) {
+    return null;
+  }
 
   return (
-    <div className="p-4">
-      <Card sx={{ p: (t) => t.spacing(3), borderRadius: (t) => t.spacing(2) }}>
-        <CardContent
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            gap: (t) => t.spacing(2),
+    <WordmasterLayout
+      userId={userId}
+      onAddWordClick={() => setShowAddModal(true)}
+      onLogout={handleLogout}
+    >
+      <Container maxWidth="md">
+        <WordsFeed
+          userId={userId}
+          onWordReviewed={(word) => {
+            // Optional: track reviewed words, update stats, etc.
+            console.log("Word reviewed:", word);
           }}
-        >
-          <Stack
-            direction="row"
-            justifyContent="space-between"
-            alignItems="center"
-          >
-            <div>
-              <Typography variant="h5">Wordmaster</Typography>
-              <Typography variant="body2" color="text.secondary">
-                Supabase-authenticated module scaffold. Build features here.
-              </Typography>
-            </div>
-            <Button
-              variant="outlined"
-              color="primary"
-              onClick={handleSignOut}
-              disabled={loading}
-            >
-              Sign out
-            </Button>
-          </Stack>
-          <Divider />
-          <Typography variant="body2" color="text.secondary">
-            Signed in as {email ?? "loading..."}
-          </Typography>
-        </CardContent>
-      </Card>
-    </div>
+        />
+      </Container>
+
+      {/* Add Words Modal */}
+      <ContentInputModal
+        userId={userId}
+        open={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onSuccess={() => {
+          // Reset badge after 2 seconds
+          setTimeout(() => setShowAddModal(false), 1500);
+        }}
+      />
+    </WordmasterLayout>
   );
 }

@@ -64,7 +64,6 @@ export default function HabitCardBack({
       };
     });
   }, [completions]);
-  console.log("🚀 ~ HabitCardBack ~ contributionData:", contributionData);
 
   return (
     <Box

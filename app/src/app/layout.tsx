@@ -34,7 +34,7 @@ export default function RootLayout({
         {/* App logo favicon */}
         <link rel="icon" type="image/png" href="/jstwi-logo.png" />
       </head>
-      <body className="font-poppins min-h-screen transition-colors duration-300 md:pb-0 pb-20">
+      <body className="font-poppins min-h-screen transition-colors duration-300 md:pb-0">
         <ThemeModeProvider>
           <AppProvider>
             <AuthGuard>{children}</AuthGuard>

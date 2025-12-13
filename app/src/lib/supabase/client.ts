@@ -1,5 +1,6 @@
 "use client";
-import { createClient } from "@supabase/supabase-js";
+
+import { createBrowserClient as supabaseCreateBrowserClient } from "@supabase/ssr";
 
 export function createBrowserClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
@@ -9,7 +10,7 @@ export function createBrowserClient() {
       "Supabase envs missing: NEXT_PUBLIC_SUPABASE_URL/NEXT_PUBLIC_SUPABASE_ANON_KEY"
     );
   }
-  return createClient(url, anon, {
+  return supabaseCreateBrowserClient(url, anon, {
     auth: {
       persistSession: true,
       autoRefreshToken: true,
