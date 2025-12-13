@@ -176,6 +176,17 @@ export const flashCards = sqliteTable("flash_cards", {
   updated_at: text("updated_at")
     .notNull()
     .default(sql`datetime('now')`),
+}); // Todo Categories table
+export const todoCategories = sqliteTable("todo_categories", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  color: text("color").notNull(),
+  is_default: integer("is_default", { mode: "boolean" })
+    .notNull()
+    .default(false),
+  created_at: text("created_at")
+    .notNull()
+    .default(sql`datetime('now')`),
 });
 
 // To-dos table
@@ -183,7 +194,16 @@ export const todos = sqliteTable("todos", {
   id: text("id").primaryKey(),
   description: text("description").notNull(),
   due_date: text("due_date").notNull(), // ISO datetime string
-  status: text("status").notNull().default("not_completed"), // 'completed' | 'not_completed'
+  status: text("status", { enum: ["completed", "not_completed"] })
+    .notNull()
+    .default("not_completed"),
+  category_id: text("category_id").references(() => todoCategories.id),
+  recurrence_type: text("recurrence_type", {
+    enum: ["none", "daily", "weekly", "specific_days"],
+  })
+    .notNull()
+    .default("none"),
+  recurrence_days: text("recurrence_days"), // JSON array of day numbers [0-6] for specific_days (0=Sunday)
   created_at: text("created_at")
     .notNull()
     .default(sql`datetime('now')`),
@@ -265,6 +285,8 @@ export type HabitJournalEntry = typeof habitJournalEntries.$inferSelect;
 export type NewHabitJournalEntry = typeof habitJournalEntries.$inferInsert;
 export type FlashCard = typeof flashCards.$inferSelect;
 export type NewFlashCard = typeof flashCards.$inferInsert;
+export type TodoCategory = typeof todoCategories.$inferSelect;
+export type NewTodoCategory = typeof todoCategories.$inferInsert;
 export type Todo = typeof todos.$inferSelect;
 export type NewTodo = typeof todos.$inferInsert;
 export type HabitCompletion = typeof habitCompletions.$inferSelect;

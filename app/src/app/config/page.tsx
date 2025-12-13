@@ -35,6 +35,7 @@ import CategoryCreateForm from "@/app/transactions/_components/CategoryCreateFor
 import { toast } from "sonner";
 import { Stack, Typography, Divider, Box } from "@mui/material";
 import ThemeToggle from "../_components/ThemeToggle";
+import TodoCategoriesSection from "./_components/TodoCategoriesSection";
 
 export default function ConfigPage() {
   const queryClient = useQueryClient();
@@ -236,7 +237,7 @@ export default function ConfigPage() {
         icon={Settings}
       >
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 bg-secondary">
+          <TabsList className="grid w-full grid-cols-3 bg-secondary">
             <TabsTrigger
               value="categories"
               className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
@@ -250,6 +251,13 @@ export default function ConfigPage() {
             >
               <Coins className="h-4 w-4" />
               Tài sản
+            </TabsTrigger>
+            <TabsTrigger
+              value="todo-categories"
+              className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+            >
+              <List className="h-4 w-4" />
+              Task Categories
             </TabsTrigger>
           </TabsList>
 
@@ -574,6 +582,12 @@ export default function ConfigPage() {
               )}
             </AppCard>
           </TabsContent>
+
+          <TabsContent value="todo-categories" className="space-y-4">
+            <Box sx={{ p: 2 }}>
+              <TodoCategoriesSection />
+            </Box>
+          </TabsContent>
         </Tabs>
       </AppCard>
     </AppLayout>
@@ -788,3 +802,9 @@ function AssetGrid({
     </div>
   );
 }
+
+<TabsContent value="todo-categories" className="space-y-4">
+  <Box sx={{ p: 2 }}>
+    <TodoCategoriesSection />
+  </Box>
+</TabsContent>;

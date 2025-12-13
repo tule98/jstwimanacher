@@ -52,6 +52,11 @@ export async function POST(req: NextRequest) {
     description: body.description,
     due_date: dueDateUTC, // Always store UTC
     status: body.status ?? "not_completed",
+    category_id: body.category_id || null,
+    recurrence_type: body.recurrence_type || "none",
+    recurrence_days: body.recurrence_days
+      ? JSON.stringify(body.recurrence_days)
+      : null,
     created_at: undefined,
     updated_at: undefined,
   };

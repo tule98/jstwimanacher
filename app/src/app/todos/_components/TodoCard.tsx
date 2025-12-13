@@ -1,12 +1,25 @@
 "use client";
-import { Box, Stack, IconButton, Typography, useTheme } from "@mui/material";
-import { CheckCircle2, Circle, Trash2 } from "lucide-react";
+import {
+  Box,
+  Stack,
+  IconButton,
+  Typography,
+  useTheme,
+  Chip,
+  Tooltip,
+} from "@mui/material";
+import { CheckCircle2, Trash2, RotateCw } from "lucide-react";
+import { formatRecurrence, parseRecurrenceDays } from "@/lib/recurrence-utils";
+import { useTodoCategories } from "@/services/react-query/hooks/todos";
 
 interface TodoCardProps {
   id: string;
   description: string;
   time: string; // HH:mm format
   status: "completed" | "not_completed";
+  categoryId?: string;
+  recurrenceType?: "none" | "daily" | "weekly" | "specific_days";
+  recurrenceDays?: string; // JSON array
   onToggleStatus: (id: string, current: string) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
 }
@@ -16,12 +29,20 @@ export default function TodoCard({
   description,
   time,
   status,
+  categoryId,
+  recurrenceType = "none",
+  recurrenceDays,
   onToggleStatus,
   onDelete,
 }: TodoCardProps) {
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
   const isCompleted = status === "completed";
+  const { data: categories } = useTodoCategories();
+
+  const category = categories?.find((c) => c.id === categoryId);
+  const recurrenceDaysArray = parseRecurrenceDays(recurrenceDays);
+  const hasRecurrence = recurrenceType && recurrenceType !== "none";
 
   return (
     <Box
@@ -98,17 +119,67 @@ export default function TodoCard({
             >
               {description}
             </Typography>
-            <Typography
-              sx={{
-                fontSize: "11px",
-                fontWeight: 500,
-                color: theme.palette.text.secondary,
-                lineHeight: "16px",
-                mt: 0.5,
-              }}
+            <Stack
+              direction="row"
+              spacing={0.75}
+              alignItems="center"
+              sx={{ mt: 0.75 }}
             >
-              {time}
-            </Typography>
+              <Typography
+                sx={{
+                  fontSize: "11px",
+                  fontWeight: 500,
+                  color: theme.palette.text.secondary,
+                  lineHeight: "16px",
+                }}
+              >
+                {time}
+              </Typography>
+
+              {category && (
+                <Chip
+                  label={category.name}
+                  size="small"
+                  sx={{
+                    height: 18,
+                    fontSize: "10px",
+                    bgcolor: category.color,
+                    color: "white",
+                    fontWeight: 600,
+                  }}
+                />
+              )}
+
+              {hasRecurrence && (
+                <Tooltip
+                  title={formatRecurrence(recurrenceType, recurrenceDaysArray)}
+                >
+                  <Box
+                    sx={{ display: "flex", alignItems: "center", gap: 0.25 }}
+                  >
+                    <RotateCw
+                      size={12}
+                      color={
+                        theme.palette.mode === "dark" ? "#94A3B8" : "#6B7280"
+                      }
+                    />
+                    <Typography
+                      sx={{
+                        fontSize: "10px",
+                        color: theme.palette.text.secondary,
+                        fontWeight: 500,
+                      }}
+                    >
+                      {recurrenceType === "daily"
+                        ? "D"
+                        : recurrenceType === "weekly"
+                        ? "W"
+                        : "C"}
+                    </Typography>
+                  </Box>
+                </Tooltip>
+              )}
+            </Stack>
           </Stack>
         </Stack>
 

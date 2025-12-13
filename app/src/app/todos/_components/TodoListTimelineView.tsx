@@ -1,4 +1,5 @@
 "use client";
+import { useState } from "react";
 import { Box, Typography, useTheme } from "@mui/material";
 import {
   Timeline,
@@ -15,6 +16,7 @@ import {
 } from "@/services/react-query/hooks/todos";
 import { toUTC, fromUTC, VN_TIMEZONE } from "@/lib/timezone";
 import TodoCard from "./TodoCard";
+import CategoryFilterChips from "./CategoryFilterChips";
 
 interface TodoListTimelineViewProps {
   onToggleStatus?: (id: string, current: string) => Promise<void>;
@@ -39,14 +41,20 @@ export default function TodoListTimelineView({
   onToggleStatus: propToggleStatus,
   onDelete: propDelete,
 }: TodoListTimelineViewProps) {
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const { start, end, now } = getTwoMonthRangeISO();
   const { data: allData } = useTodosList(start as string, end as string);
   const theme = useTheme();
   const { mutateAsync: updateTodo } = useUpdateTodo();
   const { mutateAsync: deleteTodo } = useDeleteTodo();
 
-  // Limit to 30 items maximum
-  const data = (allData ?? []).slice(0, 30);
+  // Limit to 30 items maximum, filter by selected categories
+  let data = (allData ?? []).slice(0, 30);
+  if (selectedCategories.length > 0) {
+    data = data.filter((todo) =>
+      selectedCategories.includes(todo.category_id || "")
+    );
+  }
 
   // Use provided handlers or fallback to mutations
   const handleToggleStatus = propToggleStatus
@@ -114,6 +122,17 @@ export default function TodoListTimelineView({
 
   return (
     <Box>
+      <CategoryFilterChips
+        selectedCategories={selectedCategories}
+        onCategoryToggle={(categoryId) => {
+          setSelectedCategories((prev) =>
+            prev.includes(categoryId)
+              ? prev.filter((id) => id !== categoryId)
+              : [...prev, categoryId]
+          );
+        }}
+      />
+
       <Timeline
         sx={{
           padding: 0,
@@ -212,7 +231,10 @@ export default function TodoListTimelineView({
                         hour: "2-digit",
                         minute: "2-digit",
                       })}
-                      status={t.status as "completed" | "not_completed"}
+                      status={t.status}
+                      categoryId={t.category_id || undefined}
+                      recurrenceType={t.recurrence_type}
+                      recurrenceDays={t.recurrence_days || undefined}
                       onToggleStatus={handleToggleStatus}
                       onDelete={handleDelete}
                     />
