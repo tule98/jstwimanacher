@@ -118,7 +118,7 @@ export function tokenizeText(text: string): {
   sentences: string[];
 } {
   // Normalize whitespace
-  let normalized = text
+  const normalized = text
     .trim()
     .replace(/\s+/g, " ")
     .replace(/([.!?;:])\s+/g, "$1\n");
@@ -238,8 +238,7 @@ export function extractWordsAndPhrases(
  * Requires Gemini enrichment for definitions, examples, etc.
  */
 export function prepareExtractedWords(
-  wordTexts: string[],
-  options: TextProcessingOptions = {}
+  wordTexts: string[]
 ): Array<Omit<ExtractedWord, "definition" | "example_sentence">> {
   return wordTexts.map((word) => ({
     word_text: word,

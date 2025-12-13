@@ -5,14 +5,7 @@
  * based on learning statistics and patterns
  */
 
-import {
-  Box,
-  Grid,
-  Paper,
-  Typography,
-  LinearProgress,
-  Chip,
-} from "@mui/material";
+import { Box, Paper, Typography, LinearProgress, Chip } from "@mui/material";
 
 interface InsightCardProps {
   icon: string;
@@ -43,7 +36,7 @@ function InsightCard({
           <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 0.5 }}>
             {title}
           </Typography>
-          <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
             {description}
           </Typography>
           <Chip label={action} size="small" variant="outlined" />
@@ -53,15 +46,30 @@ function InsightCard({
   );
 }
 
-interface LearningInsightsProps {
-  stats: any;
-  memoryDistribution: any;
+interface DecayMetrics {
+  totalWords?: number;
+  eligibleForDecay?: number;
 }
 
-export default function LearningInsights({
-  stats,
-  memoryDistribution,
-}: LearningInsightsProps) {
+interface MemoryBucket {
+  count?: number;
+}
+
+interface MemoryDistribution {
+  mastered?: MemoryBucket;
+  veryWeak?: MemoryBucket;
+}
+
+interface LearningStats {
+  decayMetrics?: DecayMetrics;
+  memoryLevelDistribution?: MemoryDistribution;
+}
+
+interface LearningInsightsProps {
+  stats: LearningStats | null;
+}
+
+export default function LearningInsights({ stats }: LearningInsightsProps) {
   if (!stats) {
     return null;
   }
@@ -167,7 +175,7 @@ export default function LearningInsights({
           <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
             📈 Mastery Progress
           </Typography>
-          <Typography variant="caption" color="textSecondary">
+          <Typography variant="caption" color="text.secondary">
             {Math.round(masteredPercentage)}%
           </Typography>
         </Box>
@@ -192,7 +200,7 @@ export default function LearningInsights({
           <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
             🔄 Review Status
           </Typography>
-          <Typography variant="caption" color="textSecondary">
+          <Typography variant="caption" color="text.secondary">
             {100 - Math.round(decayPercentage)}% up to date
           </Typography>
         </Box>
@@ -212,41 +220,53 @@ export default function LearningInsights({
       </Box>
 
       {/* Insights grid */}
-      <Grid container spacing={2}>
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
+          gap: (theme) => theme.spacing(2),
+        }}
+      >
         {insights.map((insight, idx) => (
-          <Grid item xs={12} sm={6} key={idx}>
+          <Box key={idx}>
             <InsightCard {...insight} />
-          </Grid>
+          </Box>
         ))}
-      </Grid>
+      </Box>
 
       {/* Tips section */}
       <Box sx={{ mt: 4, pt: 3, borderTop: "1px solid #e5e7eb" }}>
         <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
           💡 Pro Tips
         </Typography>
-        <Grid container spacing={1.5}>
-          <Grid item xs={12} sm={6}>
-            <Typography variant="body2" color="textSecondary">
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
+            gap: (theme) => theme.spacing(1.5),
+          }}
+        >
+          <Box>
+            <Typography variant="body2" color="text.secondary">
               • Review words right after learning for 70% better retention
             </Typography>
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <Typography variant="body2" color="textSecondary">
+          </Box>
+          <Box>
+            <Typography variant="body2" color="text.secondary">
               • Space out reviews over days, weeks, months (spaced repetition)
             </Typography>
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <Typography variant="body2" color="textSecondary">
+          </Box>
+          <Box>
+            <Typography variant="body2" color="text.secondary">
               • Practice with real sentences, not just definitions
             </Typography>
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <Typography variant="body2" color="textSecondary">
+          </Box>
+          <Box>
+            <Typography variant="body2" color="text.secondary">
               • The forgetting curve: Review after 1d, 3d, 7d, 14d, 30d
             </Typography>
-          </Grid>
-        </Grid>
+          </Box>
+        </Box>
       </Box>
     </Box>
   );

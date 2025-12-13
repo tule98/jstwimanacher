@@ -9,7 +9,6 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   calculateMemoryIncrease,
   shouldMarkAsQuickLearner,
-  type ReviewHistory,
 } from "@/services/wordmaster";
 import { wordmasterDb } from "@/services/wordmaster";
 

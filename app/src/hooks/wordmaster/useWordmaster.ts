@@ -13,19 +13,13 @@ import {
 } from "@tanstack/react-query";
 import { wordmasterDb } from "@/services/wordmaster";
 import type {
-  Word,
-  UserWord,
-  UserWordWithWord,
-  ReviewHistory,
   UserSettings,
   DailyStats,
-  UserProfile,
   FeedQuery,
   FeedWord,
   CreateWordInput,
   CreateUserWordInput,
   CreateReviewHistoryInput,
-  MemoryUpdateResponse,
 } from "@/services/wordmaster";
 
 const QUERY_KEYS = {
@@ -108,11 +102,9 @@ export function useCreateWord() {
 
   return useMutation({
     mutationFn: (word: CreateWordInput) => wordmasterDb.createWord(word),
-    onSuccess: (word) => {
+    onSuccess: () => {
       // Invalidate words list
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.words.all });
-      // Cache the new word
-      queryClient.setQueryData(QUERY_KEYS.words.detail(word!.id), word);
     },
   });
 }
@@ -149,7 +141,7 @@ export function useAddWordToUser(userId: string | null) {
       if (!userId) throw new Error("User ID is required");
       return wordmasterDb.createUserWord(userId, input);
     },
-    onSuccess: (userWord) => {
+    onSuccess: () => {
       if (!userId) return;
       // Invalidate feed and user words
       queryClient.invalidateQueries({
@@ -208,7 +200,7 @@ export function useUpdateWordMemory(userId: string | null) {
     }) => {
       return wordmasterDb.updateUserWordMemory(userWordId, newMemoryLevel);
     },
-    onSuccess: (updatedUserWord) => {
+    onSuccess: () => {
       if (!userId) return;
       // Invalidate feed - priority might have changed
       queryClient.invalidateQueries({
@@ -268,12 +260,26 @@ export function useDeleteWord(userId: string | null) {
  * Fetch feed with infinite scroll
  */
 export function useFeed(userId: string | null, options: FeedQuery = {}) {
-  return useInfiniteQuery({
-    queryKey: userId ? QUERY_KEYS.feed.filtered(userId, options) : ["disabled"],
-    queryFn: async ({ pageParam = 0 }) => {
+  type FeedWordsResponse = {
+    words: FeedWord[];
+    hasMore: boolean;
+  };
+
+  return useInfiniteQuery<
+    FeedWordsResponse,
+    Error,
+    FeedWordsResponse,
+    ReturnType<typeof QUERY_KEYS.feed.filtered>
+  >({
+    queryKey: QUERY_KEYS.feed.filtered(userId ?? "", options) as ReturnType<
+      typeof QUERY_KEYS.feed.filtered
+    >,
+    queryFn: async ({ pageParam }) => {
+      const page = (typeof pageParam === "number" ? pageParam : 0) as number;
       if (!userId) throw new Error("User ID is required");
-      return wordmasterDb.getFeedWords(userId, { ...options, page: pageParam });
+      return wordmasterDb.getFeedWords(userId, { ...options, page });
     },
+    initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) =>
       lastPage.hasMore ? allPages.length : undefined,
     enabled: !!userId,
@@ -525,7 +531,7 @@ export function useInvalidateCache() {
     invalidateWords: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.words.all });
     },
-    invalidateStats: (userId: string) => {
+    invalidateStats: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.stats.all });
     },
     invalidateUserData: (userId: string) => {

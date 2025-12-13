@@ -10,9 +10,36 @@
 
 import { Box, Paper, Typography, Skeleton, Stack } from "@mui/material";
 
+interface DecayMetrics {
+  totalWords?: number;
+  eligibleForDecay?: number;
+}
+
+interface MemoryBucket {
+  count?: number;
+  percentage?: number;
+}
+
+interface MemoryLevelDistribution {
+  mastered?: MemoryBucket;
+}
+
+interface LearningStats {
+  decayMetrics?: DecayMetrics;
+  memoryLevelDistribution?: MemoryLevelDistribution;
+}
+
+interface TodayStatus {
+  wordsReviewed?: number;
+}
+
+interface DecayStatus {
+  today?: TodayStatus;
+}
+
 interface StatsCardsProps {
-  stats: any;
-  decayStatus: any;
+  stats: LearningStats | null;
+  decayStatus: DecayStatus | null;
   isLoading: boolean;
 }
 

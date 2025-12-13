@@ -74,14 +74,10 @@ export function WordsFeed({
   const skipWord = useSkipWord(userId);
 
   // Flatten paginated words
-  interface PageResponse {
-    words: FeedWord[];
-  }
-  const allWords: FeedWord[] =
-    feedData?.pages.flatMap((page) => {
-      const p = page as PageResponse;
-      return p.words || [];
-    }) || [];
+  const pages =
+    (feedData as unknown as { pages?: Array<{ words?: FeedWord[] }> })?.pages ??
+    [];
+  const allWords: FeedWord[] = pages.flatMap((page) => page.words ?? []);
 
   // Load more when near end
   useEffect(() => {

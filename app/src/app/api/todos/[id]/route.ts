@@ -34,7 +34,7 @@ export async function PUT(
     if (currentTodo.recurrence_type && currentTodo.recurrence_type !== "none") {
       const nextDueDate = calculateNextDueDate(
         currentTodo.due_date,
-        currentTodo.recurrence_type as any,
+        currentTodo.recurrence_type,
         currentTodo.recurrence_days
           ? JSON.parse(currentTodo.recurrence_days)
           : undefined

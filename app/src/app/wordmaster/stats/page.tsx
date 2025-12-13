@@ -353,10 +353,7 @@ export default function StatsPage() {
                 }}
               />
             ) : (
-              <LearningInsights
-                stats={stats}
-                memoryDistribution={memoryDistribution}
-              />
+              <LearningInsights stats={stats} />
             )}
           </Paper>
         </Stack>
