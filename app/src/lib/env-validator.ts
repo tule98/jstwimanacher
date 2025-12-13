@@ -55,6 +55,26 @@ const REQUIRED_ENV_VARS: EnvironmentVariable[] = [
     env: "server",
   },
 
+  // Supabase (Wordmaster module)
+  {
+    key: "NEXT_PUBLIC_SUPABASE_URL",
+    description: "Supabase project URL (client, browser)",
+    required: true,
+    env: "client",
+  },
+  {
+    key: "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+    description: "Supabase anonymous public key (client, browser)",
+    required: true,
+    env: "client",
+  },
+  {
+    key: "SUPABASE_SERVICE_ROLE_KEY",
+    description: "Supabase service role key (server-only, optional)",
+    required: false,
+    env: "server",
+  },
+
   // Notion Integration
   {
     key: "NOTION_API_KEY",

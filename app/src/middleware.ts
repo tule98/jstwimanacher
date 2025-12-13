@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { createServerClient } from "@supabase/ssr";
 
 const isLocalhost = (hostname: string) => {
   return (
@@ -10,7 +11,33 @@ const isLocalhost = (hostname: string) => {
   );
 };
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
+  // Supabase-prefixed API: verify via Supabase session, bypass api_key
+  if (request.nextUrl.pathname.startsWith("/api/supabase/")) {
+    const response = NextResponse.next();
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL as string,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string,
+      {
+        cookies: {
+          get(name: string) {
+            return request.cookies.get(name)?.value;
+          },
+          set(name: string, value: string, options: any) {
+            response.cookies.set({ name, value, ...options });
+          },
+          remove(name: string, options: any) {
+            response.cookies.set({ name, value: "", ...options });
+          },
+        },
+      }
+    );
+    const { data } = await supabase.auth.getUser();
+    if (!data.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    return response;
+  }
   // Allow verify-key endpoint to pass through (bootstrap endpoint for authentication)
   if (request.nextUrl.pathname === "/api/verify-key") {
     return NextResponse.next();
