@@ -2,9 +2,7 @@
 import "./globals.css";
 import React from "react";
 import AppProvider from "./_components/AppProvider";
-import MuiProvider from "./_components/MuiProvider";
-import DashboardLayout from "./_components/DashboardLayout";
-import MobileBottomLayout from "./_components/MobileBottomLayout";
+import ThemeModeProvider from "./_components/MuiProvider";
 import AuthGuard from "./_components/AuthGuard";
 import ClientToaster from "./_components/ClientToaster";
 
@@ -37,16 +35,12 @@ export default function RootLayout({
         <link rel="icon" type="image/png" href="/jstwi-logo.png" />
       </head>
       <body className="font-poppins min-h-screen transition-colors duration-300 md:pb-0 pb-20">
-        <MuiProvider>
+        <ThemeModeProvider>
           <AppProvider>
-            <AuthGuard>
-              <MobileBottomLayout>
-                <DashboardLayout>{children}</DashboardLayout>
-              </MobileBottomLayout>
-            </AuthGuard>
+            <AuthGuard>{children}</AuthGuard>
             <ClientToaster />
           </AppProvider>
-        </MuiProvider>
+        </ThemeModeProvider>
       </body>
     </html>
   );
