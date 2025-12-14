@@ -8,10 +8,14 @@ export default function SignInPage() {
   const handleGoogle = useCallback(async () => {
     setLoading(true);
     const supabase = createBrowserClient();
+    const siteUrl =
+      process.env.NEXT_PUBLIC_SITE_URL ??
+      (typeof window !== "undefined" ? window.location.origin : "");
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: `${siteUrl}/auth/callback`,
       },
     });
     if (error) {
