@@ -3,8 +3,6 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
-  console.log("🚀 ~ GET ~ searchParams:", searchParams);
-  console.log("🚀 ~ GET ~ origin:", origin);
   const code = searchParams.get("code");
 
   // if "next" is in param, use it as the redirect URL
@@ -17,11 +15,6 @@ export async function GET(request: Request) {
   if (code) {
     const supabase = await createSupabaseServerClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    console.log("🚀 ~ GET ~ user:", user);
 
     if (!error) {
       const forwardedHost = request.headers.get("x-forwarded-host");

@@ -350,6 +350,32 @@ export function WordsFeed({
                 <Button
                   variant="contained"
                   size="small"
+                  onClick={() => handleMarkKnown(word)}
+                  disabled={
+                    markAsKnown.isPending ||
+                    markForReview.isPending ||
+                    skipWord.isPending
+                  }
+                  sx={{
+                    background:
+                      "linear-gradient(90deg, #4318FF 0%, #6B8AFF 100%)",
+                    color: "#FFFFFF",
+                    flex: 1,
+                    "&:hover": {
+                      background:
+                        "linear-gradient(90deg, #5629FF 0%, #7B9AFF 100%)",
+                    },
+                    "&:disabled": {
+                      background: "rgba(255, 255, 255, 0.1)",
+                      color: "rgba(255, 255, 255, 0.3)",
+                    },
+                  }}
+                >
+                  ✓ Known
+                </Button>
+                <Button
+                  variant="contained"
+                  size="small"
                   onClick={() => handleSkip(word)}
                   disabled={
                     markAsKnown.isPending ||
@@ -395,33 +421,6 @@ export function WordsFeed({
                   }}
                 >
                   Review
-                </Button>
-
-                <Button
-                  variant="contained"
-                  size="small"
-                  onClick={() => handleMarkKnown(word)}
-                  disabled={
-                    markAsKnown.isPending ||
-                    markForReview.isPending ||
-                    skipWord.isPending
-                  }
-                  sx={{
-                    background:
-                      "linear-gradient(90deg, #4318FF 0%, #6B8AFF 100%)",
-                    color: "#FFFFFF",
-                    flex: 1,
-                    "&:hover": {
-                      background:
-                        "linear-gradient(90deg, #5629FF 0%, #7B9AFF 100%)",
-                    },
-                    "&:disabled": {
-                      background: "rgba(255, 255, 255, 0.1)",
-                      color: "rgba(255, 255, 255, 0.3)",
-                    },
-                  }}
-                >
-                  ✓ Known
                 </Button>
               </Stack>
             </Box>
