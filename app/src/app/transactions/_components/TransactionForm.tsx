@@ -38,7 +38,6 @@ const transactionFormSchema = z.object({
   category_id: z.string().min(1, "Category is required"),
   note: z.string().min(1, "Description is required"),
   created_at: z.string().min(1, "Time is required"),
-  is_virtual: z.boolean(),
   is_resolved: z.boolean(),
   bucket_ids: z.array(z.string()).default([]),
 });
@@ -100,7 +99,6 @@ export default function TransactionForm({
       category_id: "",
       note: "",
       created_at: format(new Date(), "yyyy-MM-dd"),
-      is_virtual: false,
       is_resolved: true,
       bucket_ids: [],
     },
@@ -131,7 +129,6 @@ export default function TransactionForm({
         "created_at",
         format(parseISO(editTransaction.created_at), "yyyy-MM-dd")
       );
-      setValue("is_virtual", editTransaction.is_virtual || false);
       setValue("is_resolved", editTransaction.is_resolved ?? true);
       // Initialize bucket_ids from available buckets relations if present
       const existingBucketIds = editTransaction.buckets?.map((b) => b.id) || [];
@@ -206,7 +203,6 @@ export default function TransactionForm({
       category_id: defaultCategory?.id || newCategories[0]?.id || "",
       note: "",
       created_at: currentCreatedAt,
-      is_virtual: false,
       is_resolved: true,
       bucket_ids: defaultBucket ? [defaultBucket.id] : [],
     });
@@ -221,7 +217,6 @@ export default function TransactionForm({
       bucket_ids: data.bucket_ids,
       note: data.note,
       created_at: data.created_at,
-      is_virtual: data.is_virtual,
       is_resolved: data.is_resolved,
     };
 
@@ -251,7 +246,6 @@ export default function TransactionForm({
         category_id: defaultCategory?.id || currentCategories[0]?.id || "",
         note: "",
         created_at: currentCreatedAt,
-        is_virtual: false,
         is_resolved: true,
         bucket_ids: defaultBucket ? [defaultBucket.id] : [],
       });
@@ -480,33 +474,6 @@ export default function TransactionForm({
           </Box>
 
           <Stack spacing={2}>
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: 2,
-                p: 2,
-                borderRadius: 1,
-                border: 1,
-                borderColor: "divider",
-              }}
-            >
-              <Box>
-                <Typography variant="subtitle2">Virtual Transaction</Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Not counted in actual{" "}
-                  {activeType === "income" ? "income" : "expenses"}
-                </Typography>
-              </Box>
-              <Switch
-                id="is_virtual"
-                checked={watch("is_virtual")}
-                onChange={(_, checked) => setValue("is_virtual", checked)}
-                inputProps={{ "aria-label": "Virtual transaction" }}
-              />
-            </Box>
-
             <Box
               sx={{
                 display: "flex",

@@ -28,9 +28,6 @@ export const transactions = sqliteTable("transactions", {
   is_resolved: integer("is_resolved", { mode: "boolean" })
     .notNull()
     .default(true),
-  is_virtual: integer("is_virtual", { mode: "boolean" })
-    .notNull()
-    .default(false), // Đánh dấu giao dịch ảo
 });
 
 // Buckets table

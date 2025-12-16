@@ -88,7 +88,6 @@ export interface Transaction {
   /** UTC ISO string - always stored and transmitted in UTC */
   updated_at: UTCString;
   is_resolved: boolean;
-  is_virtual: boolean; // Mark virtual transaction
   category: Category; // Joined category data
   buckets?: Bucket[]; // Associated buckets (optional)
 }
@@ -99,7 +98,6 @@ export interface TransactionCreateData {
   bucket_id?: string | null;
   bucket_ids?: string[]; // New field for multiple buckets
   note?: string;
-  is_virtual?: boolean; // Mark virtual transaction
   is_resolved?: boolean; // Mark transaction as resolved
   /** UTC ISO string - will be converted to UTC if provided, otherwise uses current UTC time */
   created_at?: UTCString | string;
@@ -113,7 +111,6 @@ export interface TransactionUpdateData {
   bucket_ids?: string[]; // New field for multiple buckets
   note?: string;
   is_resolved?: boolean;
-  is_virtual?: boolean; // Mark virtual transaction
   /** UTC ISO string - will be converted to UTC if provided */
   created_at?: UTCString | string;
 }
@@ -135,14 +132,12 @@ export interface MonthlyStats {
 
 export interface BalanceStats {
   // Income
-  income_real: number; // Real income (excluding virtual)
-  income_virtual: number; // Virtual income
-  income: number; // Total income (real + virtual) - primary field
+  income_real: number; // Real income
+  income: number; // Total income - primary field
 
   // Expenses
-  expense_real: number; // Real expenses (excluding virtual)
-  expense_virtual: number; // Virtual expenses
-  expense: number; // Total expenses (real + virtual) - primary field
+  expense_real: number; // Real expenses
+  expense: number; // Total expenses - primary field
 
   // Balance
   balance: number; // Total income - total expenses
@@ -258,7 +253,6 @@ export const TransactionsAPI = {
     offset: number,
     options?: {
       onlyUnresolved?: boolean;
-      onlyVirtual?: boolean;
       search?: string;
       categoryId?: string;
       bucketIds?: string[];
@@ -268,7 +262,6 @@ export const TransactionsAPI = {
       limit,
       offset,
       ...(options?.onlyUnresolved && { onlyUnresolved: "true" }),
-      ...(options?.onlyVirtual && { onlyVirtual: "true" }),
       ...(options?.search && { search: options.search }),
       ...(options?.categoryId && { categoryId: options.categoryId }),
       ...(options?.bucketIds &&
@@ -286,13 +279,6 @@ export const TransactionsAPI = {
       month,
       year,
     });
-  },
-
-  /**
-   * Get all virtual transactions (not limited by time)
-   */
-  async getVirtualTransactions(): Promise<Transaction[]> {
-    return httpClient.get<Transaction[]>("/api/transactions/virtual");
   },
 
   /**

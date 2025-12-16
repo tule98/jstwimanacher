@@ -22,8 +22,6 @@ interface TransactionFilterSectionProps {
   onSearchChange: (value: string) => void;
   onlyUnresolved: boolean;
   onOnlyUnresolvedChange: (value: boolean) => void;
-  onlyVirtual: boolean;
-  onOnlyVirtualChange: (value: boolean) => void;
   selectedCategoryId: string;
   onCategoryChange: (value: string) => void;
   selectedBucketId?: string;
@@ -35,8 +33,6 @@ export default function TransactionFilterSection({
   onSearchChange,
   onlyUnresolved,
   onOnlyUnresolvedChange,
-  onlyVirtual,
-  onOnlyVirtualChange,
   selectedCategoryId,
   onCategoryChange,
   selectedBucketId,
@@ -46,8 +42,7 @@ export default function TransactionFilterSection({
   const { data: buckets = [] } = useBuckets();
   const { data: bucketBalance } = useBucketBalance(selectedBucketId);
 
-  const hasActiveFilters =
-    onlyUnresolved || onlyVirtual || selectedCategoryId !== "all";
+  const hasActiveFilters = onlyUnresolved || selectedCategoryId !== "all";
 
   return (
     <div className="space-y-4">
@@ -227,24 +222,6 @@ export default function TransactionFilterSection({
               id="only-unresolved"
               checked={onlyUnresolved}
               onCheckedChange={onOnlyUnresolvedChange}
-            />
-          </div>
-          <div className="flex items-center justify-between">
-            <Label
-              htmlFor="only-virtual"
-              className="text-sm font-medium cursor-pointer flex items-center gap-2"
-            >
-              <span>Only show virtual transactions</span>
-              {onlyVirtual && (
-                <span className="text-xs px-2 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full">
-                  Active
-                </span>
-              )}
-            </Label>
-            <Switch
-              id="only-virtual"
-              checked={onlyVirtual}
-              onCheckedChange={onOnlyVirtualChange}
             />
           </div>
         </div>

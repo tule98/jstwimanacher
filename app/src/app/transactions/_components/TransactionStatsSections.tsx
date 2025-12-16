@@ -53,20 +53,6 @@ export default function TransactionStatsSections({
             }
             variant="success"
             icon={<TrendingUp className="w-4 h-4" />}
-            metadata={[
-              {
-                key: "THỰC TẾ",
-                value: hideBalance
-                  ? "••••••"
-                  : formatCurrency(balanceStats.income_real),
-              },
-              {
-                key: "THU ẢO",
-                value: hideBalance
-                  ? "••••••"
-                  : formatCurrency(balanceStats.income_virtual),
-              },
-            ]}
           />
 
           {/* Chi tiêu */}
@@ -77,20 +63,6 @@ export default function TransactionStatsSections({
             }
             variant="error"
             icon={<TrendingDown className="w-4 h-4" />}
-            metadata={[
-              {
-                key: "THỰC TẾ",
-                value: hideBalance
-                  ? "••••••"
-                  : formatCurrency(balanceStats.expense_real),
-              },
-              {
-                key: "CHI ẢO",
-                value: hideBalance
-                  ? "••••••"
-                  : formatCurrency(balanceStats.expense_virtual),
-              },
-            ]}
           />
 
           {/* Số dư */}
@@ -101,38 +73,13 @@ export default function TransactionStatsSections({
                 "•••••••"
               ) : (
                 <>
-                  {balanceStats.income_real - balanceStats.expense_real >= 0
-                    ? "+"
-                    : ""}
-                  {formatCurrency(
-                    balanceStats.income_real - balanceStats.expense_real
-                  )}
+                  {balanceStats.income - balanceStats.expense >= 0 ? "+" : ""}
+                  {formatCurrency(balanceStats.income - balanceStats.expense)}
                 </>
               )
             }
             variant="info"
             icon={<DollarSign className="w-4 h-4" />}
-            metadata={[
-              {
-                key: "THỰC TẾ",
-                value: hideBalance
-                  ? "••••••"
-                  : formatCurrency(
-                      balanceStats.income_real - balanceStats.expense_real
-                    ),
-              },
-              {
-                key: "TƯƠNG LAI",
-                value: hideBalance
-                  ? "••••••"
-                  : formatCurrency(
-                      balanceStats.income_real -
-                        balanceStats.expense_real +
-                        balanceStats.expense_virtual -
-                        balanceStats.income_virtual
-                    ),
-              },
-            ]}
           />
         </div>
       ) : (

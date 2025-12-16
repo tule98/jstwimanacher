@@ -6,7 +6,6 @@ export const queryKeys = {
     all: ["transactions"] as const,
     infinite: (filters?: {
       onlyUnresolved?: boolean;
-      onlyVirtual?: boolean;
       search?: string;
       categoryId?: string;
       bucketIds?: string[];
@@ -20,9 +19,6 @@ export const queryKeys = {
   balance: {
     stats: (month: number, year: number) =>
       ["balance-stats", month, year] as const,
-  },
-  virtual: {
-    transactions: ["virtual-transactions"] as const,
   },
   unresolved: {
     transactions: ["unresolved-transactions"] as const,

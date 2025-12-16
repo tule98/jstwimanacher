@@ -16,7 +16,6 @@ const baseGET: RouteHandler = async (request) => {
     const limit = searchParams.get("limit");
     const offset = searchParams.get("offset");
     const onlyUnresolved = searchParams.get("onlyUnresolved") === "true";
-    const onlyVirtual = searchParams.get("onlyVirtual") === "true";
     const search = searchParams.get("search") || undefined;
     const categoryId = searchParams.get("categoryId") || undefined;
     const bucketIdsParam =
@@ -42,7 +41,6 @@ const baseGET: RouteHandler = async (request) => {
         offsetNum,
         {
           onlyUnresolved,
-          onlyVirtual,
           search,
           categoryId,
           bucketIds,
@@ -66,7 +64,6 @@ const basePOST: RouteHandler = async (request) => {
       amount,
       category_id,
       note,
-      is_virtual,
       is_resolved,
       created_at,
       bucket_id,
@@ -87,7 +84,6 @@ const basePOST: RouteHandler = async (request) => {
       bucket_ids:
         bucket_ids && Array.isArray(bucket_ids) ? bucket_ids : undefined,
       note,
-      is_virtual: is_virtual || false,
       is_resolved: is_resolved ?? true,
       created_at: created_at ? toUTC(created_at) : undefined,
     });
@@ -111,7 +107,6 @@ const basePUT: RouteHandler = async (request) => {
       category_id,
       note,
       is_resolved,
-      is_virtual,
       created_at,
       bucket_id,
       bucket_ids,
@@ -131,7 +126,6 @@ const basePUT: RouteHandler = async (request) => {
       bucket_ids?: string[];
       note?: string;
       is_resolved?: boolean;
-      is_virtual?: boolean;
       created_at?: string;
     } = {};
 
@@ -142,7 +136,6 @@ const basePUT: RouteHandler = async (request) => {
       updateData.bucket_ids = bucket_ids;
     if (note !== undefined) updateData.note = note;
     if (is_resolved !== undefined) updateData.is_resolved = is_resolved;
-    if (is_virtual !== undefined) updateData.is_virtual = is_virtual;
     if (created_at !== undefined) updateData.created_at = toUTC(created_at);
 
     const result = await databaseService.updateTransaction(id, updateData);

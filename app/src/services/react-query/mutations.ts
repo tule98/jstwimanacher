@@ -34,9 +34,6 @@ export function useCreateTransaction() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.transactions.all });
       queryClient.invalidateQueries({
-        queryKey: queryKeys.virtual.transactions,
-      });
-      queryClient.invalidateQueries({
         queryKey: queryKeys.unresolved.transactions,
       });
     },
@@ -51,9 +48,6 @@ export function useUpdateTransaction() {
     mutationFn: API.transactions.update,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.transactions.all });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.virtual.transactions,
-      });
       queryClient.invalidateQueries({
         queryKey: queryKeys.unresolved.transactions,
       });
@@ -70,16 +64,13 @@ export function useDeleteTransaction() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.transactions.all });
       queryClient.invalidateQueries({
-        queryKey: queryKeys.virtual.transactions,
-      });
-      queryClient.invalidateQueries({
         queryKey: queryKeys.unresolved.transactions,
       });
     },
   });
 }
 
-// Mutations for toggling resolved/virtual status
+// Mutations for toggling resolved status
 export function useToggleResolvedTransaction() {
   const queryClient = useQueryClient();
 
@@ -88,28 +79,6 @@ export function useToggleResolvedTransaction() {
       API.transactions.update(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.transactions.all });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.virtual.transactions,
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.unresolved.transactions,
-      });
-    },
-  });
-}
-
-// Mutations for toggling virtual status
-export function useToggleVirtualTransaction() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (data: { id: string; is_virtual: boolean }) =>
-      API.transactions.update(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.transactions.all });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.virtual.transactions,
-      });
       queryClient.invalidateQueries({
         queryKey: queryKeys.unresolved.transactions,
       });

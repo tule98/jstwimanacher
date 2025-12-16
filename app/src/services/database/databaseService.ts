@@ -132,7 +132,6 @@ export class DatabaseService {
     offset?: number,
     options?: {
       onlyUnresolved?: boolean;
-      onlyVirtual?: boolean;
       search?: string;
       categoryId?: string;
       bucketIds?: string[];
@@ -143,10 +142,6 @@ export class DatabaseService {
     // Add filter conditions
     if (options?.onlyUnresolved) {
       conditions.push(eq(transactions.is_resolved, false));
-    }
-
-    if (options?.onlyVirtual) {
-      conditions.push(eq(transactions.is_virtual, true));
     }
 
     // Add search condition
@@ -258,7 +253,6 @@ export class DatabaseService {
     bucket_id?: string | null;
     bucket_ids?: string[]; // New field for multiple buckets
     note?: string;
-    is_virtual?: boolean;
     is_resolved?: boolean;
     created_at?: string | UTCString;
   }): Promise<Transaction> {
@@ -294,7 +288,6 @@ export class DatabaseService {
       created_at: data.created_at ? toUTC(data.created_at) : now,
       updated_at: now,
       is_resolved: data.is_resolved ?? true,
-      is_virtual: data.is_virtual || false,
     };
 
     const result = await db
@@ -329,7 +322,6 @@ export class DatabaseService {
       bucket_ids?: string[]; // New field for multiple buckets
       note: string;
       is_resolved: boolean;
-      is_virtual: boolean;
       created_at: string | UTCString;
     }>
   ): Promise<Transaction | null> {
@@ -349,9 +341,6 @@ export class DatabaseService {
     }
     if (data.is_resolved !== undefined) {
       updateData.is_resolved = data.is_resolved;
-    }
-    if (data.is_virtual !== undefined) {
-      updateData.is_virtual = data.is_virtual;
     }
     if (data.created_at !== undefined) {
       updateData.created_at = toUTC(data.created_at);
@@ -523,23 +512,6 @@ export class DatabaseService {
     return { income, expense };
   }
 
-  // Get all virtual transactions (not limited by time)
-  async getVirtualTransactions(): Promise<
-    (Transaction & { category: Category })[]
-  > {
-    const result = await db
-      .select()
-      .from(transactions)
-      .leftJoin(categories, eq(transactions.category_id, categories.id))
-      .where(eq(transactions.is_virtual, true))
-      .orderBy(desc(transactions.created_at));
-
-    return result.map((row) => ({
-      ...row.transactions,
-      category: row.categories!,
-    }));
-  }
-
   // Statistics methods
   async getCategoryStats(
     month: number,
@@ -589,17 +561,15 @@ export class DatabaseService {
     year: number
   ): Promise<{
     income_real: number;
-    income_virtual: number;
     income: number;
     expense_real: number;
-    expense_virtual: number;
     expense: number;
     balance: number;
   }> {
     const { start, end } = getMonthBoundsUTC(month, year);
 
-    // Get real transactions for the specific month
-    const realResult = await db
+    // Get transactions for the specific month
+    const result = await db
       .select({
         type: categories.type,
         total: sql<number>`sum(${transactions.amount})`,
@@ -614,53 +584,25 @@ export class DatabaseService {
       )
       .groupBy(categories.type);
 
-    // Get virtual transactions (all time, not limited by month)
-    const virtualResult = await db
-      .select({
-        type: categories.type,
-        total: sql<number>`sum(${transactions.amount})`,
-      })
-      .from(transactions)
-      .leftJoin(categories, eq(transactions.category_id, categories.id))
-      .where(eq(transactions.is_virtual, true))
-      .groupBy(categories.type);
+    let income = 0;
+    let expense = 0;
 
-    let income_real = 0;
-    let expense_real = 0;
-    let income_virtual = 0;
-    let expense_virtual = 0;
-
-    // Process real transactions
-    realResult.forEach((item) => {
+    // Process transactions
+    result.forEach((item) => {
       const amount = item.total || 0;
       if (item.type === "income") {
-        income_real += amount;
+        income += amount;
       } else if (item.type === "expense") {
-        expense_real += amount;
+        expense += amount;
       }
     });
-
-    // Process virtual transactions
-    virtualResult.forEach((item) => {
-      const amount = item.total || 0;
-      if (item.type === "income") {
-        income_virtual += amount;
-      } else if (item.type === "expense") {
-        expense_virtual += amount;
-      }
-    });
-
-    const income_total = income_real + income_virtual;
-    const expense_total = expense_real + expense_virtual;
 
     return {
-      income_real,
-      income_virtual,
-      income: income_total,
-      expense_real,
-      expense_virtual,
-      expense: expense_total,
-      balance: income_total - expense_total,
+      income_real: income,
+      income: income,
+      expense_real: expense,
+      expense: expense,
+      balance: income - expense,
     };
   }
 
@@ -843,12 +785,7 @@ export class DatabaseService {
         transactions,
         eq(assetConversions.transaction_id, transactions.id)
       )
-      .where(
-        and(
-          eq(transactions.is_resolved, true),
-          eq(transactions.is_virtual, false)
-        )
-      );
+      .where(eq(transactions.is_resolved, true));
 
     // Group and calculate portfolio data
     const portfolioMap = new Map<

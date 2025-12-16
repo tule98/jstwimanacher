@@ -20,7 +20,6 @@ const baseGET: RouteHandler = async () => {
         created_at: transactions.created_at,
         updated_at: transactions.updated_at,
         is_resolved: transactions.is_resolved,
-        is_virtual: transactions.is_virtual,
         category: {
           id: categories.id,
           name: categories.name,

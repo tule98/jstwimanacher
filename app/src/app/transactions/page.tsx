@@ -8,7 +8,6 @@ import {
   useUpdateTransaction,
   useDeleteTransaction,
   useToggleResolvedTransaction,
-  useToggleVirtualTransaction,
 } from "@/services/react-query/mutations";
 import { queryKeys } from "@/services/react-query/query-keys";
 import {
@@ -120,7 +119,6 @@ export default function TransactionsPage() {
     error: transactionsError,
   } = useTransactions(PAGE_SIZE, {
     onlyUnresolved: filters.onlyUnresolved,
-    onlyVirtual: filters.onlyVirtual,
     search: debouncedSearch || undefined,
     categoryId: filters.categoryId !== "all" ? filters.categoryId : undefined,
     bucketIds: filters.bucketIds,
@@ -134,7 +132,6 @@ export default function TransactionsPage() {
   const updateMutation = useUpdateTransaction();
   const deleteMutation = useDeleteTransaction();
   const toggleResolvedMutation = useToggleResolvedTransaction();
-  const toggleVirtualMutation = useToggleVirtualTransaction();
 
   // Load more transactions function - using React Query pattern
   const loadMoreTransactions = () => {
@@ -233,39 +230,6 @@ export default function TransactionsPage() {
     }
   };
 
-  const handleToggleVirtual = (id: string) => {
-    const transaction = transactions.find((tx) => tx.id === id);
-    if (transaction) {
-      // Toggle logic: undefined/false -> true, true -> false
-      const currentVirtual = transaction.is_virtual === true;
-      const newVirtualState = !currentVirtual;
-      toggleVirtualMutation.mutate(
-        {
-          id: id,
-          is_virtual: newVirtualState,
-        },
-        {
-          onSuccess: () => {
-            queryClient.invalidateQueries({
-              queryKey: queryKeys.balance.stats(currentMonth, currentYear),
-            });
-            toast.success(
-              newVirtualState
-                ? "Transaction marked as virtual"
-                : "Transaction marked as real"
-            );
-          },
-          onError: (error) => {
-            toast.error("Failed to update transaction status", {
-              description:
-                error instanceof Error ? error.message : "An error occurred",
-            });
-          },
-        }
-      );
-    }
-  };
-
   return (
     <Box sx={{ width: 1 }}>
       {/* Content */}
@@ -307,16 +271,11 @@ export default function TransactionsPage() {
                 onEdit={handleEdit}
                 onDelete={handleDelete}
                 onToggleResolved={handleToggleResolved}
-                onToggleVirtual={handleToggleVirtual}
                 isDeleting={deleteMutation.isPending}
                 deletingId={deleteMutation.variables as string}
                 isTogglingResolved={toggleResolvedMutation.isPending}
                 togglingId={
                   toggleResolvedMutation.variables?.id as string | undefined
-                }
-                isTogglingVirtual={toggleVirtualMutation.isPending}
-                togglingVirtualId={
-                  toggleVirtualMutation.variables?.id as string | undefined
                 }
               />
             </Box>

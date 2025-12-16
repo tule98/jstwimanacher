@@ -50,7 +50,6 @@ export function useTransactions(
   pageSize: number = 20,
   options?: {
     onlyUnresolved?: boolean;
-    onlyVirtual?: boolean;
     search?: string;
     categoryId?: string;
     bucketIds?: string[];

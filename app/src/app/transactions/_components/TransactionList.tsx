@@ -16,8 +16,6 @@ import {
   AlertCircle,
   TrendingUp,
   TrendingDown,
-  Eye,
-  EyeOff,
 } from "lucide-react";
 import { format, parseISO, isSameDay } from "date-fns";
 import { useUserTimezone } from "@/hooks/useUserTimezone";
@@ -30,13 +28,10 @@ interface TransactionListProps {
   onEdit: (transaction: Transaction) => void;
   onDelete: (id: string) => void;
   onToggleResolved: (id: string) => void;
-  onToggleVirtual?: (id: string) => void;
   isDeleting: boolean;
   deletingId?: string;
   isTogglingResolved: boolean;
   togglingId?: string;
-  isTogglingVirtual?: boolean;
-  togglingVirtualId?: string;
 }
 
 // Format currency function
@@ -79,13 +74,10 @@ export default function TransactionList({
   onEdit,
   onDelete,
   onToggleResolved,
-  onToggleVirtual,
   isDeleting,
   deletingId,
   isTogglingResolved,
   togglingId,
-  isTogglingVirtual,
-  togglingVirtualId,
 }: TransactionListProps) {
   const { data: categories = [] } = useCategories();
   const theme = useTheme();
@@ -402,25 +394,6 @@ export default function TransactionList({
                           >
                             {tx.note || "Không có ghi chú"}
                           </Typography>
-                          {tx.is_virtual && (
-                            <Chip
-                              label="Ảo"
-                              size="small"
-                              sx={{
-                                bgcolor:
-                                  theme.palette.mode === "dark"
-                                    ? "rgba(168, 85, 247, 0.2)"
-                                    : "rgba(243, 232, 255, 1)",
-                                color:
-                                  theme.palette.mode === "dark"
-                                    ? "rgba(216, 180, 254, 1)"
-                                    : "rgba(126, 34, 206, 1)",
-                                fontSize: "0.65rem",
-                                height: 18,
-                                flexShrink: 0,
-                              }}
-                            />
-                          )}
                         </Stack>
                         <Chip
                           variant="outlined"
@@ -505,45 +478,6 @@ export default function TransactionList({
                               <AlertCircle size={16} />
                             )}
                           </IconButton>
-                          {onToggleVirtual && (
-                            <IconButton
-                              size="small"
-                              onClick={() => onToggleVirtual(tx.id)}
-                              disabled={
-                                isDeleting ||
-                                isTogglingResolved ||
-                                isTogglingVirtual
-                              }
-                              title={
-                                tx.is_virtual
-                                  ? "Chuyển thành giao dịch thực tế"
-                                  : "Đánh dấu là giao dịch ảo"
-                              }
-                              sx={{
-                                color: tx.is_virtual
-                                  ? "secondary.main"
-                                  : "text.disabled",
-                                "&:hover": {
-                                  bgcolor: tx.is_virtual
-                                    ? theme.palette.mode === "dark"
-                                      ? "rgba(168, 85, 247, 0.2)"
-                                      : "rgba(243, 232, 255, 1)"
-                                    : theme.palette.mode === "dark"
-                                    ? "rgba(255,255,255,0.05)"
-                                    : "grey.100",
-                                },
-                              }}
-                            >
-                              {isTogglingVirtual &&
-                              togglingVirtualId === tx.id ? (
-                                <CircularProgress size={16} />
-                              ) : tx.is_virtual ? (
-                                <EyeOff size={16} />
-                              ) : (
-                                <Eye size={16} />
-                              )}
-                            </IconButton>
-                          )}
                           <IconButton
                             size="small"
                             onClick={() => onEdit(tx)}
