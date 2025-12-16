@@ -20,6 +20,8 @@ import {
   EyeOff,
 } from "lucide-react";
 import { format, parseISO, isSameDay } from "date-fns";
+import { useUserTimezone } from "@/hooks/useUserTimezone";
+import { formatDateForDisplay } from "@/lib/timezone";
 import { Transaction } from "@/services/api/client";
 import { useCategories } from "@/services/react-query/queries";
 
@@ -87,6 +89,7 @@ export default function TransactionList({
 }: TransactionListProps) {
   const { data: categories = [] } = useCategories();
   const theme = useTheme();
+  const { timezone } = useUserTimezone();
 
   const getCategoryColor = (categoryId: string): string => {
     const category = categories.find((cat) => cat.id === categoryId);
@@ -138,13 +141,22 @@ export default function TransactionList({
           new Date(Date.now() - 24 * 60 * 60 * 1000)
         );
 
-        let dateLabel = format(date, "dd/MM/yyyy - EEEE", {
-          locale: undefined,
-        });
+        // Format date using timezone-aware utility
+        const dateStr = format(date, "yyyy-MM-dd");
+        const formattedDate = formatDateForDisplay(
+          date.toISOString(),
+          timezone
+        );
+        let dateLabel =
+          formattedDate +
+          " - " +
+          format(date, "EEEE", {
+            locale: undefined,
+          });
         if (isToday) {
-          dateLabel = "Hôm nay - " + format(date, "dd/MM/yyyy");
+          dateLabel = "Hôm nay - " + formattedDate;
         } else if (isYesterday) {
-          dateLabel = "Hôm qua - " + format(date, "dd/MM/yyyy");
+          dateLabel = "Hôm qua - " + formattedDate;
         }
 
         // Calculate daily total (income - expense)

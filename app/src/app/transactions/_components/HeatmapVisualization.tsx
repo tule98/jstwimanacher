@@ -2,6 +2,8 @@
 import * as React from "react";
 import { Box, Typography, Stack, Tooltip } from "@mui/material";
 import { HeatmapDataPoint } from "@/services/api/client";
+import { useUserTimezone } from "@/hooks/useUserTimezone";
+import { formatDateForDisplay } from "@/lib/timezone";
 
 interface HeatmapVisualizationProps {
   year: number;
@@ -14,6 +16,7 @@ export default function HeatmapVisualization({
   month,
   data,
 }: HeatmapVisualizationProps) {
+  const { timezone } = useUserTimezone();
   // Create a map for quick lookup
   const dataMap = React.useMemo(() => {
     const map = new Map<string, number>();
@@ -121,7 +124,10 @@ export default function HeatmapVisualization({
                   key={dayIdx}
                   title={
                     day.dateStr
-                      ? `${day.dateStr}: ${day.value.toLocaleString("vi-VN")} ₫`
+                      ? `${formatDateForDisplay(
+                          day.dateStr,
+                          timezone
+                        )}: ${day.value.toLocaleString("vi-VN")} ₫`
                       : ""
                   }
                   arrow
@@ -180,7 +186,10 @@ export default function HeatmapVisualization({
                 key={dayIdx}
                 title={
                   day.dateStr
-                    ? `${day.dateStr}: ${day.value.toLocaleString("vi-VN")} ₫`
+                    ? `${formatDateForDisplay(
+                        day.dateStr,
+                        timezone
+                      )}: ${day.value.toLocaleString("vi-VN")} ₫`
                     : ""
                 }
                 arrow

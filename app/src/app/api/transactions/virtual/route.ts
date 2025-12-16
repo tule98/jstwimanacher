@@ -1,11 +1,17 @@
 import { NextResponse } from "next/server";
 import { databaseService } from "@/services/database/databaseService";
+import {
+  compose,
+  withAuth,
+  withLog,
+  type RouteHandler,
+} from "@/lib/route-handlers";
 
 /**
  * API endpoint for virtual transactions
  * GET /api/transactions/virtual - Get all virtual transactions
  */
-export async function GET() {
+const baseGET: RouteHandler = async (request) => {
   try {
     const virtualTransactions = await databaseService.getVirtualTransactions();
     return NextResponse.json(virtualTransactions);
@@ -15,4 +21,6 @@ export async function GET() {
       { status: 500 }
     );
   }
-}
+};
+
+export const GET = compose(withLog, withAuth)(baseGET);

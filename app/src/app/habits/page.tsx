@@ -33,6 +33,7 @@ export default function HabitsTodayPage() {
   const isDark = theme.palette.mode === "dark";
   const queryClient = useQueryClient();
   const { setPlusAction } = useMobileBottomActions();
+  // Timezone context is available via useUserTimezone() if needed for date rendering
 
   const [formOpen, setFormOpen] = useState(false);
   const [moodSelectorOpen, setMoodSelectorOpen] = useState(false);

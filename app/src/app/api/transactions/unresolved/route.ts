@@ -2,10 +2,15 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { transactions, categories } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import {
+  compose,
+  withAuth,
+  withLog,
+  type RouteHandler,
+} from "@/lib/route-handlers";
 
-export async function GET() {
+const baseGET: RouteHandler = async (request) => {
   try {
-    // Get all unresolved transactions regardless of time
     const unresolvedTransactions = await db
       .select({
         id: transactions.id,
@@ -36,4 +41,6 @@ export async function GET() {
       { status: 500 }
     );
   }
-}
+};
+
+export const GET = compose(withLog, withAuth)(baseGET);

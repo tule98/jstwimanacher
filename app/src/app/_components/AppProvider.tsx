@@ -1,6 +1,7 @@
 "use client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ToastProvider } from "@/lib/toast-context";
+import { TimezoneProvider } from "@/hooks/useUserTimezone";
 
 const queryClient = new QueryClient();
 
@@ -11,7 +12,9 @@ export default function AppProvider({
 }) {
   return (
     <QueryClientProvider client={queryClient}>
-      <ToastProvider>{children}</ToastProvider>
+      <TimezoneProvider>
+        <ToastProvider>{children}</ToastProvider>
+      </TimezoneProvider>
     </QueryClientProvider>
   );
 }

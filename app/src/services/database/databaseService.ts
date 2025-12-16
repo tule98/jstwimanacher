@@ -960,24 +960,32 @@ export class DatabaseService {
       .orderBy(asc(habits.order), desc(habits.created_at));
     if (!includeEntries) return result;
 
-    // Calculate date range for journal entries
+    // Calculate date range for journal entries (use date-only strings to avoid TZ shifts)
     let startStr: string;
     let endStr: string;
 
     if (month !== undefined && year !== undefined) {
-      // Get entries for specific month/year
-      const startDate = new Date(year, month - 1, 1);
-      const endDate = new Date(year, month, 0); // Last day of the month
-      startStr = startDate.toISOString().slice(0, 10);
-      endStr = endDate.toISOString().slice(0, 10);
+      // Specific month/year: compute YYYY-MM-DD explicitly (no toISOString)
+      const daysInMonth = new Date(year, month, 0).getDate();
+      startStr = `${year}-${String(month).padStart(2, "0")}-01`;
+      endStr = `${year}-${String(month).padStart(2, "0")}-${String(
+        daysInMonth
+      ).padStart(2, "0")}`;
     } else {
-      // Default to current month if not specified
+      // Default: current month
       const now = new Date();
-      const startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-      const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-      startStr = startDate.toISOString().slice(0, 10);
-      endStr = endDate.toISOString().slice(0, 10);
+      const y = now.getFullYear();
+      const m = now.getMonth() + 1; // 1-12
+      const daysInMonth = new Date(y, m, 0).getDate();
+      startStr = `${y}-${String(m).padStart(2, "0")}-01`;
+      endStr = `${y}-${String(m).padStart(2, "0")}-${String(
+        daysInMonth
+      ).padStart(2, "0")}`;
     }
+    console.log("🚀 ~ DatabaseService ~ getHabits ~ startStr:", {
+      startStr,
+      endStr,
+    });
 
     const entries = await db
       .select()

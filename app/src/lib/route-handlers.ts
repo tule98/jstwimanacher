@@ -211,3 +211,103 @@ export function compose(
     return fns.reduceRight((acc, fn) => fn(acc), handler);
   };
 }
+
+/**
+ * Utility: Truncate strings for logging
+ */
+function truncateForLog(input: string, max = 100): string {
+  if (input.length <= max) return input;
+  return input.slice(0, max) + "…";
+}
+
+/**
+ * Utility: Safely read request body without consuming original stream
+ */
+async function readBodyPreview(request: NextRequest): Promise<string> {
+  try {
+    // Clone to avoid consuming the original body stream
+    const cloned = request.clone();
+    const text = await cloned.text();
+    // Collapse whitespace to keep logs compact
+    return truncateForLog(text.replace(/\s+/g, " ").trim());
+  } catch {
+    return "[unreadable body]";
+  }
+}
+
+/**
+ * Logs request query/body and truncated response for authenticated handlers
+ * Use in compose(): compose(withLog, withAuth)(handler)
+ */
+export function withLog(handler: RouteHandler): RouteHandler {
+  return async function loggedHandler(request: AuthenticatedRequest) {
+    const start = Date.now();
+    const method = request.method;
+    const path = request.nextUrl.pathname;
+    const query = request.nextUrl.searchParams.toString();
+    const bodyPreview = await readBodyPreview(request);
+
+    // Pre-log
+    console.log(
+      `[API] ${method} ${path}${query ? `?${query}` : ""} body=${bodyPreview}`
+    );
+
+    const response = await handler(request);
+
+    let responsePreview = "";
+    try {
+      const cloned = response.clone();
+      const text = await cloned.text();
+      responsePreview = truncateForLog(text.replace(/\s+/g, " ").trim());
+    } catch {
+      responsePreview = "[unreadable response]";
+    }
+
+    const duration = Date.now() - start;
+    console.log(
+      `[API] ${method} ${path} -> ${response.status} in ${duration}ms res=${responsePreview}`
+    );
+
+    return response;
+  };
+}
+
+/**
+ * Logs request/response for plain NextRequest handlers
+ * Useful for routes not using AuthenticatedRequest
+ */
+export function withLogRequest<ARGS extends unknown[] = []>(
+  handler: (request: NextRequest, ...args: ARGS) => Promise<NextResponse>
+) {
+  return async function loggedNextHandler(
+    request: NextRequest,
+    ...args: ARGS
+  ): Promise<NextResponse> {
+    const start = Date.now();
+    const method = request.method;
+    const path = request.nextUrl.pathname;
+    const query = request.nextUrl.searchParams.toString();
+    const bodyPreview = await readBodyPreview(request);
+
+    console.log(
+      `[API] ${method} ${path}${query ? `?${query}` : ""} body=${bodyPreview}`
+    );
+
+    const response = await handler(request, ...args);
+
+    let responsePreview = "";
+    try {
+      const text = await response.clone().text();
+      responsePreview = truncateForLog(text.replace(/\s+/g, " ").trim());
+    } catch {
+      responsePreview = "[unreadable response]";
+    }
+
+    const duration = Date.now() - start;
+    console.log(
+      `[API] ${method} ${path} -> ${response.status} in ${duration}ms res=${responsePreview}`
+    );
+
+    return response;
+  } as typeof handler;
+}

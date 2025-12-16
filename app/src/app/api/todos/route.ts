@@ -1,18 +1,22 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { todos, NewTodo } from "@/db/schema";
 import { and, gte, lte } from "drizzle-orm";
 import { inferDueDateFromDescription } from "@/services/api/ai";
 import { parseUserDateToUTC } from "@/lib/timezone";
+import {
+  compose,
+  withAuth,
+  withLog,
+  type RouteHandler,
+} from "@/lib/route-handlers";
 
 // GET /api/todos?start=ISO&end=ISO
-export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
+const baseGET: RouteHandler = async (request) => {
+  const { searchParams } = request.nextUrl;
   const start = searchParams.get("start");
   const end = searchParams.get("end");
 
-  // TODO: Validate date range more strictly
-  // Query with UTC dates directly (dates in DB are already in UTC)
   const rows =
     start && end
       ? await db
@@ -22,11 +26,13 @@ export async function GET(req: NextRequest) {
           .orderBy(todos.due_date)
       : await db.select().from(todos).orderBy(todos.due_date);
   return NextResponse.json({ items: rows });
-}
+};
+
+export const GET = compose(withLog, withAuth)(baseGET);
 
 // POST /api/todos
-export async function POST(req: NextRequest) {
-  const body = await req.json();
+const basePOST: RouteHandler = async (request) => {
+  const body = await request.json();
   const inferredDue =
     body.due_date ||
     (await inferDueDateFromDescription(body.description || ""));
@@ -63,4 +69,6 @@ export async function POST(req: NextRequest) {
 
   await db.insert(todos).values(payload);
   return NextResponse.json({ item: payload }, { status: 201 });
-}
+};
+
+export const POST = compose(withLog, withAuth)(basePOST);

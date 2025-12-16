@@ -1,10 +1,16 @@
 import { NextResponse } from "next/server";
 import { databaseService } from "@/services/database/databaseService";
 import { toUTC } from "@/lib/timezone";
+import {
+  compose,
+  withAuth,
+  withLog,
+  type RouteHandler,
+} from "@/lib/route-handlers";
 
-export async function GET(request: Request) {
+const baseGET: RouteHandler = async (request) => {
   try {
-    const { searchParams } = new URL(request.url);
+    const { searchParams } = request.nextUrl;
     const month = searchParams.get("month");
     const year = searchParams.get("year");
     const limit = searchParams.get("limit");
@@ -23,14 +29,12 @@ export async function GET(request: Request) {
       : undefined;
 
     if (month && year) {
-      // Nếu có tham số month và year, lấy transactions theo tháng
       const transactions = await databaseService.getTransactionsByMonth(
         parseInt(month, 10),
         parseInt(year, 10)
       );
       return NextResponse.json(transactions);
     } else {
-      // Nếu không có tham số month/year, lấy transactions với limit và offset tùy chọn
       const limitNum = limit ? parseInt(limit, 10) : undefined;
       const offsetNum = offset ? parseInt(offset, 10) : undefined;
       const transactions = await databaseService.getTransactions(
@@ -52,9 +56,11 @@ export async function GET(request: Request) {
       { status: 500 }
     );
   }
-}
+};
 
-export async function POST(request: Request) {
+export const GET = compose(withLog, withAuth)(baseGET);
+
+const basePOST: RouteHandler = async (request) => {
   try {
     const {
       amount,
@@ -93,9 +99,11 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
-}
+};
 
-export async function PUT(request: Request) {
+export const POST = compose(withLog, withAuth)(basePOST);
+
+const basePUT: RouteHandler = async (request) => {
   try {
     const {
       id,
@@ -116,7 +124,6 @@ export async function PUT(request: Request) {
       );
     }
 
-    // Chỉ cập nhật các trường được cung cấp
     const updateData: {
       amount?: number;
       category_id?: string;
@@ -154,11 +161,13 @@ export async function PUT(request: Request) {
       { status: 500 }
     );
   }
-}
+};
 
-export async function DELETE(request: Request) {
+export const PUT = compose(withLog, withAuth)(basePUT);
+
+const baseDELETE: RouteHandler = async (request) => {
   try {
-    const { searchParams } = new URL(request.url);
+    const { searchParams } = request.nextUrl;
     const id = searchParams.get("id");
 
     if (!id) {
@@ -184,4 +193,6 @@ export async function DELETE(request: Request) {
       { status: 500 }
     );
   }
-}
+};
+
+export const DELETE = compose(withLog, withAuth)(baseDELETE);

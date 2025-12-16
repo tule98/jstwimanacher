@@ -3,6 +3,8 @@ import { Box, Typography, IconButton, useTheme } from "@mui/material";
 import { Check, Flame, GripVertical, Pencil, Trash } from "lucide-react";
 import { HabitCompletion } from "@/services/api/habits";
 import { formatDate } from "@/lib/habit-utils";
+import { useUserTimezone } from "@/hooks/useUserTimezone";
+import { formatDateForDisplay } from "@/lib/timezone";
 
 export interface HabitCardFrontProps {
   habitId: string;
@@ -38,9 +40,10 @@ export default function HabitCardFront({
 }: HabitCardFrontProps) {
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
+  const { timezone } = useUserTimezone();
 
   // Generate contribution graph data for the last 30 days (latest first)
-  // TODO: Ensure dates are stored in GMT+0 in database and converted to user timezone for display
+  // Dates are stored in UTC (GMT+0) and displayed using user's timezone
   const contributionData = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -312,10 +315,9 @@ export default function HabitCardFront({
           {contributionData.map((day) => (
             <Box
               key={day.date}
-              title={`${new Date(day.date).toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-              })} — ${day.completed ? "Done" : "Missed"}`}
+              title={`${formatDateForDisplay(day.date, timezone)} — ${
+                day.completed ? "Done" : "Missed"
+              }`}
               sx={{
                 width: "8px",
                 height: "8px",

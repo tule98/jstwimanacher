@@ -236,3 +236,80 @@ export function formatLocalDate(
     day
   ).padStart(2, "0")}`;
 }
+
+/**
+ * Format UTC date for display in user's timezone (date only)
+ * Reusable utility for components - use useUserTimezone hook instead when in React components
+ * @param utcDateString - UTC ISO string from database
+ * @param timezone - User's timezone (from user_profiles.timezone)
+ * @returns Formatted date string: 'dd/MM/yyyy'
+ * @example formatDateForDisplay('2025-01-15T10:30:00Z', 'America/New_York') -> '15/01/2025'
+ */
+export function formatDateForDisplay(
+  utcDateString: string,
+  timezone: string = VN_TIMEZONE
+): string {
+  try {
+    const utcDate = parseISO(utcDateString);
+    return formatInTimeZone(utcDate, timezone, "dd/MM/yyyy");
+  } catch (error) {
+    console.error("Failed to format date for display:", error);
+    return "Invalid date";
+  }
+}
+
+/**
+ * Format UTC datetime for display in user's timezone (date + time)
+ * Reusable utility for components - use useUserTimezone hook instead when in React components
+ * @param utcDateString - UTC ISO string from database
+ * @param timezone - User's timezone (from user_profiles.timezone)
+ * @returns Formatted datetime string: 'dd/MM/yyyy HH:mm'
+ * @example formatDateTimeForDisplay('2025-01-15T10:30:00Z', 'America/New_York') -> '15/01/2025 05:30'
+ */
+export function formatDateTimeForDisplay(
+  utcDateString: string,
+  timezone: string = VN_TIMEZONE
+): string {
+  try {
+    const utcDate = parseISO(utcDateString);
+    return formatInTimeZone(utcDate, timezone, "dd/MM/yyyy HH:mm");
+  } catch (error) {
+    console.error("Failed to format datetime for display:", error);
+    return "Invalid datetime";
+  }
+}
+
+/**
+ * Convert user input to UTC ISO string
+ * Reusable utility - use useUserTimezone hook's parseUserInput method when in React components
+ * @param dateInput - User input (date string, e.g., '2025-01-15' or '2025-01-15 14:30')
+ * @param timezone - User's timezone (from user_profiles.timezone)
+ * @returns UTC ISO string for storage in database
+ * @example toDateTimeUTC('2025-01-15 14:30', 'America/New_York') -> '2025-01-15T19:30:00.000Z'
+ */
+export function toDateTimeUTC(
+  dateInput: string,
+  timezone: string = VN_TIMEZONE
+): UTCString {
+  try {
+    // If already UTC, return as-is
+    if (isValidUTCString(dateInput)) {
+      return dateInput as UTCString;
+    }
+
+    // Check if input has explicit timezone offset
+    const hasOffset = /[zZ]|[+-]\d{2}:?\d{2}$/.test(dateInput);
+    if (hasOffset) {
+      // parseISO will handle the offset correctly
+      return parseISO(dateInput).toISOString() as UTCString;
+    }
+
+    // Parse input as local time in user's timezone and convert to UTC
+    const parsed = parseISO(dateInput);
+    const utcDate = fromZonedTime(parsed, timezone);
+    return utcDate.toISOString() as UTCString;
+  } catch (error) {
+    console.error("Failed to convert date to UTC:", error);
+    return new Date().toISOString() as UTCString;
+  }
+}

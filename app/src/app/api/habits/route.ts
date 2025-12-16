@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { databaseService } from "@/services/database/databaseService";
+import { withLogRequest } from "@/lib/route-handlers";
 
-export async function GET(request: NextRequest) {
+export const GET = withLogRequest(async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const includeEntries = searchParams.get("includeEntries") !== "false";
@@ -19,9 +20,9 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
-export async function POST(request: NextRequest) {
+export const POST = withLogRequest(async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { name, description } = body;
@@ -36,4 +37,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

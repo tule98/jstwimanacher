@@ -1,4 +1,5 @@
 import { Habit, HabitCompletion } from "@/services/api/habits";
+import { getTodayLocal, formatLocalDate } from "@/lib/timezone";
 
 /**
  * Calculate the current streak for a habit
@@ -98,16 +99,24 @@ export function isHabitScheduledForDate(
 
 /**
  * Format date as YYYY-MM-DD
+ * Builds explicit YYYY-MM-DD string without timezone conversion
+ * (avoids .toISOString().slice which can cause timezone offset issues)
  */
 export function formatDate(date: Date): string {
-  return date.toISOString().slice(0, 10);
+  return formatLocalDate(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate(),
+    true // month is 0-indexed from getMonth()
+  );
 }
 
 /**
- * Get today's date as YYYY-MM-DD
+ * Get today's date as YYYY-MM-DD in user's local timezone
+ * Uses timezone-aware utility to ensure correct "today" regardless of server timezone
  */
 export function getTodayString(): string {
-  return formatDate(new Date());
+  return getTodayLocal();
 }
 
 /**
