@@ -15,7 +15,6 @@ import {
   useDeleteTodo,
 } from "@/services/react-query/hooks/todos";
 import { toUTC, fromUTC, VN_TIMEZONE } from "@/lib/timezone";
-import { useUserTimezone } from "@/hooks/useUserTimezone";
 import TodoCard from "./TodoCard";
 import CategoryFilterChips from "./CategoryFilterChips";
 
@@ -48,7 +47,6 @@ export default function TodoListTimelineView({
   const theme = useTheme();
   const { mutateAsync: updateTodo } = useUpdateTodo();
   const { mutateAsync: deleteTodo } = useDeleteTodo();
-  const { timezone, formatDate } = useUserTimezone();
 
   // Limit to 30 items maximum, filter by selected categories
   let data = (allData ?? []).slice(0, 30);

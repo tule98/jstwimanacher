@@ -206,9 +206,17 @@ export function withValidation<T>(
  */
 export function compose(
   ...fns: Array<(handler: RouteHandler) => RouteHandler>
-): (handler: RouteHandler) => RouteHandler {
+): (handler: RouteHandler) => (request: NextRequest) => Promise<NextResponse> {
   return (handler: RouteHandler) => {
-    return fns.reduceRight((acc, fn) => fn(acc), handler);
+    const composed = fns.reduceRight<RouteHandler>(
+      (acc, fn) => fn(acc),
+      handler
+    );
+
+    // Expose a NextRequest-compatible signature for Next typed route handlers
+    return async function composedHandler(request: NextRequest) {
+      return composed(request as AuthenticatedRequest);
+    };
   };
 }
 

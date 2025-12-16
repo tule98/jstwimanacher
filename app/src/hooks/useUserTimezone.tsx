@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect, useState, useCallback, useContext, createContext } from "react";
-import { useAuth } from "./useAuth";
 import {
-  formatInTimeZone,
-  toZonedTime,
-  fromZonedTime,
-} from "date-fns-tz";
+  useEffect,
+  useState,
+  useCallback,
+  useContext,
+  createContext,
+} from "react";
+import { useAuth } from "./useAuth";
+import { formatInTimeZone, toZonedTime, fromZonedTime } from "date-fns-tz";
 import { parseISO } from "date-fns";
 import { VN_TIMEZONE } from "@/lib/timezone";
 
@@ -41,11 +43,7 @@ export function useUserTimezone(): UseUserTimezoneReturn {
  * Provider component that wraps the app
  * Handles timezone auto-detection and context management
  */
-export function TimezoneProvider({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export function TimezoneProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const [timezone, setTimezone] = useState<string>(VN_TIMEZONE);
   const [loading, setLoading] = useState(true);
@@ -69,6 +67,7 @@ export function TimezoneProvider({
 
     // Fallback: auto-detect timezone on first load
     await autoDetectAndSaveTimezone();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Auto-detect timezone using browser API
@@ -105,6 +104,7 @@ export function TimezoneProvider({
       // User is not authenticated - use default timezone
       setLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, fetchUserTimezone]);
 
   // Formatting utilities
@@ -188,7 +188,9 @@ export function TimezoneProvider({
   };
 
   return (
-    <TimezoneContext.Provider value={value}>{children}</TimezoneContext.Provider>
+    <TimezoneContext.Provider value={value}>
+      {children}
+    </TimezoneContext.Provider>
   );
 }
 

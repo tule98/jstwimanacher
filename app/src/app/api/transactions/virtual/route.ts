@@ -11,7 +11,7 @@ import {
  * API endpoint for virtual transactions
  * GET /api/transactions/virtual - Get all virtual transactions
  */
-const baseGET: RouteHandler = async (request) => {
+const baseGET: RouteHandler = async () => {
   try {
     const virtualTransactions = await databaseService.getVirtualTransactions();
     return NextResponse.json(virtualTransactions);

@@ -9,7 +9,7 @@ import {
   type RouteHandler,
 } from "@/lib/route-handlers";
 
-const baseGET: RouteHandler = async (request) => {
+const baseGET: RouteHandler = async () => {
   try {
     const unresolvedTransactions = await db
       .select({

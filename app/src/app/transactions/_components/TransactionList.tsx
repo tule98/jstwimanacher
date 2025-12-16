@@ -142,7 +142,6 @@ export default function TransactionList({
         );
 
         // Format date using timezone-aware utility
-        const dateStr = format(date, "yyyy-MM-dd");
         const formattedDate = formatDateForDisplay(
           date.toISOString(),
           timezone
