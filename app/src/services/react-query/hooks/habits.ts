@@ -117,8 +117,56 @@ export function useCompleteHabit() {
       completionDate: string;
       moodEmoji?: string;
     }) => HabitsAPI.completeHabit(payload),
-    onSuccess: () => {
-      // Invalidate all habit-related queries to refresh streak and completion data
+    onMutate: async (payload) => {
+      // Cancel outgoing refetches to avoid overwriting optimistic update
+      await qc.cancelQueries({ queryKey: habitQueryKeys.all });
+
+      // Snapshot previous values for rollback
+      const previousCompletions = qc.getQueryData<HabitCompletion[]>([
+        "habits",
+        "completions",
+        "all",
+      ]);
+
+      // Optimistically update completions cache
+      qc.setQueriesData<HabitCompletion[]>(
+        { queryKey: ["habits", "completions", "all"], exact: false },
+        (old) => {
+          if (!old) return old;
+          // Check if completion already exists
+          const exists = old.some(
+            (c) =>
+              c.habit_id === payload.habitId &&
+              c.completion_date === payload.completionDate
+          );
+          if (exists) return old;
+          // Add new completion
+          return [
+            ...old,
+            {
+              id: `temp-${Date.now()}`,
+              habit_id: payload.habitId,
+              completion_date: payload.completionDate,
+              mood_emoji: payload.moodEmoji || null,
+              created_at: new Date().toISOString(),
+            } as HabitCompletion,
+          ];
+        }
+      );
+
+      return { previousCompletions };
+    },
+    onError: (_error, _variables, context) => {
+      // Rollback on error
+      if (context?.previousCompletions) {
+        qc.setQueryData(
+          ["habits", "completions", "all"],
+          context.previousCompletions
+        );
+      }
+    },
+    onSettled: () => {
+      // Refetch to ensure sync with server
       qc.invalidateQueries({ queryKey: habitQueryKeys.all });
     },
   });
@@ -129,8 +177,45 @@ export function useUncompleteHabit() {
   return useMutation({
     mutationFn: (args: { habitId: string; completionDate: string }) =>
       HabitsAPI.uncompleteHabit(args.habitId, args.completionDate),
-    onSuccess: () => {
-      // Invalidate all habit-related queries to refresh streak and completion data
+    onMutate: async (args) => {
+      // Cancel outgoing refetches
+      await qc.cancelQueries({ queryKey: habitQueryKeys.all });
+
+      // Snapshot previous values for rollback
+      const previousCompletions = qc.getQueryData<HabitCompletion[]>([
+        "habits",
+        "completions",
+        "all",
+      ]);
+
+      // Optimistically remove completion from cache
+      qc.setQueriesData<HabitCompletion[]>(
+        { queryKey: ["habits", "completions", "all"], exact: false },
+        (old) => {
+          if (!old) return old;
+          return old.filter(
+            (c) =>
+              !(
+                c.habit_id === args.habitId &&
+                c.completion_date === args.completionDate
+              )
+          );
+        }
+      );
+
+      return { previousCompletions };
+    },
+    onError: (_error, _variables, context) => {
+      // Rollback on error
+      if (context?.previousCompletions) {
+        qc.setQueryData(
+          ["habits", "completions", "all"],
+          context.previousCompletions
+        );
+      }
+    },
+    onSettled: () => {
+      // Refetch to ensure sync with server
       qc.invalidateQueries({ queryKey: habitQueryKeys.all });
     },
   });

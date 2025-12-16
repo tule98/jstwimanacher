@@ -1,6 +1,7 @@
 /* eslint-disable @next/next/no-page-custom-font */
 import "./globals.css";
 import React from "react";
+import type { Viewport } from "next";
 import AppProvider from "./_components/AppProvider";
 import ThemeModeProvider from "./_components/MuiProvider";
 import AuthGuard from "./_components/AuthGuard";
@@ -11,8 +12,13 @@ export const metadata = {
   description: "💂 Doorkeeper",
 };
 
-export const viewport = {
+export const viewport: Viewport = {
   themeColor: "#1976d2", // Blue primary color
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
@@ -29,7 +35,7 @@ export default function RootLayout({
         />
         <meta
           name="viewport"
-          content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+          content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
         />
         {/* App logo favicon */}
         <link rel="icon" type="image/png" href="/jstwi-logo.png" />
