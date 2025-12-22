@@ -215,6 +215,40 @@ export function useUpdateWordMemory(userId: string | null) {
 }
 
 /**
+ * Hook to update a word's memory level directly via API
+ * Supports range 0-101 (101 = mastered state)
+ */
+export function useUpdateMemoryLevel(userId: string | null) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (params: { userWordId: string; memoryLevel: number }) => {
+      const response = await fetch("/api/wordmaster/update-memory-level", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(params),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to update memory level");
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      if (!userId) return;
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.feed.byUser(userId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.stats.vocabulary(userId),
+      });
+    },
+  });
+}
+
+/**
  * Delete a word from user's vocabulary
  */
 export function useDeleteWord(userId: string | null) {
@@ -262,6 +296,7 @@ export function useDeleteWord(userId: string | null) {
 export function useFeed(userId: string | null, options: FeedQuery = {}) {
   type FeedWordsResponse = {
     words: FeedWord[];
+    total: number;
     hasMore: boolean;
   };
 

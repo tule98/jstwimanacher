@@ -281,12 +281,6 @@ export function validateContentInput(
     };
   }
 
-  // Check if content has meaningful words
-  const { words } = tokenizeText(content);
-  if (words.length < 5) {
-    return { valid: false, error: "Content must contain at least 5 words" };
-  }
-
   return { valid: true };
 }
 

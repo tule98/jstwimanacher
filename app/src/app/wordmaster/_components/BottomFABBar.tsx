@@ -23,103 +23,82 @@ export function BottomFABBar({
 
   return (
     <>
-      {/* Sticky Bottom FAB Bar */}
-      <Box
+      {/* Filter Button */}
+      <IconButton
+        onClick={() => setFilterSheetOpen(true)}
         sx={{
-          position: "fixed",
-          bottom: "8px",
-          left: 0,
-          right: 0,
-          zIndex: 50,
+          width: 32,
+          height: 32,
+          borderRadius: "999px",
+          backgroundColor: "rgba(255, 255, 255, 0.15)",
+          border: "1px solid rgba(255, 255, 255, 0.2)",
+          color: "#FFFFFF",
           display: "flex",
-          justifyContent: "center",
           alignItems: "center",
-          gap: 2,
-          padding: "8px",
-          background: "rgba(255, 255, 255, 0.15)",
-          backdropFilter: "blur(30px)",
-          borderRadius: "36px",
-          width: "fit-content",
-          margin: "0 auto",
+          justifyContent: "center",
+          transition: "all 200ms ease-out",
+          "&:hover": {
+            backgroundColor: "rgba(255, 255, 255, 0.25)",
+            transform: "scale(1.05)",
+          },
+          "&:active": {
+            transform: "scale(0.95)",
+          },
         }}
       >
-        {/* Filter Button */}
-        <IconButton
-          onClick={() => setFilterSheetOpen(true)}
-          sx={{
-            width: 48,
-            height: 48,
-            borderRadius: "999px",
-            backgroundColor: "rgba(255, 255, 255, 0.15)",
-            border: "1px solid rgba(255, 255, 255, 0.2)",
-            color: "#FFFFFF",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            transition: "all 200ms ease-out",
-            "&:hover": {
-              backgroundColor: "rgba(255, 255, 255, 0.25)",
-              transform: "scale(1.05)",
-            },
-            "&:active": {
-              transform: "scale(0.95)",
-            },
-          }}
-        >
-          <Filter size={24} />
-        </IconButton>
+        <Filter size={16} />
+      </IconButton>
 
-        {/* Add Word Button */}
-        <IconButton
-          onClick={onAddWordClick}
-          sx={{
-            width: 48,
-            height: 48,
-            borderRadius: "999px",
-            background: "linear-gradient(90deg, #4318FF 0%, #6B8AFF 100%)",
-            color: "#FFFFFF",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            transition: "all 200ms ease-out",
-            "&:hover": {
-              background: "linear-gradient(90deg, #5629FF 0%, #7B9AFF 100%)",
-              transform: "scale(1.05)",
-            },
-            "&:active": {
-              transform: "scale(0.95)",
-            },
-          }}
-        >
-          <Plus size={24} />
-        </IconButton>
+      {/* Add Word Button */}
+      <IconButton
+        onClick={onAddWordClick}
+        sx={{
+          width: 32,
+          height: 32,
+          borderRadius: "999px",
+          background: "linear-gradient(90deg, #4318FF 0%, #6B8AFF 100%)",
+          color: "#FFFFFF",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          transition: "all 200ms ease-out",
+          "&:hover": {
+            background: "linear-gradient(90deg, #5629FF 0%, #7B9AFF 100%)",
+            transform: "scale(1.05)",
+          },
+          "&:active": {
+            transform: "scale(0.95)",
+          },
+        }}
+      >
+        <Plus size={16} />
+      </IconButton>
 
-        {/* User Profile Button */}
-        <IconButton
-          onClick={() => setProfileSheetOpen(true)}
-          sx={{
-            width: 48,
-            height: 48,
-            borderRadius: "999px",
-            backgroundColor: "rgba(255, 255, 255, 0.15)",
-            border: "1px solid rgba(255, 255, 255, 0.2)",
-            color: "#FFFFFF",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            transition: "all 200ms ease-out",
-            "&:hover": {
-              backgroundColor: "rgba(255, 255, 255, 0.25)",
-              transform: "scale(1.05)",
-            },
-            "&:active": {
-              transform: "scale(0.95)",
-            },
-          }}
-        >
-          <UserCircle2 size={24} />
-        </IconButton>
-      </Box>
+      {/* User Profile Button */}
+      <IconButton
+        onClick={() => setProfileSheetOpen(true)}
+        sx={{
+          width: 32,
+          height: 32,
+          borderRadius: "999px",
+          backgroundColor: "rgba(255, 255, 255, 0.15)",
+          border: "1px solid rgba(255, 255, 255, 0.2)",
+          color: "#FFFFFF",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          transition: "all 200ms ease-out",
+          "&:hover": {
+            backgroundColor: "rgba(255, 255, 255, 0.25)",
+            transform: "scale(1.05)",
+          },
+          "&:active": {
+            transform: "scale(0.95)",
+          },
+        }}
+      >
+        <UserCircle2 size={16} />
+      </IconButton>
 
       {/* Filter Bottom Sheet */}
       <ResponsiveDialog

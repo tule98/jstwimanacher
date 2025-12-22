@@ -20,6 +20,7 @@ interface GeminiResponse {
   definition: string;
   example: string;
   partOfSpeech: string;
+  topic: string;
 }
 
 /**
@@ -34,8 +35,9 @@ async function enrichWordsWithGemini(
 2. Clear, simple definition
 3. Part of speech
 4. Example sentence using the word
+5. Topic/category (free-form text describing subject area, e.g., 'technology', 'food', 'emotions', 'business')
 
-Return response as JSON array with objects containing: word, phonetic, definition, partOfSpeech, example
+Return response as JSON array with objects containing: word, phonetic, definition, partOfSpeech, example, topic
 
 Words to enrich: ${wordTexts.map((w) => `"${w}"`).join(", ")}
 
@@ -62,6 +64,7 @@ function createFallbackEnrichment(word: string): GeminiResponse {
     definition: `Word: ${word}. Definition not available.`,
     example: `Example: "${word}" is used in vocabulary learning.`,
     partOfSpeech: "noun",
+    topic: "general",
   };
 }
 

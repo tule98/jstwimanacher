@@ -60,7 +60,7 @@ export function WordmasterLayout({
         </Box>
       </AppBar>
 
-      {/* Action Buttons */}
+      {/* Action Buttons - Top Right */}
       <Box
         sx={{
           width: "fit-content",
@@ -69,11 +69,13 @@ export function WordmasterLayout({
           backdropFilter: "blur(20px)",
           borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
           boxShadow: "none",
-          borderRadius: "8px",
+          borderRadius: "36px",
           display: "flex",
           position: "fixed",
           top: "8px",
           right: "12px",
+          gap: 1,
+          padding: "8px",
           zIndex: 101,
         }}
       >
@@ -81,19 +83,32 @@ export function WordmasterLayout({
         <Link href="/wordmaster/stats">
           <IconButton
             sx={{
-              borderColor: "#6B8AFF",
-              color: "#6B8AFF",
-              border: "1px solid #6B8AFF",
-              borderRadius: "8px",
+              width: 32,
+              height: 32,
+              borderRadius: "999px",
+              backgroundColor: "rgba(255, 255, 255, 0.15)",
+              border: "1px solid rgba(255, 255, 255, 0.2)",
+              color: "#FFFFFF",
+              transition: "all 200ms ease-out",
               "&:hover": {
-                background: "rgba(107, 138, 255, 0.1)",
-                borderColor: "#7B9AFF",
+                backgroundColor: "rgba(255, 255, 255, 0.25)",
+                transform: "scale(1.05)",
+              },
+              "&:active": {
+                transform: "scale(0.95)",
               },
             }}
           >
-            <BarChart3 size={20} />
+            <BarChart3 size={16} />
           </IconButton>
         </Link>
+
+        {/* Bottom FAB Bar Controls */}
+        <BottomFABBar
+          userId={userId}
+          onAddWordClick={onAddWordClick}
+          onLogout={onLogout}
+        />
       </Box>
 
       {/* Main Content */}
@@ -107,13 +122,6 @@ export function WordmasterLayout({
       >
         {children}
       </Box>
-
-      {/* Bottom FAB Bar */}
-      <BottomFABBar
-        userId={userId}
-        onAddWordClick={onAddWordClick}
-        onLogout={onLogout}
-      />
     </Box>
   );
 }

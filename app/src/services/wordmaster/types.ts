@@ -36,6 +36,7 @@ export interface Word {
   definition: string;
   part_of_speech: PartOfSpeech | null;
   example_sentence: string | null;
+  topic: string | null;
   word_length: number;
   difficulty_level: DifficultyLevel;
   language: string;
@@ -49,6 +50,7 @@ export interface CreateWordInput {
   definition: string;
   part_of_speech?: PartOfSpeech;
   example_sentence?: string;
+  topic?: string;
   word_length: number;
   difficulty_level: DifficultyLevel;
   language?: string;
@@ -223,6 +225,7 @@ export interface ExtractedWord {
   definition: string;
   part_of_speech?: PartOfSpeech;
   example_sentence?: string;
+  topic?: string;
   word_length: number;
   difficulty_level: DifficultyLevel;
   source_content?: string;

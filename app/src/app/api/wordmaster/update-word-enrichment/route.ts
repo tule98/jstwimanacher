@@ -16,6 +16,7 @@ interface UpdateEnrichmentRequest {
   phonetic: string;
   example_sentence: string;
   part_of_speech: string;
+  topic: string;
 }
 
 async function handleUpdateWordEnrichment(
@@ -28,8 +29,14 @@ async function handleUpdateWordEnrichment(
     }
 
     const body: UpdateEnrichmentRequest = await request.json();
-    const { wordId, definition, phonetic, example_sentence, part_of_speech } =
-      body;
+    const {
+      wordId,
+      definition,
+      phonetic,
+      example_sentence,
+      part_of_speech,
+      topic,
+    } = body;
 
     console.log("Update enrichment request:", {
       wordId,
@@ -37,6 +44,7 @@ async function handleUpdateWordEnrichment(
       phonetic,
       example_sentence,
       part_of_speech,
+      topic,
     });
 
     if (!wordId || !definition) {
@@ -70,6 +78,7 @@ async function handleUpdateWordEnrichment(
         phonetic,
         example_sentence,
         part_of_speech,
+        topic,
       })
       .eq("id", wordId)
       .select();

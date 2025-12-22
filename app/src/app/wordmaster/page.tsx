@@ -87,13 +87,7 @@ export default function WordmasterPage() {
       onLogout={handleLogout}
     >
       <Container maxWidth="md">
-        <WordsFeed
-          userId={userId}
-          onWordReviewed={(word) => {
-            // Optional: track reviewed words, update stats, etc.
-            console.log("Word reviewed:", word);
-          }}
-        />
+        <WordsFeed userId={userId} />
       </Container>
 
       {/* Add Words Modal */}

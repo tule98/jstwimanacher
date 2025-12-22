@@ -236,7 +236,7 @@ class WordmasterSupabaseClient {
       )
         .from("user_words")
         .update({
-          memory_level: Math.min(100, Math.max(0, newMemoryLevel)),
+          memory_level: Math.min(101, Math.max(0, newMemoryLevel)), // Allow up to 101
           last_memory_update_at: new Date().toISOString(),
         })
         .eq("id", userWordId)
