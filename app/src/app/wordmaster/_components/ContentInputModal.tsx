@@ -45,9 +45,6 @@ export function ContentInputModal({
 }: ContentInputModalProps) {
   const [step, setStep] = useState<Step>("input");
   const [content, setContent] = useState("");
-  const [inputType, setInputType] = useState<
-    "song" | "paragraph" | "topic" | "manual"
-  >("paragraph");
   const [previewData, setPreviewData] = useState<{
     words: ExtractedWord[];
     totalCount: number;
@@ -77,7 +74,6 @@ export function ContentInputModal({
     try {
       const result = await extractMutation.mutateAsync({
         content,
-        inputType,
         minWordLength: 3,
         maxWordLength: 15,
         includePhrases: true,
@@ -92,7 +88,7 @@ export function ContentInputModal({
       setError(err instanceof Error ? err.message : "Failed to extract words");
       setStep("input");
     }
-  }, [content, inputType, isValidInput, extractMutation]);
+  }, [content, isValidInput, extractMutation]);
 
   // Handle reset - define this before handleEnrich so it can be used in dependency array
   const handleReset = useCallback(() => {
@@ -181,46 +177,18 @@ export function ContentInputModal({
 
       <DialogContent
         sx={{
-          paddingTop: "24px",
+          paddingTop: "24px !important",
           color: "#FFFFFF",
         }}
       >
         {/* Input Step */}
         {step === "input" && (
           <Box sx={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-            {/* Input Type Selector */}
-            <Box sx={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-              {(["song", "paragraph", "topic", "manual"] as const).map(
-                (type) => (
-                  <Chip
-                    key={type}
-                    label={type.charAt(0).toUpperCase() + type.slice(1)}
-                    onClick={() => setInputType(type)}
-                    variant={inputType === type ? "filled" : "outlined"}
-                    sx={{
-                      backgroundColor:
-                        inputType === type
-                          ? "rgba(67, 24, 255, 0.4)"
-                          : "transparent",
-                      borderColor: "rgba(255, 255, 255, 0.3)",
-                      color: "#FFFFFF",
-                      "&:hover": {
-                        backgroundColor:
-                          inputType === type
-                            ? "rgba(67, 24, 255, 0.5)"
-                            : "rgba(255, 255, 255, 0.1)",
-                      },
-                    }}
-                  />
-                )
-              )}
-            </Box>
-
             {/* Content Input */}
             <TextField
               multiline
               rows={8}
-              placeholder={`Paste ${inputType} lyrics, text, or topic...`}
+              placeholder="Paste lyrics, text, or topic..."
               value={content}
               onChange={(e) => {
                 const newContent = e.target.value.slice(0, maxCharacters);
@@ -285,6 +253,7 @@ export function ContentInputModal({
                     backgroundColor: "rgba(255, 255, 255, 0.05)",
                   },
                   flex: 1,
+                  whiteSpace: "nowrap",
                 }}
               >
                 Cancel
@@ -306,6 +275,7 @@ export function ContentInputModal({
                     color: "rgba(255, 255, 255, 0.5)",
                   },
                   flex: 1,
+                  whiteSpace: "nowrap",
                 }}
               >
                 {extractMutation.isPending ? "Extracting..." : "Extract Words"}
@@ -542,6 +512,7 @@ export function ContentInputModal({
                     backgroundColor: "rgba(255, 255, 255, 0.05)",
                   },
                   flex: 1,
+                  whiteSpace: "nowrap",
                 }}
               >
                 Back
@@ -563,6 +534,7 @@ export function ContentInputModal({
                     color: "rgba(255, 255, 255, 0.5)",
                   },
                   flex: 1,
+                  whiteSpace: "nowrap",
                 }}
               >
                 {enrichMutation.isPending ? "Enriching..." : "Enrich & Add"}

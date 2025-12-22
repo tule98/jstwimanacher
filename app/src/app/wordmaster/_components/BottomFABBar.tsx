@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Box, IconButton } from "@mui/material";
+import { IconButton } from "@mui/material";
 import { Filter, Plus, UserCircle2 } from "lucide-react";
 import ResponsiveDialog from "@/components/ui/ResponsiveDialog";
 import { FilterBottomSheet } from "./FilterBottomSheet";

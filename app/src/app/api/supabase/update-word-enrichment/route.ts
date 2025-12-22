@@ -1,6 +1,6 @@
 /**
  * API: Update Word Enrichment
- * PATCH /api/wordmaster/update-word-enrichment
+ * PATCH /api/supabase/update-word-enrichment
  *
  * Updates enriched word data (definition, phonetic, example, part of speech)
  * This allows users to re-enrich words with better data

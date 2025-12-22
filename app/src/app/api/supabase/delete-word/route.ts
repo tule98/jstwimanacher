@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 /**
- * DELETE /api/wordmaster/delete-word
+ * DELETE /api/supabase/delete-word
  * Removes a word from user's vocabulary
  * Body: { userWordId: string }
  */

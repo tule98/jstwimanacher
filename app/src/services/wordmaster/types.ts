@@ -217,7 +217,6 @@ export interface FeedQuery {
 }
 
 // ============= CONTENT EXTRACTION =============
-export type ContentInputType = "song" | "paragraph" | "topic" | "manual";
 
 export interface ExtractedWord {
   word_text: string;
@@ -245,7 +244,6 @@ export interface ExtractionPreview {
 
 export interface ExtractWordsRequest {
   content: string;
-  inputType: ContentInputType;
   minWordLength?: number;
   maxWordLength?: number;
   includePhrases?: boolean;

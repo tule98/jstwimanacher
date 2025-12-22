@@ -55,9 +55,9 @@ ALTER TABLE user_words ADD CONSTRAINT user_words_memory_level_check
 
 ### 2. API Endpoint
 
-**File**: `app/src/app/api/wordmaster/update-memory-level/route.ts`
+**File**: `app/src/app/api/supabase/update-memory-level/route.ts`
 
-- New POST endpoint: `/api/wordmaster/update-memory-level`
+- New POST endpoint: `/api/supabase/update-memory-level`
 - Validates input (0-101 range)
 - Uses auth middleware (`withAuth`)
 - Includes request/response logging (`withLog`)

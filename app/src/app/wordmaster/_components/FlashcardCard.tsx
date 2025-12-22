@@ -33,9 +33,11 @@ function useTextToSpeech() {
     setIsSupported(supported);
   }, []);
 
-  const speak = (text: string) => {
+  const speak = (text: string, options?: { silent?: boolean }) => {
     if (!isSupported) {
-      toast.error("Text-to-speech is not supported in your browser");
+      if (!options?.silent) {
+        toast.error("Text-to-speech is not supported in your browser");
+      }
       return;
     }
 
@@ -53,14 +55,19 @@ function useTextToSpeech() {
       utterance.onend = () => setIsPlaying(false);
       utterance.onerror = () => {
         setIsPlaying(false);
-        toast.error("Failed to play audio");
+        // Only show error if not silent mode (auto-play)
+        if (!options?.silent) {
+          toast.error("Failed to play audio");
+        }
       };
 
       window.speechSynthesis.speak(utterance);
     } catch (error) {
       console.error("TTS error:", error);
       setIsPlaying(false);
-      toast.error("Text-to-speech error");
+      if (!options?.silent) {
+        toast.error("Text-to-speech error");
+      }
     }
   };
 
@@ -115,9 +122,10 @@ export function FlashcardCard({
   }, [word.word.id]);
 
   // Auto-speak the word when front side is shown, only once
+  // Use silent mode to avoid error toasts on auto-play (browsers block auto-play audio)
   useEffect(() => {
     if (!isFlipped && !hasSpokenRef.current && isSupported) {
-      speak(word.word.word_text);
+      speak(word.word.word_text, { silent: true });
       hasSpokenRef.current = true;
     }
   }, [isFlipped, word.word.word_text, speak, isSupported]);
@@ -215,7 +223,7 @@ export function FlashcardCard({
       console.log("Sending update payload:", updatePayload);
 
       const updateResponse = await fetch(
-        "/api/wordmaster/update-word-enrichment",
+        "/api/supabase/update-word-enrichment",
         {
           method: "PATCH",
           headers: {

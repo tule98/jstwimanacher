@@ -223,7 +223,7 @@ export function useUpdateMemoryLevel(userId: string | null) {
 
   return useMutation({
     mutationFn: async (params: { userWordId: string; memoryLevel: number }) => {
-      const response = await fetch("/api/wordmaster/update-memory-level", {
+      const response = await fetch("/api/supabase/update-memory-level", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(params),
@@ -256,7 +256,7 @@ export function useDeleteWord(userId: string | null) {
 
   return useMutation({
     mutationFn: async (userWordId: string) => {
-      const response = await fetch("/api/wordmaster/delete-word", {
+      const response = await fetch("/api/supabase/delete-word", {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
