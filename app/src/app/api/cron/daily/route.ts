@@ -15,8 +15,8 @@ import { formatInTimeZone } from "date-fns-tz";
  * This converts to 06:00 the next day in GMT+7 (Asia/Ho_Chi_Minh)
  */
 
-const DECAY_RATE_PER_DAY = 5; // 5% per day without review
-const MASTERED_THRESHOLD = 80;
+const DECAY_RATE_PER_DAY = 8; // 8% per day without review
+const MASTERED_THRESHOLD = 100;
 const DAYS_UNTIL_DECAY = 1; // Start decay after 1 day
 
 interface UserWord {
@@ -36,22 +36,16 @@ interface DecayUpdate {
   decayAmount: number;
 }
 
-async function runDecay(req: Request) {
-  // Verify Vercel scheduled job invocation
-  const cronHeader = req.headers.get("x-vercel-cron");
-  if (!cronHeader) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+async function runDecay() {
   const SUPABASE_URL =
     process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || "";
   const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-    return NextResponse.json(
-      { error: "Missing Supabase configuration" },
-      { status: 500 }
-    );
+    return {
+      success: false,
+      error: "Missing Supabase configuration",
+    };
   }
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
@@ -67,22 +61,23 @@ async function runDecay(req: Request) {
       "id, user_id, word_id, memory_level, last_reviewed_at, times_reviewed"
     )
     .lt("memory_level", MASTERED_THRESHOLD)
+    .gt("memory_level", 0)
     .or(
       `last_reviewed_at.is.null,last_reviewed_at.lt.${decayThresholdDate.toISOString()}`
     );
 
   if (fetchError) {
-    return NextResponse.json(
-      { error: `Failed to fetch user words: ${fetchError.message}` },
-      { status: 500 }
-    );
+    return {
+      success: false,
+      error: `Failed to fetch user words: ${fetchError.message}`,
+    };
   }
 
   if (!userWords || userWords.length === 0) {
-    return NextResponse.json(
-      { success: true, decayedCount: 0 },
-      { status: 200 }
-    );
+    return {
+      success: true,
+      decayedCount: 0,
+    };
   }
 
   const updates = (userWords || [])
@@ -106,26 +101,27 @@ async function runDecay(req: Request) {
 
       const decayDays = daysSinceReview - DAYS_UNTIL_DECAY;
       const decayPercentage = (decayDays * DECAY_RATE_PER_DAY) / 100;
-      const newMemoryLevel = Math.max(
-        0,
-        uw.memory_level * (1 - decayPercentage)
-      );
+      const calculatedDecayAmount = uw.memory_level * decayPercentage;
+      // Minimum decay is 1 point, even for small percentages
+      const decayAmount = Math.max(1, Math.round(calculatedDecayAmount));
+      // Minimum memory level after decay is 1 (never goes to 0)
+      const roundedNewLevel = Math.max(1, uw.memory_level - decayAmount);
 
       return {
         id: uw.id,
         user_id: uw.user_id,
         word_id: uw.word_id,
-        newMemoryLevel: Math.round(newMemoryLevel * 10) / 10,
-        decayAmount: Math.round((uw.memory_level - newMemoryLevel) * 10) / 10,
+        newMemoryLevel: roundedNewLevel,
+        decayAmount,
       };
     })
     .filter((u): u is DecayUpdate => u !== null);
 
   if (updates.length === 0) {
-    return NextResponse.json(
-      { success: true, decayedCount: 0 },
-      { status: 200 }
-    );
+    return {
+      success: true,
+      decayedCount: 0,
+    };
   }
 
   for (const update of updates) {
@@ -175,27 +171,30 @@ async function runDecay(req: Request) {
         10
     ) / 10;
 
-  return NextResponse.json(
-    {
-      success: true,
-      decayedCount: updates.length,
-      totalDecayAmount,
-    },
-    { status: 200 }
-  );
+  return {
+    success: true,
+    decayedCount: updates.length,
+    totalDecayAmount,
+  };
 }
 
 export async function GET(req: Request) {
-  try {
-    await runDecay(req);
+  // Verify cron request is from Vercel
+  const authHeader = req.headers.get("authorization");
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
-    // Verify cron request is from Vercel
-    const authHeader = req.headers.get("authorization");
-    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  try {
+    // Run memory decay
+    const decayResult = await runDecay();
+    if (!decayResult.success) {
+      return NextResponse.json(
+        { success: false, error: decayResult.error },
+        { status: 500 }
+      );
     }
 
-    // Get date range for next 2 weeks in GMT+7 (UTC equivalent)
     const { start: todayUTC } = getTodayBoundsUTC(VN_TIMEZONE);
     const twoWeeksLaterUTC = new Date(parseISO(todayUTC));
     twoWeeksLaterUTC.setDate(twoWeeksLaterUTC.getDate() + 14);
@@ -258,6 +257,8 @@ export async function GET(req: Request) {
         sent: true,
         count: upcomingTasks.length,
         days: sortedDays.length,
+        decayCount: decayResult.decayedCount,
+        decayAmount: decayResult.totalDecayAmount,
         timestamp: new Date().toISOString(),
       });
     } catch (error) {
