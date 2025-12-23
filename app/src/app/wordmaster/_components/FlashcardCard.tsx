@@ -7,6 +7,7 @@ import {
   Card,
   Typography,
   Button,
+  IconButton,
   CircularProgress,
   Alert,
 } from "@mui/material";
@@ -14,6 +15,7 @@ import RefreshIcon from "@mui/icons-material/Refresh";
 import VolumeUpIcon from "@mui/icons-material/VolumeUp";
 import DeleteIcon from "@mui/icons-material/Delete";
 import StarIcon from "@mui/icons-material/Star";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import { toast } from "sonner";
 import { useDeleteWord, useUpdateMemoryLevel } from "@/hooks/wordmaster";
 import type { FeedWord } from "@/services/wordmaster";
@@ -137,6 +139,11 @@ export function FlashcardCard({
     const newFlipped = !isFlipped;
     setIsFlipped(newFlipped);
     onFlip?.(newFlipped);
+
+    // Speak the word every time we flip to the front
+    if (!newFlipped && isSupported) {
+      speak(word.word.word_text, { silent: true });
+    }
   };
 
   const handleDeleteWord = async () => {
@@ -498,7 +505,7 @@ export function FlashcardCard({
                   >
                     Definition
                   </Typography>
-                  <Button
+                  <IconButton
                     size="small"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -506,15 +513,9 @@ export function FlashcardCard({
                       toast.success("Definition copied!");
                     }}
                     sx={{
-                      minWidth: "auto",
-                      padding: "2px 8px",
-                      borderRadius: "8px",
-                      fontSize: "10px",
+                      padding: "4px",
                       backgroundColor: "rgba(67, 24, 255, 0.08)",
                       color: "#4318FF",
-                      textTransform: "none",
-                      fontWeight: 600,
-                      boxShadow: "none",
                       border: "1px solid rgba(67, 24, 255, 0.15)",
                       "&:hover": {
                         backgroundColor: "rgba(67, 24, 255, 0.18)",
@@ -523,8 +524,8 @@ export function FlashcardCard({
                       },
                     }}
                   >
-                    Copy
-                  </Button>
+                    <ContentCopyIcon sx={{ fontSize: "14px" }} />
+                  </IconButton>
                 </Box>
                 <Typography
                   variant="body1"
@@ -777,19 +778,16 @@ export function FlashcardCard({
                           <Box
                             component="span"
                             sx={{
-                              backgroundColor: "rgba(67, 24, 255, 0.15)",
-                              color: "#4318FF",
-                              fontWeight: 800,
-                              padding: "2px 4px",
-                              borderRadius: "4px",
-                              border: "1px solid rgba(67, 24, 255, 0.3)",
-                              boxShadow: "0 0 8px rgba(67, 24, 255, 0.4)",
-                              textDecoration: "underline",
-                              textDecorationColor: "#4318FF",
-                              textDecorationThickness: "2px",
-                              textUnderlineOffset: "2px",
+                              backgroundColor: "#4318FF",
+                              color: "#FFFFFF",
+                              fontWeight: 700,
+                              padding: "3px 8px",
+                              borderRadius: "6px",
+                              border: "1px solid rgba(67, 24, 255, 0.8)",
+                              boxShadow: "0 2px 12px rgba(67, 24, 255, 0.5)",
                               display: "inline-block",
-                              margin: "0 1px",
+                              margin: "0 2px",
+                              fontStyle: "normal",
                             }}
                           >
                             {word.word.word_text}
