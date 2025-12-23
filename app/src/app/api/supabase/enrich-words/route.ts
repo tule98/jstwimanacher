@@ -21,6 +21,7 @@ interface GeminiResponse {
   example: string;
   partOfSpeech: string;
   topic: string;
+  meaning_vi: string;
 }
 
 /**
@@ -36,8 +37,9 @@ async function enrichWordsWithGemini(
 3. Part of speech
 4. Example sentence using the word
 5. Topic/category (free-form text describing subject area, e.g., 'technology', 'food', 'emotions', 'business')
+6. Short Vietnamese glossary-style meaning (3-8 words, concise, no transliteration)
 
-Return response as JSON array with objects containing: word, phonetic, definition, partOfSpeech, example, topic
+Return response as JSON array with objects containing: word, phonetic, definition, partOfSpeech, example, topic, meaning_vi
 
 Words to enrich: ${wordTexts.map((w) => `"${w}"`).join(", ")}
 
@@ -65,6 +67,7 @@ function createFallbackEnrichment(word: string): GeminiResponse {
     example: `Example: "${word}" is used in vocabulary learning.`,
     partOfSpeech: "noun",
     topic: "general",
+    meaning_vi: "Meaning unavailable (vi)",
   };
 }
 
@@ -119,6 +122,8 @@ async function handleEnrichWords(
       definition: enriched.definition,
       example_sentence: enriched.example,
       part_of_speech: pos,
+      meaning_vi: enriched.meaning_vi,
+      topic: enriched.topic,
       word_length: enriched.word.length,
       difficulty_level:
         enriched.word.length <= 4

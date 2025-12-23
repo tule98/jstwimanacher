@@ -61,6 +61,8 @@ async function handleAddExtractedWords(
         definition: extractedWord.definition,
         part_of_speech: extractedWord.part_of_speech,
         example_sentence: extractedWord.example_sentence,
+        meaning_vi: extractedWord.meaning_vi,
+        topic: extractedWord.topic,
         word_length: extractedWord.word_length,
         difficulty_level: extractedWord.difficulty_level,
       });

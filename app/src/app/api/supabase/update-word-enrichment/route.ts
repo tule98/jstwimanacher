@@ -17,6 +17,7 @@ interface UpdateEnrichmentRequest {
   example_sentence: string;
   part_of_speech: string;
   topic: string;
+  meaning_vi?: string;
 }
 
 async function handleUpdateWordEnrichment(
@@ -36,6 +37,7 @@ async function handleUpdateWordEnrichment(
       example_sentence,
       part_of_speech,
       topic,
+      meaning_vi,
     } = body;
 
     console.log("Update enrichment request:", {
@@ -71,15 +73,21 @@ async function handleUpdateWordEnrichment(
     }
 
     // Update the word with new enrichment data
+    const updates: Record<string, unknown> = {
+      definition,
+      phonetic,
+      example_sentence,
+      part_of_speech,
+      topic,
+    };
+
+    if (typeof meaning_vi !== "undefined") {
+      updates.meaning_vi = meaning_vi;
+    }
+
     const { data, error } = await supabase
       .from("words")
-      .update({
-        definition,
-        phonetic,
-        example_sentence,
-        part_of_speech,
-        topic,
-      })
+      .update(updates)
       .eq("id", wordId)
       .select();
 

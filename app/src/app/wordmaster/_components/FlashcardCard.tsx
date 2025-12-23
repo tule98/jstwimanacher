@@ -216,9 +216,10 @@ export function FlashcardCard({
         wordId: word.word.id,
         definition: enrichedData.definition,
         phonetic: enrichedData.phonetic,
-        example_sentence: enrichedData.example,
-        part_of_speech: enrichedData.partOfSpeech,
+        example_sentence: enrichedData.example_sentence,
+        part_of_speech: enrichedData.part_of_speech,
         topic: enrichedData.topic,
+        meaning_vi: enrichedData.meaning_vi,
       };
       console.log("Sending update payload:", updatePayload);
 
@@ -249,8 +250,10 @@ export function FlashcardCard({
           ...word.word,
           definition: enrichedData.definition,
           phonetic: enrichedData.phonetic,
-          example_sentence: enrichedData.example,
-          part_of_speech: enrichedData.partOfSpeech,
+          example_sentence: enrichedData.example_sentence,
+          part_of_speech: enrichedData.part_of_speech,
+          topic: enrichedData.topic,
+          meaning_vi: enrichedData.meaning_vi,
         },
       };
 
@@ -455,6 +458,44 @@ export function FlashcardCard({
               )}
             </Box>
 
+              {/* Definition on Front */}
+              {word.word.definition && (
+                <Box
+                  sx={{
+                    backgroundColor: "rgba(255, 255, 255, 0.06)",
+                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                    borderRadius: "16px",
+                    padding: "16px",
+                    maxWidth: "720px",
+                    width: "100%",
+                    textAlign: "center",
+                    boxShadow: "0 12px 30px rgba(0, 0, 0, 0.18)",
+                  }}
+                >
+                  <Typography
+                    variant="overline"
+                    sx={{
+                      letterSpacing: "0.08em",
+                      color: "rgba(255, 255, 255, 0.6)",
+                      fontWeight: 700,
+                    }}
+                  >
+                    Definition
+                  </Typography>
+                  <Typography
+                    variant="body1"
+                    sx={{
+                      marginTop: "4px",
+                      color: "rgba(255, 255, 255, 0.85)",
+                      lineHeight: 1.6,
+                      fontWeight: 500,
+                    }}
+                  >
+                    {word.word.definition}
+                  </Typography>
+                </Box>
+              )}
+
             {/* Sound Button - Large and prominent */}
             {isSupported && (
               <Box
@@ -630,19 +671,40 @@ export function FlashcardCard({
               }}
             />
 
-            {/* Definition */}
-            <Typography
-              variant="body2"
+            {/* Vietnamese Meaning */}
+            <Box
               sx={{
-                fontSize: "14px",
-                color: "rgba(255, 255, 255, 0.7)",
-                lineHeight: 1.6,
+                backgroundColor: "rgba(67, 24, 255, 0.1)",
+                border: "1px solid rgba(67, 24, 255, 0.25)",
+                borderRadius: "16px",
+                padding: "14px 16px",
                 textAlign: "center",
-                fontWeight: 400,
+                boxShadow: "0 12px 28px rgba(67, 24, 255, 0.18)",
               }}
             >
-              {word.word.definition}
-            </Typography>
+              <Typography
+                variant="overline"
+                sx={{
+                  letterSpacing: "0.1em",
+                  color: "rgba(255, 255, 255, 0.75)",
+                  fontWeight: 700,
+                }}
+              >
+                Vietnamese meaning
+              </Typography>
+              <Typography
+                variant="body1"
+                sx={{
+                  fontSize: "16px",
+                  color: "rgba(255, 255, 255, 0.9)",
+                  lineHeight: 1.6,
+                  fontWeight: 600,
+                  marginTop: "4px",
+                }}
+              >
+                {word.word.meaning_vi || "No Vietnamese meaning yet."}
+              </Typography>
+            </Box>
 
             {/* Example Sentence */}
             {word.word.example_sentence && (

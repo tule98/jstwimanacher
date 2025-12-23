@@ -133,6 +133,8 @@ class WordmasterSupabaseClient {
           definition: word.definition,
           part_of_speech: word.part_of_speech,
           example_sentence: word.example_sentence,
+          meaning_vi: word.meaning_vi,
+          topic: word.topic,
           word_length: word.word_length,
           difficulty_level: word.difficulty_level,
           language: word.language || "en",
