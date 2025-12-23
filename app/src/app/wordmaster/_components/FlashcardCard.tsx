@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   Box,
@@ -33,43 +33,46 @@ function useTextToSpeech() {
     setIsSupported(supported);
   }, []);
 
-  const speak = (text: string, options?: { silent?: boolean }) => {
-    if (!isSupported) {
-      if (!options?.silent) {
-        toast.error("Text-to-speech is not supported in your browser");
-      }
-      return;
-    }
-
-    try {
-      // Stop any currently playing speech
-      if (isPlaying) {
-        window.speechSynthesis.cancel();
-      }
-
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = "en-US";
-      utterance.rate = 1;
-
-      utterance.onstart = () => setIsPlaying(true);
-      utterance.onend = () => setIsPlaying(false);
-      utterance.onerror = () => {
-        setIsPlaying(false);
-        // Only show error if not silent mode (auto-play)
+  const speak = useCallback(
+    (text: string, options?: { silent?: boolean }) => {
+      if (!isSupported) {
         if (!options?.silent) {
-          toast.error("Failed to play audio");
+          toast.error("Text-to-speech is not supported in your browser");
         }
-      };
-
-      window.speechSynthesis.speak(utterance);
-    } catch (error) {
-      console.error("TTS error:", error);
-      setIsPlaying(false);
-      if (!options?.silent) {
-        toast.error("Text-to-speech error");
+        return;
       }
-    }
-  };
+
+      try {
+        // Stop any currently playing speech
+        if (isPlaying) {
+          window.speechSynthesis.cancel();
+        }
+
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = "en-US";
+        utterance.rate = 1;
+
+        utterance.onstart = () => setIsPlaying(true);
+        utterance.onend = () => setIsPlaying(false);
+        utterance.onerror = () => {
+          setIsPlaying(false);
+          // Only show error if not silent mode (auto-play)
+          if (!options?.silent) {
+            toast.error("Failed to play audio");
+          }
+        };
+
+        window.speechSynthesis.speak(utterance);
+      } catch (error) {
+        console.error("TTS error:", error);
+        setIsPlaying(false);
+        if (!options?.silent) {
+          toast.error("Text-to-speech error");
+        }
+      }
+    },
+    [isSupported, isPlaying]
+  );
 
   return { speak, isPlaying, isSupported };
 }
@@ -458,18 +461,31 @@ export function FlashcardCard({
               )}
             </Box>
 
-              {/* Definition on Front */}
-              {word.word.definition && (
+            {/* Definition on Front */}
+            {word.word.definition && (
+              <Box
+                sx={{
+                  backgroundColor: "rgba(255, 255, 255, 0.06)",
+                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                  borderRadius: "16px",
+                  padding: "16px",
+                  maxWidth: "720px",
+                  width: "100%",
+                  textAlign: "center",
+                  boxShadow: "0 12px 30px rgba(0, 0, 0, 0.18)",
+                  position: "relative",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                }}
+              >
                 <Box
                   sx={{
-                    backgroundColor: "rgba(255, 255, 255, 0.06)",
-                    border: "1px solid rgba(255, 255, 255, 0.1)",
-                    borderRadius: "16px",
-                    padding: "16px",
-                    maxWidth: "720px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
                     width: "100%",
-                    textAlign: "center",
-                    boxShadow: "0 12px 30px rgba(0, 0, 0, 0.18)",
+                    justifyContent: "center",
                   }}
                 >
                   <Typography
@@ -482,19 +498,47 @@ export function FlashcardCard({
                   >
                     Definition
                   </Typography>
-                  <Typography
-                    variant="body1"
+                  <Button
+                    size="small"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigator.clipboard.writeText(word.word.definition);
+                      toast.success("Definition copied!");
+                    }}
                     sx={{
-                      marginTop: "4px",
-                      color: "rgba(255, 255, 255, 0.85)",
-                      lineHeight: 1.6,
-                      fontWeight: 500,
+                      minWidth: "auto",
+                      padding: "2px 8px",
+                      borderRadius: "8px",
+                      fontSize: "10px",
+                      backgroundColor: "rgba(67, 24, 255, 0.08)",
+                      color: "#4318FF",
+                      textTransform: "none",
+                      fontWeight: 600,
+                      boxShadow: "none",
+                      border: "1px solid rgba(67, 24, 255, 0.15)",
+                      "&:hover": {
+                        backgroundColor: "rgba(67, 24, 255, 0.18)",
+                        color: "#4318FF",
+                        borderColor: "#4318FF",
+                      },
                     }}
                   >
-                    {word.word.definition}
-                  </Typography>
+                    Copy
+                  </Button>
                 </Box>
-              )}
+                <Typography
+                  variant="body1"
+                  sx={{
+                    marginTop: "4px",
+                    color: "rgba(255, 255, 255, 0.85)",
+                    lineHeight: 1.6,
+                    fontWeight: 500,
+                  }}
+                >
+                  {word.word.definition}
+                </Typography>
+              </Box>
+            )}
 
             {/* Sound Button - Large and prominent */}
             {isSupported && (
@@ -730,18 +774,26 @@ export function FlashcardCard({
                       <span key={index}>
                         {part}
                         {index < array.length - 1 && (
-                          <span
-                            style={{
+                          <Box
+                            component="span"
+                            sx={{
+                              backgroundColor: "rgba(67, 24, 255, 0.15)",
                               color: "#4318FF",
-                              fontWeight: 700,
+                              fontWeight: 800,
+                              padding: "2px 4px",
+                              borderRadius: "4px",
+                              border: "1px solid rgba(67, 24, 255, 0.3)",
+                              boxShadow: "0 0 8px rgba(67, 24, 255, 0.4)",
                               textDecoration: "underline",
-                              textDecorationColor: "rgba(67, 24, 255, 0.3)",
+                              textDecorationColor: "#4318FF",
                               textDecorationThickness: "2px",
-                              textUnderlineOffset: "4px",
+                              textUnderlineOffset: "2px",
+                              display: "inline-block",
+                              margin: "0 1px",
                             }}
                           >
                             {word.word.word_text}
-                          </span>
+                          </Box>
                         )}
                       </span>
                     ))}

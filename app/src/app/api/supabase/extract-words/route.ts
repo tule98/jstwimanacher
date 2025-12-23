@@ -2,19 +2,69 @@
  * Wordmaster Extract Words API
  * POST /api/supabase/extract-words
  *
- * Extracts words from user content (lyrics, paragraphs, topics)
+ * Uses AI to extract valuable words from user content (lyrics, paragraphs, topics)
  * Returns preview with difficulty breakdown and ready for enrichment
  */
 
 import { NextResponse } from "next/server";
 import {
-  extractWordsAndPhrases,
   validateContentInput,
   getExtractionStats,
   deduplicateAgainstExisting,
   type ExtractWordsRequest,
 } from "@/services/wordmaster";
+import { geminiService } from "@/services/gemini/GeminiService";
 import { withAuth, type AuthenticatedRequest } from "@/lib/route-handlers";
+
+interface AIExtractedWord {
+  word: string;
+  reason: string;
+  difficulty: "easy" | "medium" | "hard" | "very_hard";
+}
+
+/**
+ * Use AI to extract valuable words from content
+ */
+async function extractWordsWithAI(content: string): Promise<AIExtractedWord[]> {
+  const prompt = `You are a vocabulary learning assistant. Analyze the following text and extract 8-15 valuable words that would be most beneficial for an English learner to learn.
+
+For each word, consider:
+- Educational value: Is it commonly used? Does it have multiple meanings? Is it part of important vocabulary?
+- Context relevance: How central is it to understanding this text?
+- Learning difficulty: Consider length, complexity, and familiarity
+
+Return ONLY a JSON array of objects with this exact structure:
+[{"word": "word_here", "reason": "brief reason why this word is valuable", "difficulty": "easy|medium|hard|very_hard"}]
+
+Text to analyze:
+"${content}"
+
+Respond with ONLY valid JSON, no markdown or other text.`;
+
+  try {
+    const extractedWords = await geminiService.generateJSON<AIExtractedWord[]>(
+      prompt
+    );
+
+    if (!Array.isArray(extractedWords)) {
+      throw new Error("Expected array response from AI");
+    }
+
+    return extractedWords;
+  } catch (error) {
+    console.error("AI extraction failed:", error);
+    // Fallback to basic extraction if AI fails
+    const words = content.toLowerCase().match(/\b[a-z]{3,15}\b/g) || [];
+    const uniqueWords = [...new Set(words)].slice(0, 10);
+
+    return uniqueWords.map((word) => ({
+      word,
+      reason: "Fallback extraction - AI unavailable",
+      difficulty:
+        word.length <= 4 ? "easy" : word.length <= 7 ? "medium" : "hard",
+    }));
+  }
+}
 
 async function handleExtractWords(
   request: AuthenticatedRequest
@@ -23,9 +73,9 @@ async function handleExtractWords(
   const body: ExtractWordsRequest = await request.json();
   const {
     content,
-    minWordLength = 3,
-    maxWordLength = 15,
-    includePhrases = true,
+    // minWordLength = 3, // Not used with AI extraction
+    // maxWordLength = 15, // Not used with AI extraction
+    // includePhrases = true, // Not used with AI extraction
   } = body;
 
   // Validate content
@@ -40,18 +90,15 @@ async function handleExtractWords(
     );
   }
 
-  // Extract words and phrases
-  const { words: extractedWords, phrases } = extractWordsAndPhrases(content, {
-    minWordLength,
-    maxWordLength,
-    includePhrases,
-  });
+  // Extract words using AI
+  const aiExtractedWords = await extractWordsWithAI(content);
 
-  // Combine words and phrases
-  const allExtracted = [
-    ...extractedWords.map((w) => ({ word_text: w })),
-    ...phrases.map((p) => ({ word_text: p })),
-  ];
+  // Convert to expected format
+  const allExtracted = aiExtractedWords.map((item) => ({
+    word_text: item.word,
+    difficulty_level: item.difficulty,
+    reason: item.reason,
+  }));
 
   // Get existing user words for deduplication
   const existingWords: string[] = [];
@@ -69,13 +116,18 @@ async function handleExtractWords(
     existingWords
   );
 
-  // Get statistics
+  // Filter to only new words and get their AI data
+  const newWordsWithData = allExtracted.filter((item) =>
+    newWords.includes(item.word_text)
+  );
+
+  // Get statistics using AI difficulty levels
   const stats = getExtractionStats(
-    newWords.map((w) => ({
-      word_text: w,
-      word_length: w.length,
+    newWordsWithData.map((item) => ({
+      word_text: item.word_text,
+      word_length: item.word_text.length,
       definition: "",
-      difficulty_level: "medium" as const,
+      difficulty_level: item.difficulty_level,
       part_of_speech: "noun" as const,
     }))
   );
@@ -83,37 +135,25 @@ async function handleExtractWords(
   return new NextResponse(
     JSON.stringify({
       preview: {
-        words: newWords.map((w) => ({
-          word_text: w,
-          word_length: w.length,
+        words: newWordsWithData.map((item) => ({
+          word_text: item.word_text,
+          word_length: item.word_text.length,
           definition: "",
-          difficulty_level:
-            w.length <= 4
-              ? "easy"
-              : w.length <= 7
-              ? "medium"
-              : w.length <= 10
-              ? "hard"
-              : "very_hard",
+          difficulty_level: item.difficulty_level,
           part_of_speech: "noun" as const,
+          ai_reason: item.reason,
         })),
-        totalCount: newWords.length,
+        totalCount: newWordsWithData.length,
         duplicates: duplicates.length,
         difficultyBreakdown: stats.difficultyBreakdown,
       },
-      words: newWords.map((w) => ({
-        word_text: w,
-        word_length: w.length,
+      words: newWordsWithData.map((item) => ({
+        word_text: item.word_text,
+        word_length: item.word_text.length,
         definition: "",
-        difficulty_level:
-          w.length <= 4
-            ? "easy"
-            : w.length <= 7
-            ? "medium"
-            : w.length <= 10
-            ? "hard"
-            : "very_hard",
+        difficulty_level: item.difficulty_level,
         part_of_speech: "noun" as const,
+        ai_reason: item.reason,
       })),
     }),
     {
